@@ -1,6 +1,8 @@
-use std::fmt::{Debug, Display, Formatter};
-use std::path::PathBuf;
-use std::str::FromStr;
+use std::{
+    fmt::{Debug, Display, Formatter},
+    path::PathBuf,
+    str::FromStr,
+};
 
 use url::{ParseError, Url};
 
@@ -8,13 +10,13 @@ use crate::ResourcePath;
 
 impl Debug for ResourcePath {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("ResourcePath").field("network", &self.network.as_str()).field("local", &self.local).finish()
+        f.debug_struct("ResourcePath").field("network", &self.remote.as_str()).field("local", &self.local).finish()
     }
 }
 
 impl Display for ResourcePath {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}?local={}", self.network, self.local.display())
+        write!(f, "{}?local={}", self.remote, self.local.display())
     }
 }
 
@@ -31,6 +33,6 @@ impl FromStr for ResourcePath {
             }
         }
         url.set_query(None);
-        Ok(Self { network: url, local })
+        Ok(Self { remote: url, local })
     }
 }

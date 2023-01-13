@@ -1,4 +1,3 @@
-
 use std::{fmt::Formatter, str::FromStr};
 
 use serde::{
@@ -12,15 +11,15 @@ struct PathVisitor {}
 
 impl<'de> Deserialize<'de> for ResourcePath {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-        where
-            D: Deserializer<'de>,
+    where
+        D: Deserializer<'de>,
     {
         let out = deserializer.deserialize_any(PathVisitor {})?;
         Ok(out)
     }
     fn deserialize_in_place<D>(deserializer: D, place: &mut Self) -> Result<(), D::Error>
-        where
-            D: Deserializer<'de>,
+    where
+        D: Deserializer<'de>,
     {
         *place = deserializer.deserialize_any(PathVisitor {})?;
         Ok(())
@@ -35,8 +34,8 @@ impl<'de> Visitor<'de> for PathVisitor {
     }
 
     fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
-        where
-            E: Error,
+    where
+        E: Error,
     {
         match ResourcePath::from_str(v) {
             Ok(o) => Ok(o),
@@ -45,8 +44,8 @@ impl<'de> Visitor<'de> for PathVisitor {
     }
 
     fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error>
-        where
-            A: MapAccess<'de>,
+    where
+        A: MapAccess<'de>,
     {
         let mut network = None;
         let mut relative = None;
@@ -62,7 +61,7 @@ impl<'de> Visitor<'de> for PathVisitor {
             }
         }
         match (network, relative) {
-            (Some(network), Some(relative)) => Ok(ResourcePath { network, local: relative }),
+            (Some(network), Some(relative)) => Ok(ResourcePath { remote: network, local: relative }),
             (_, None) => Err(Error::missing_field("relative")),
             _ => Err(Error::missing_field("network")),
         }
