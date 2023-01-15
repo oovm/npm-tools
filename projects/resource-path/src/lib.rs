@@ -1,3 +1,6 @@
+#![forbid(missing_docs)]
+#![doc = include_str!("../Readme.md")]
+
 use std::{
     path::{Path, PathBuf},
     str::FromStr,
@@ -5,7 +8,7 @@ use std::{
 
 use url::{ParseError, Url};
 
-mod third_party;
+pub mod third_party;
 
 /// A path to a resource, either local or remote.
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
