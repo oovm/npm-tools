@@ -1,0 +1,22 @@
+[package]
+name = "task-system"
+version = "0.0.0"
+authors = ["Aster <192607617@qq.com>"]
+description = "A path representation for resource at local and remote."
+repository = "https://github.com/oovm/fs-tools"
+documentation = "https://docs.rs/resource-path"
+readme = "Readme.md"
+license = "MPL-2.0"
+edition = "2021"
+
+[dependencies]
+url = "2.3.1"
+serde = { version = "1.0", features = ["derive"], optional = true }
+trauma = { version = "2.2.1", optional = true }
+
+[dev-dependencies]
+serde_json = "1.0.94"
+
+[features]
+default = ["serde"]
+serde = ["dep:serde", "url/serde"]
