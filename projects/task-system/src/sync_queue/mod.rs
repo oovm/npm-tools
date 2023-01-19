@@ -1,52 +1,24 @@
 use std::{
     collections::VecDeque,
-    sync::{
-        mpsc::{channel, Receiver, SendError, Sender},
-        Arc, Mutex,
-    },
+    sync::{Arc, Mutex, MutexGuard, PoisonError},
 };
 
-use crate::Cancellable;
+mod sender;
+mod system;
 
 /// A task system that can be used to send tasks to a thread pool.
-#[derive(Debug)]
 pub struct TaskSystem<T> {
     queue: Arc<Mutex<VecDeque<T>>>,
 }
 
+/// Sender for a task system.
 pub struct TaskSender<T> {
-    queue: Arc<Mutex<VecDeque<T>>>,
+    refer: TaskSystem<T>,
 }
 
-impl<T> Default for TaskSystem<T> {
-    fn default() -> Self {
-        let (tx, rx) = channel::<T>();
-        Self { queue: Arc::new(Mutex::new(VecDeque::new())), senders: Arc::new(Mutex::new(tx)), receiver: rx }
-    }
-}
-
-impl<T> TaskSystem<T> {
-    pub fn start<F>(&self, callback: F)
-    where
-        F: Fn(T) + Send + 'static,
-    {
-        todo!()
-    }
-
-    pub fn send(&self, task: T) {
-        let sender = self.sender();
-    }
-
-    pub fn sender(&self) -> TaskSender<T> {
-        TaskSender { queue: self.queue.clone(), senders: self.senders.clone() }
-    }
-}
-
-impl<T> TaskSender<T> {
-    pub fn send(&self, task: T) -> Result<(), SendError<T>> {
-        let mut queue = self.queue.lock().unwrap();
-        queue.push_back(task);
-        let mut sender = self.senders.lock().unwrap();
-        sender.send(task)
+fn send_task<T>(queue: &Arc<Mutex<VecDeque<T>>>, task: T) -> Result<(), PoisonError<MutexGuard<'_, VecDeque<T>>>> {
+    match queue.lock() {
+        Ok(mut o) => Ok(o.push_back(task)),
+        Err(e) => Err(e),
     }
 }

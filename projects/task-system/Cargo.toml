@@ -10,11 +10,12 @@ license = "MPL-2.0"
 edition = "2021"
 
 [dependencies]
-tokio = { version = "1.26.0", features = ["full"] }
-tokio-util = "0.7.7"
+
+
 
 [dev-dependencies]
-
+tokio = { version = "1.26.0", features = ["full"] }
+tokio-util = "0.7.7"
 
 [features]
 default = []
