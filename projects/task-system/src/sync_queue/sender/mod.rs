@@ -2,7 +2,7 @@ use super::*;
 
 impl<T> Clone for TaskSender<T> {
     fn clone(&self) -> Self {
-        TaskSender { refer: TaskSystem { queue: self.refer.queue.clone() } }
+        TaskSender { refer: TaskSystem { interrupt: self.refer.interrupt.clone(), queue: self.refer.queue.clone() } }
     }
 }
 
