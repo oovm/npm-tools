@@ -1,5 +1,6 @@
 use std::{
     collections::VecDeque,
+    fmt::{Debug, Formatter},
     sync::{Arc, Mutex, MutexGuard, PoisonError},
 };
 
@@ -8,6 +9,7 @@ mod system;
 
 /// A task system that can be used to send tasks to a thread pool.
 pub struct TaskSystem<T> {
+    interrupt: Arc<Mutex<bool>>,
     queue: Arc<Mutex<VecDeque<T>>>,
 }
 

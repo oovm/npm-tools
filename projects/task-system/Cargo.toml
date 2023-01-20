@@ -9,9 +9,19 @@ readme = "Readme.md"
 license = "MPL-2.0"
 edition = "2021"
 
+[[example]]
+name = "simple"
+path = "examples/simple.rs"
+required-features = ["tokio"]
+
 [dependencies]
 
 
+
+[dependencies.tokio]
+version = "1.26.0"
+features = []
+optional = true
 
 [dev-dependencies]
 tokio = { version = "1.26.0", features = ["full"] }

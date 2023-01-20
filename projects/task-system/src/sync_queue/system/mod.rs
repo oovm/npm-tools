@@ -1,8 +1,4 @@
-use std::{
-    fmt::{Debug, Formatter},
-    thread::{spawn, JoinHandle},
-};
-use tokio::task::spawn_blocking;
+use std::fmt::Display;
 
 use super::*;
 
@@ -16,20 +12,30 @@ impl<T: Debug> Debug for TaskSystem<T> {
     }
 }
 
+impl<T: Display> Display for TaskSystem<T> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self.queue.try_lock() {
+            Ok(o) => f.debug_list().entries(o.iter()).finish(),
+            Err(_) => f.debug_struct("TaskSystem").field("queue", &"<LOCKED>").finish(),
+        }
+    }
+}
+
 impl<T> Default for TaskSystem<T> {
     fn default() -> Self {
-        Self { queue: Arc::new(Mutex::new(VecDeque::new())) }
+        Self { interrupt: false, queue: Arc::new(Mutex::new(VecDeque::new())) }
     }
 }
 
 impl<T> TaskSystem<T> {
+    #[cfg(feature = "tokio")]
     pub fn start<F>(&self, callback: F) -> tokio::task::JoinHandle<()>
     where
         F: Fn(T) -> bool + Send + 'static,
         T: Send + 'static,
     {
         let queue = self.queue.clone();
-        spawn_blocking(move || {
+        tokio::task::spawn_blocking(move || {
             loop {
                 let task = match queue.try_lock() {
                     Ok(mut o) => match o.pop_front() {
@@ -38,7 +44,7 @@ impl<T> TaskSystem<T> {
                     },
                     Err(_) => continue,
                 };
-                if !callback(task) {
+                if self.interrupt || !callback(task) {
                     break;
                 }
             }
@@ -55,6 +61,19 @@ impl<T> TaskSystem<T> {
         match self.queue.try_lock() {
             Ok(mut o) => o.pop_front(),
             Err(_) => None,
+        }
+    }
+    pub fn consume<F>(&self, callback: F) -> bool
+    where
+        F: Fn(T) -> bool + Send + 'static,
+        T: Send + 'static,
+    {
+        match self.receive() {
+            Some(s) => {
+                callback(s);
+                true
+            }
+            None => false,
         }
     }
 }
