@@ -28,6 +28,7 @@ impl<T> Default for TaskSystem<T> {
 }
 
 impl<T> TaskSystem<T> {
+    /// Create a new task system.
     #[cfg(feature = "tokio")]
     pub fn start<F>(&self, callback: F) -> tokio::task::JoinHandle<()>
     where
