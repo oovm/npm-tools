@@ -1,0 +1,18 @@
+# nifty-github
+
+GitHub REST API helpers for [Nifty](https://github.com/oovm/npm-tools).
+
+| API | Token | Notes |
+| --- | --- | --- |
+| `user_by_login` | optional | `GET /users/{login}` |
+| `search_user_by_email` | required | `GET /search/users?q=… in:email` |
+| `lookup_user_by_email` | optional | noreply → map → search → optional fetch |
+
+Pairs with `nifty-core` for noreply emails and `author-github.json` maps.
+
+```rust
+use nifty_github::{lookup_user_by_email, user_by_login};
+
+let user = user_by_login("oovm", None)?;
+let mapped = lookup_user_by_email("aster@vers.site", r#"{"aster@vers.site":{"login":"oovm"}}"#, None, true)?;
+```

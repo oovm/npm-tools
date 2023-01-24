@@ -1,0 +1,15 @@
+[package]
+name = "nifty-github"
+version = "0.1.0"
+authors = ["Aster <192607617@qq.com>"]
+description = "GitHub REST API helpers for Nifty (user lookup by login or email)"
+license = "MPL-2.0"
+edition = "2021"
+
+[dependencies]
+nifty-core = { path = "../nifty-core" }
+serde_json = "1.0"
+ureq = { version = "2.12", default-features = false, features = ["json"] }
+urlencoding = "2.1"
+
+[dev-dependencies]
