@@ -1,0 +1,15 @@
+[package]
+name = "nifty-git"
+version = "0.1.0"
+authors = ["Aster <192607617@qq.com>"]
+description = "Git repository helpers for Nifty (gix, gitmoji-aware commit log)"
+license = "MPL-2.0"
+edition = "2021"
+
+[dependencies]
+gix = { version = "0.68", default-features = false, features = ["revision", "max-performance-safe"] }
+nifty-core = { path = "../nifty-core" }
+semver = "1.0"
+
+[dev-dependencies]
+tempfile = "3.14"
