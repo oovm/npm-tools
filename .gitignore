@@ -12,3 +12,8 @@ time-travel.*
 # Rust
 target/
 Cargo.lock
+
+# Nifty jco output (regenerate with `npm run build` in projects/nifty)
+projects/nifty/lib/*
+!projects/nifty/lib/.gitkeep
+projects/nifty/node_modules/

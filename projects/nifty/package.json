@@ -1,0 +1,24 @@
+{
+    "name": "@doki-land/nifty",
+    "version": "0.1.0",
+    "description": "Gitmoji-first commit conventions and release helpers (WASI + TypeScript)",
+    "type": "module",
+    "license": "MPL-2.0",
+    "exports": {
+        ".": "./src/index.ts"
+    },
+    "files": [
+        "src",
+        "lib"
+    ],
+    "scripts": {
+        "build:wasi": "cargo component build --release --manifest-path ../nifty-wasi/Cargo.toml",
+        "build:jco": "jco transpile ../nifty-wasi/target/wasm32-wasip2/release/nifty_wasi.wasm -o lib --name nifty",
+        "build": "npm run build:wasi && npm run build:jco",
+        "typecheck": "tsc --noEmit"
+    },
+    "devDependencies": {
+        "@bytecodealliance/jco": "^2.6.0",
+        "typescript": "^5.8.3"
+    }
+}
