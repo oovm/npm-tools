@@ -4,11 +4,12 @@
 
 use std::path::Path;
 
-use nifty_core::{
-    GithubAuthor as CoreAuthor, author_mention, avatar_url, commit_bullet, display_login, format_subject,
-    github_from_noreply_email, known_gitmojis, leading_gitmoji, load_author_map_from_json, parse_subject,
-    profile_url, resolve_github_author, section_for_gitmoji, section_name, strip_gitmoji, validate_subject,
+use nifty_types::{
+    GithubAuthor as CoreAuthor, avatar_url, display_login, github_from_noreply_email, known_gitmojis,
+    leading_gitmoji, load_author_map_from_json, parse_subject, profile_url, resolve_github_author,
+    section_for_gitmoji, section_name, strip_gitmoji, validate_subject,
 };
+use nifty_formatter::{author_mention, commit_bullet, format_subject};
 use nifty_git::{
     CommitRecord as CoreCommit, RangeInfo as CoreRange, TagInfo as CoreTag, collect_commits, detect_github_repo,
     discover_root, format_tag_list, list_tag_infos, list_version_tags, parse_github_remote_repo, resolve_range,
@@ -32,7 +33,7 @@ fn from_wit_author(author: GithubAuthor) -> CoreAuthor {
     CoreAuthor { id: author.id, login: author.login }
 }
 
-fn to_wit_parsed(parsed: nifty_core::ParsedSubject) -> ParsedSubject {
+fn to_wit_parsed(parsed: nifty_types::ParsedSubject) -> ParsedSubject {
     ParsedSubject {
         gitmoji: parsed.gitmoji,
         body: parsed.body,

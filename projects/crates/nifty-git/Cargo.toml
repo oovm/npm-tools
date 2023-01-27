@@ -8,7 +8,7 @@ edition = "2021"
 
 [dependencies]
 gix = { version = "0.68", default-features = false, features = ["revision", "max-performance-safe"] }
-nifty-core = { path = "../nifty-core" }
+nifty-types = { path = "../nifty-types" }
 semver = "1.0"
 
 [dev-dependencies]

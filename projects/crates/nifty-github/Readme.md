@@ -8,7 +8,7 @@ GitHub REST API helpers for [Nifty](https://github.com/oovm/npm-tools).
 | `search_user_by_email` | required | `GET /search/users?q=… in:email` |
 | `lookup_user_by_email` | optional | noreply → map → search → optional fetch |
 
-Pairs with `nifty-core` for noreply emails and `author-github.json` maps.
+Pairs with `nifty-types` for noreply emails and `author-github.json` maps.
 
 ```rust
 use nifty_github::{lookup_user_by_email, user_by_login};

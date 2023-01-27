@@ -7,7 +7,7 @@ license = "MPL-2.0"
 edition = "2021"
 
 [dependencies]
-nifty-core = { path = "../nifty-core" }
+nifty-types = { path = "../nifty-types" }
 serde_json = "1.0"
 ureq = { version = "2.12", default-features = false, features = ["json"] }
 urlencoding = "2.1"

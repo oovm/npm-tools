@@ -4,7 +4,7 @@ use std::path::Path;
 
 use gix::{Commit, ObjectId, Repository};
 
-use nifty_core::{parse_subject, section_name};
+use nifty_types::{parse_subject, section_name};
 
 use crate::repo::{Result, open_repo, resolve_rev};
 

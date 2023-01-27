@@ -11,7 +11,8 @@ crate-type = ["cdylib"]
 path = "src/lib.rs"
 
 [dependencies]
-nifty-core = { path = "../nifty-core" }
+nifty-types = { path = "../nifty-types" }
+nifty-formatter = { path = "../nifty-formatter" }
 nifty-git = { path = "../nifty-git" }
 wit-bindgen = "0.41.0"
 

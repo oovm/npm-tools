@@ -1,12 +1,11 @@
 [workspace]
-members = ["projects/*"]
+members = ["projects/crates/*"]
 default-members = [
-    "projects/flatten-files",
-    "projects/resource-path",
+    "projects/crates/nifty-uploader",
+    "projects/crates/nifty-formatter",
 ]
 exclude = [
     "projects/.DS_Store",
-    "projects/nifty",
 ]
 
 [profile.release]

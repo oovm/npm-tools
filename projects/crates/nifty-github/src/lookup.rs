@@ -1,6 +1,6 @@
 //! 组合本地 author 映射与 GitHub API 查询。
 
-use nifty_core::{
+use nifty_types::{
     GithubAuthor, github_from_noreply_email, load_author_map_from_json, merge_authors, resolve_github_author,
 };
 
