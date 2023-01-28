@@ -12,7 +12,7 @@ use super::*;
 /// # Examples
 ///
 /// ```
-/// # use find_target::find_directory;
+/// # use nifty_config::find_directory;
 /// # use std::env::current_dir;
 /// let dir = find_directory(&current_dir().unwrap(), "target").unwrap();
 /// ```
@@ -44,7 +44,7 @@ pub fn find_directory(start: &Path, name: &str) -> Result<PathBuf> {
 /// # Examples
 ///
 /// ```
-/// # use find_target::find_directory_or_create;
+/// # use nifty_config::find_directory_or_create;
 /// # use std::env::current_dir;
 /// let dir = find_directory_or_create(&current_dir().unwrap(), "target").unwrap();
 /// ```
@@ -63,7 +63,7 @@ pub fn find_directory_or_create(start: &Path, name: &str) -> Result<PathBuf> {
 /// # Examples
 ///
 /// ```
-/// print!("{}", find_target::this_directory().unwrap().display());
+/// print!("{}", nifty_config::this_directory().unwrap().display());
 /// ```
 pub fn this_directory() -> Result<PathBuf> {
     match current_exe()?.canonicalize()?.parent() {

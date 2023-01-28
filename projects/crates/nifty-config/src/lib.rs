@@ -1,3 +1,6 @@
+#![warn(missing_docs)]
+#![doc = include_str!("../Readme.md")]
+
 use std::{
     fs::create_dir_all,
     io::{Error, Result},
@@ -5,28 +8,20 @@ use std::{
 };
 
 pub use find_dir::{find_directory, find_directory_or_create, this_directory};
+pub use find_file::{find_config_file, CONFIG_FILE_NAMES};
+pub use project::{
+    detect_project_layout, find_cargo_manifest, find_package_manifest, ProjectKind, ProjectLayout,
+};
 
 mod find_dir;
 mod find_file;
+mod project;
 
 /// Ensure path is dir
-///
-/// # Arguments
-///
-/// * `path`:
-///
-/// returns: Result<PathBuf, Error>
-///
-/// # Examples
-///
-/// ```
-/// use find_target::ensure_directory;
-/// ```
 pub fn ensure_directory(path: &Path) -> Result<PathBuf> {
     if path.is_dir() {
         path.canonicalize()
-    }
-    else {
+    } else {
         match path.parent() {
             Some(s) => s.canonicalize(),
             None => Err(Error::from_raw_os_error(10006)),
@@ -35,19 +30,10 @@ pub fn ensure_directory(path: &Path) -> Result<PathBuf> {
 }
 
 /// Ensure path is file
-///
-/// # Arguments
-///
-/// * `path`:
-/// * `name`:
-///
-/// returns: Result<PathBuf, Error>
-///
-/// # Examples
-///
-/// ```
-/// use find_target::ensure_file;
-/// ```
 pub fn ensure_file(path: &Path, name: &str) -> Result<PathBuf> {
-    if path.is_file() { path.canonicalize() } else { Ok(path.canonicalize()?.join(name)) }
+    if path.is_file() {
+        path.canonicalize()
+    } else {
+        Ok(path.canonicalize()?.join(name))
+    }
 }
