@@ -1,0 +1,15 @@
+[package]
+name = "nifty-formatter"
+version = "0.1.0"
+authors = ["Aster <192607617@qq.com>"]
+description = "Nifty formatting: gitmoji subjects, release bullets, and changelog sections"
+repository = "https://github.com/oovm/npm-tools"
+documentation = "https://docs.rs/nifty-formatter"
+readme = "Readme.md"
+license = "MPL-2.0"
+edition = "2021"
+
+[dependencies]
+nifty-types = { path = "../nifty-types" }
+
+[dev-dependencies]
