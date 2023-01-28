@@ -1,8 +1,8 @@
 [package]
-name = "nifty-core"
+name = "nifty-types"
 version = "0.1.0"
 authors = ["Aster <192607617@qq.com>"]
-description = "Portable changelog and GitHub author helpers for Nifty"
+description = "Shared Nifty types: gitmoji conventions and GitHub author maps"
 license = "MPL-2.0"
 edition = "2021"
 

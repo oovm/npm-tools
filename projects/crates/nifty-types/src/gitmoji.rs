@@ -95,17 +95,6 @@ pub fn parse_subject(subject: &str) -> ParsedSubject {
     ParsedSubject { gitmoji, body, section }
 }
 
-/// 按 Nifty 规范格式化 subject：`<gitmoji> <body>`。
-pub fn format_subject(gitmoji: &str, body: &str) -> String {
-    let body = body.trim();
-    if body.is_empty() {
-        gitmoji.to_string()
-    } else {
-        format!("{gitmoji} {body}")
-    }
-}
-
-/// subject 是否符合 Nifty gitmoji 规范（以已知 gitmoji 开头）。
 pub fn validate_subject(subject: &str) -> bool {
     leading_gitmoji(subject).is_some()
 }
