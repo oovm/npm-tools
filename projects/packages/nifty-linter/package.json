@@ -1,0 +1,24 @@
+{
+    "name": "@doki-land/nifty-linter",
+    "version": "0.1.0",
+    "description": "Rule-based lint/check for Nifty gitmoji conventions",
+    "type": "module",
+    "license": "MPL-2.0",
+    "exports": {
+        ".": "./src/index.ts"
+    },
+    "files": [
+        "src"
+    ],
+    "scripts": {
+        "typecheck": "tsc --noEmit",
+        "p": "cargo publish --allow-dirty --manifest-path ../../crates/nifty-linter/Cargo.toml"
+    },
+    "dependencies": {
+        "@doki-land/nifty-config": "file:../nifty-config"
+    },
+    "devDependencies": {
+        "@types/node": "^22.13.10",
+        "typescript": "^5.8.3"
+    }
+}
