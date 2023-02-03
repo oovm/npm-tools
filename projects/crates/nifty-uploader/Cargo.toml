@@ -1,0 +1,21 @@
+[package]
+name = "nifty-uploader"
+version = "0.1.0"
+authors = ["Aster <192607617@qq.com>"]
+description = "Publish artifacts to GitHub Pages and GitHub Releases"
+repository = "https://github.com/oovm/npm-tools"
+documentation = "https://docs.rs/nifty-uploader"
+readme = "Readme.md"
+license = "MPL-2.0"
+edition = "2021"
+
+[dependencies]
+nifty-config = { path = "../nifty-config" }
+nifty-formatter = { path = "../nifty-formatter" }
+nifty-git = { path = "../nifty-git" }
+nifty-types = { path = "../nifty-types" }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+ureq = { version = "2.12", default-features = false, features = ["json"] }
+walkdir = "2.5"
+tempfile = "3.14"
