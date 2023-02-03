@@ -1,0 +1,29 @@
+{
+    "name": "@doki-land/nifty-updater",
+    "version": "0.1.0",
+    "description": "Update cargo and npm dependencies (`nifty update`, `-i` for interactive)",
+    "type": "module",
+    "license": "MPL-2.0",
+    "bin": {
+        "nifty": "./bin/nifty.mjs"
+    },
+    "exports": {
+        ".": "./src/index.ts"
+    },
+    "files": [
+        "bin",
+        "src"
+    ],
+    "scripts": {
+        "typecheck": "tsc --noEmit",
+        "p": "cargo publish --allow-dirty --manifest-path ../../crates/nifty-updater/Cargo.toml",
+        "i": "cargo install --path ../../crates/nifty-updater --force"
+    },
+    "dependencies": {
+        "@doki-land/nifty-config": "file:../nifty-config"
+    },
+    "devDependencies": {
+        "@types/node": "^22.13.10",
+        "typescript": "^5.8.3"
+    }
+}
