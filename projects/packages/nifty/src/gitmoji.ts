@@ -5,11 +5,14 @@ import { loadNiftyWasm, mapCommitRecord, mapRangeInfo, mapTagInfo } from "./wasm
  * Nifty default convention: every commit subject starts with a gitmoji followed by a space.
  */
 export class Gitmoji {
-    constructor(private readonly wasm: Awaited<ReturnType<typeof loadNiftyWasm>>["gitmoji"]) {}
+    constructor(
+        private readonly wasm: Awaited<ReturnType<typeof loadNiftyWasm>>["gitmoji"],
+        private readonly defaultAuthorMapJson = "{}",
+    ) {}
 
-    static async open(): Promise<Gitmoji> {
+    static async open(authorMapJson = "{}"): Promise<Gitmoji> {
         const wasm = await loadNiftyWasm();
-        return new Gitmoji(wasm.gitmoji);
+        return new Gitmoji(wasm.gitmoji, authorMapJson);
     }
 
     knownGitmojis(): string[] {
@@ -44,7 +47,7 @@ export class Gitmoji {
         return this.wasm["parse-noreply-email"](email);
     }
 
-    resolveGithubAuthor(email: string, authorMapJson = "{}"): GithubAuthor | undefined {
+    resolveGithubAuthor(email: string, authorMapJson = this.defaultAuthorMapJson): GithubAuthor | undefined {
         return this.wasm["resolve-github-author"](email, authorMapJson);
     }
 
@@ -60,11 +63,11 @@ export class Gitmoji {
         return this.wasm["avatar-url"](author);
     }
 
-    authorMention(email: string, authorName: string, authorMapJson = "{}"): string {
+    authorMention(email: string, authorName: string, authorMapJson = this.defaultAuthorMapJson): string {
         return this.wasm["author-mention"](email, authorName, authorMapJson);
     }
 
-    commitBullet(body: string, email: string, authorName: string, authorMapJson = "{}"): string {
+    commitBullet(body: string, email: string, authorName: string, authorMapJson = this.defaultAuthorMapJson): string {
         return this.wasm["commit-bullet"](body, email, authorName, authorMapJson);
     }
 }

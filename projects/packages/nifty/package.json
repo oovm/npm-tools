@@ -12,10 +12,15 @@
         "lib"
     ],
     "scripts": {
-        "build:wasi": "cargo component build --release --manifest-path ../nifty-wasi/Cargo.toml",
-        "build:jco": "jco transpile ../nifty-wasi/target/wasm32-wasip2/release/nifty_wasi.wasm -o lib --name nifty",
+        "build:wasi": "cargo component build --release --manifest-path ../../crates/nifty-wasi/Cargo.toml",
+        "build:jco": "jco transpile ../../../target/wasm32-wasip2/release/nifty_wasi.wasm -o lib --name nifty",
         "build": "npm run build:wasi && npm run build:jco",
         "typecheck": "tsc --noEmit"
+    },
+    "dependencies": {
+        "@doki-land/nifty-config": "file:../nifty-config",
+        "@doki-land/nifty-linter": "file:../nifty-linter",
+        "@doki-land/nifty-updater": "file:../nifty-updater"
     },
     "devDependencies": {
         "@bytecodealliance/jco": "^2.6.0",
