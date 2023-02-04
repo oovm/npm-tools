@@ -13,7 +13,8 @@ time-travel.*
 target/
 Cargo.lock
 
-# Nifty jco output (regenerate with `npm run build` in projects/nifty)
-projects/nifty/lib/*
-!projects/nifty/lib/.gitkeep
-projects/nifty/node_modules/
+# Nifty jco output (regenerate with `npm run build` in projects/packages/nifty)
+projects/packages/nifty/lib/*
+!projects/packages/nifty/lib/.gitkeep
+projects/packages/*/node_modules/
+projects/packages/*/package-lock.json
