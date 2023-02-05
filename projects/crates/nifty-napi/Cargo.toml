@@ -1,27 +1,25 @@
 [package]
-name = "nifty-wasi"
+name = "nifty-napi"
 version = "0.1.0"
 authors = ["Aster <192607617@qq.com>"]
-description = "WASI Preview 2 component for Nifty gitmoji helpers"
+description = "Node-API bindings for Nifty gitmoji and gix helpers"
 license = "MPL-2.0"
 edition = "2021"
 
 [lib]
 crate-type = ["cdylib"]
-path = "src/lib.rs"
 
 [dependencies]
+napi = { version = "2", default-features = false, features = ["napi4", "serde-json"] }
+napi-derive = "2"
 nifty-types = { path = "../nifty-types" }
 nifty-formatter = { path = "../nifty-formatter" }
 nifty-git = { path = "../nifty-git" }
-wit-bindgen = "0.41.0"
-
-[target.'cfg(not(target_os = "wasi"))'.dependencies]
 nifty-github = { path = "../nifty-github" }
+serde_json = "1"
 
-[package.metadata.component]
-package = "doki:land"
+[build-dependencies]
+napi-build = "2"
 
-[package.metadata.component.target]
-path = "wit/world.wit"
-world = "nifty"
+[package.metadata.napi]
+name = "nifty"
