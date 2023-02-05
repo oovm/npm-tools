@@ -1,0 +1,18 @@
+{
+    "name": "@doki-land/nifty-win32-x64",
+    "version": "0.1.0",
+    "description": "Nifty Node-API binary for Windows x64 (MSVC)",
+    "type": "module",
+    "license": "MPL-2.0",
+    "main": "./index.js",
+    "files": [
+        "index.js",
+        "lib"
+    ],
+    "os": [
+        "win32"
+    ],
+    "cpu": [
+        "x64"
+    ]
+}
