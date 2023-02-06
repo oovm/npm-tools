@@ -8,7 +8,7 @@ mod release;
 
 use std::path::PathBuf;
 
-pub use action::apply_github_action_defaults;
+pub use action::{apply_github_action_defaults, parse_target};
 pub use release::UploadReport;
 
 pub type Result<T> = std::result::Result<T, String>;

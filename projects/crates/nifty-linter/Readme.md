@@ -13,7 +13,7 @@ Rule-based lint/check for Nifty gitmoji commit conventions.
 
 ## CLI
 
-Via the `nifty` binary (from `nifty-updater`):
+Via npm `@doki-land/nifty` (`bin/nifty`, Node.js CLI):
 
 ```bash
 nifty lint

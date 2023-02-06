@@ -26,6 +26,6 @@ nifty upload --both --dir dist
     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 ```
 
-Release notes are auto-generated from git history via `nifty-formatter` when `--generate-notes` is enabled (default).
+Release notes are auto-generated from git history via `nifty-win32-x64` when `--generate-notes` is enabled (default).
 
 Pages deploy pushes to the `gh-pages` branch (adds `.nojekyll` automatically).

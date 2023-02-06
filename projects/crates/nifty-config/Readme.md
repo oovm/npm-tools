@@ -2,7 +2,7 @@
 
 Discover Nifty project configuration (`nifty.config.ts` / `nifty.config.js`) by walking upward from a directory.
 
-On the npm side, use `@doki-land/nifty-config` for `defineConfig`, `loadConfig`, and cargo/npm project detection.
+On the npm side, use `@doki-land/nifty` for `defineConfig`, `loadConfig`, and cargo/npm project detection.
 
 ```rust,no_run
 fn main() -> std::io::Result<()> {
