@@ -1,7 +1,8 @@
 /**
  * @doki-land/nifty — gitmoji-first commit conventions and gix-backed git helpers.
  *
- * Build the WASI component first: `npm run build` in this package.
+ * Build native bindings first: `npm run build:napi` at the repo root.
+ * CLI (`nifty update`, `nifty lint`, `nifty upload`) is provided via the `nifty` bin.
  */
 
 export type {
@@ -22,6 +23,7 @@ export {
     findConfigFile,
     authorMapToJson,
     detectProjectLayout,
+    discoverPackageDirs,
     findCargoManifest,
     findPackageManifest,
     type LoadConfigOptions,
@@ -31,16 +33,4 @@ export {
     type NiftyConfigEnv,
     type ProjectKind,
     type ProjectLayout,
-} from "@doki-land/nifty-config";
-export { update, type UpdateOptions } from "@doki-land/nifty-updater";
-export {
-    lint,
-    check,
-    lintSubjects,
-    DEFAULT_RULES,
-    type LintDiagnostic,
-    type LintOptions,
-    type LintReport,
-    type LintRuleConfig,
-    type LintSeverity,
-} from "@doki-land/nifty-linter";
+} from "./config/index.js";

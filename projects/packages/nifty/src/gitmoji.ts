@@ -1,18 +1,18 @@
 import type { CommitRecord, GithubAuthor, ParsedSubject, RangeInfo, ReleaseSection, TagInfo } from "./types.js";
-import { loadNiftyWasm, mapCommitRecord, mapRangeInfo, mapTagInfo } from "./wasm.js";
+import { loadNiftyNative, type GitmojiExports } from "./native.js";
 
 /**
  * Nifty default convention: every commit subject starts with a gitmoji followed by a space.
  */
 export class Gitmoji {
     constructor(
-        private readonly wasm: Awaited<ReturnType<typeof loadNiftyWasm>>["gitmoji"],
+        private readonly wasm: GitmojiExports,
         private readonly defaultAuthorMapJson = "{}",
     ) {}
 
-    static async open(authorMapJson = "{}"): Promise<Gitmoji> {
-        const wasm = await loadNiftyWasm();
-        return new Gitmoji(wasm.gitmoji, authorMapJson);
+    static open(authorMapJson = "{}"): Gitmoji {
+        const native = loadNiftyNative();
+        return new Gitmoji(native.gitmoji, authorMapJson);
     }
 
     knownGitmojis(): string[] {
@@ -72,6 +72,6 @@ export class Gitmoji {
     }
 }
 
-export async function createGitmoji(): Promise<Gitmoji> {
+export function createGitmoji(): Gitmoji {
     return Gitmoji.open();
 }

@@ -1,29 +1,35 @@
 {
     "name": "@doki-land/nifty",
     "version": "0.1.0",
-    "description": "Gitmoji-first commit conventions and release helpers (WASI + TypeScript)",
+    "description": "Gitmoji-first commit conventions and release helpers (Node-API + TypeScript)",
     "type": "module",
     "license": "MPL-2.0",
+    "bin": {
+        "nifty": "./bin/nifty.mjs"
+    },
     "exports": {
-        ".": "./src/index.ts"
+        ".": "./src/index.ts",
+        "./cli": "./src/cli/index.ts"
     },
     "files": [
-        "src",
-        "lib"
+        "bin/nifty.mjs",
+        "src"
     ],
     "scripts": {
-        "build:wasi": "cargo component build --release --manifest-path ../../crates/nifty-wasi/Cargo.toml",
-        "build:jco": "jco transpile ../../../target/wasm32-wasip2/release/nifty_wasi.wasm -o lib --name nifty",
-        "build": "npm run build:wasi && npm run build:jco",
         "typecheck": "tsc --noEmit"
     },
     "dependencies": {
-        "@doki-land/nifty-config": "file:../nifty-config",
-        "@doki-land/nifty-linter": "file:../nifty-linter",
-        "@doki-land/nifty-updater": "file:../nifty-updater"
+        "jiti": "^2.4.2"
+    },
+    "optionalDependencies": {
+        "@doki-land/nifty-darwin-arm64": "file:../nifty-darwin-arm64",
+        "@doki-land/nifty-darwin-x64": "file:../nifty-darwin-x64",
+        "@doki-land/nifty-linux-arm64": "file:../nifty-linux-arm64",
+        "@doki-land/nifty-linux-x64": "file:../nifty-linux-x64",
+        "@doki-land/nifty-win32-x64": "file:../nifty-win32-x64"
     },
     "devDependencies": {
-        "@bytecodealliance/jco": "^2.6.0",
+        "@types/node": "^22.13.10",
         "typescript": "^5.8.3"
     }
 }

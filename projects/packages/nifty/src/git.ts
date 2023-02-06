@@ -1,5 +1,5 @@
 import type { CommitRecord, RangeInfo, TagInfo } from "./types.js";
-import { loadNiftyWasm, mapCommitRecord, mapRangeInfo, mapTagInfo } from "./wasm.js";
+import { loadNiftyNative, mapCommitRecord, mapRangeInfo, mapTagInfo, type GitExports } from "./native.js";
 
 export type ResolveRangeOptions = {
     version?: string;
@@ -8,14 +8,14 @@ export type ResolveRangeOptions = {
 };
 
 /**
- * Read-only git repository helpers (gix inside WASI, no `git` subprocess).
+ * Read-only git repository helpers (gix via Node-API, no `git` subprocess).
  */
 export class Git {
-    constructor(private readonly wasm: Awaited<ReturnType<typeof loadNiftyWasm>>["git"]) {}
+    constructor(private readonly wasm: GitExports) {}
 
-    static async open(): Promise<Git> {
-        const wasm = await loadNiftyWasm();
-        return new Git(wasm.git);
+    static open(): Git {
+        const native = loadNiftyNative();
+        return new Git(native.git);
     }
 
     /** Walk upward from `startPath` to find the working tree root containing `.git`. */
@@ -56,6 +56,6 @@ export class Git {
     }
 }
 
-export async function createGit(): Promise<Git> {
+export function createGit(): Git {
     return Git.open();
 }
