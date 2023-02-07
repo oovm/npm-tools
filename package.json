@@ -7,6 +7,7 @@
         "fmt": "cargo fmt --all",
         "p": "git push && git push --tags --prune",
         "reset": "git reset Head~ --soft",
-        "u": "nifty update"
+        "u": "nifty update",
+        "bump": "nifty bump"
     }
 }

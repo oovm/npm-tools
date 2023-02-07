@@ -1,3 +1,4 @@
+import { runBump } from "./bump.js";
 import { runLint } from "./lint.js";
 import { runUpdate } from "./update.js";
 import { runUpload } from "./upload.js";
@@ -24,6 +25,9 @@ export async function runCli(argv: string[]): Promise<number> {
             case "upload":
                 await runUpload(rest);
                 return 0;
+            case "bump":
+                await runBump(rest);
+                return 0;
             default:
                 console.error(`unknown command: ${command}`);
                 printHelp();
@@ -43,5 +47,6 @@ Usage:
   nifty lint [--from ref] [--to ref] [-s subject] [-C cwd]
   nifty check [--from ref] [--to ref] [-s subject] [-C cwd]
   nifty upload (--release | --pages | --both) [options]
+  nifty bump [version] [--dry-run] [-C cwd]
 `);
 }
