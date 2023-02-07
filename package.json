@@ -2,10 +2,11 @@
     "private": true,
     "scripts": {
         "build": "cargo build --release",
+        "build:napi": "npm install --prefix projects/crates/nifty-napi && node scripts/build-napi.mjs",
         "test": "cargo test --release",
         "fmt": "cargo fmt --all",
         "p": "git push && git push --tags --prune",
         "reset": "git reset Head~ --soft",
-        "u": "nifty update",
+        "u": "nifty update"
     }
 }

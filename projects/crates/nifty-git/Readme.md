@@ -16,4 +16,4 @@ let commits = collect_commits(&root, range.from_ref.as_deref(), &range.to_ref)?;
 
 ## WASI
 
-Consumed by `nifty-wasi` and exposed to TypeScript via `@doki-land/nifty` (`Git` class).
+Consumed by `nifty-napi` and exposed to TypeScript via `@doki-land/nifty` (`Git` class).
