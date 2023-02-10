@@ -8,6 +8,7 @@
         "p": "git push && git push --tags --prune",
         "reset": "git reset Head~ --soft",
         "u": "nifty update",
-        "bump": "nifty bump"
+        "bump": "nifty bump",
+        "publish": "nifty publish"
     }
 }
