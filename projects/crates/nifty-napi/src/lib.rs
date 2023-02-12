@@ -10,6 +10,7 @@ use nifty_git::{
     CommitRecord as CoreCommit, RangeInfo as CoreRange, TagInfo as CoreTag, collect_commits, detect_github_repo,
     discover_root, format_tag_list, list_tag_infos, list_version_tags, parse_github_remote_repo, resolve_range,
 };
+use nifty_publisher::PublishOptions as CorePublishOptions;
 use nifty_types::{
     GithubAuthor as CoreAuthor, avatar_url, display_login, github_from_noreply_email, known_gitmojis,
     leading_gitmoji, load_author_map_from_json, parse_subject, profile_url, resolve_github_author,
@@ -251,6 +252,40 @@ pub fn github_user_by_login(login: String, token: Option<String>) -> Result<Gith
 #[napi]
 pub fn github_search_user_by_email(email: String, token: String) -> Result<Option<GithubAuthor>> {
     map_err(nifty_github::search_user_by_email(&email, &token).map(|author| author.map(to_napi_author)))
+}
+
+#[napi(object)]
+pub struct PublishReport {
+    pub root: String,
+    pub order: Vec<String>,
+    pub published: Vec<String>,
+    pub skipped: Vec<String>,
+}
+
+#[napi(object)]
+pub struct PublishWorkspaceOptions {
+    pub cwd: Option<String>,
+    pub dry_run: Option<bool>,
+    pub tag: Option<String>,
+    pub access: Option<String>,
+}
+
+#[napi]
+pub fn publisher_publish_workspace(options: PublishWorkspaceOptions) -> Result<PublishReport> {
+    map_err(
+        nifty_publisher::publish_workspace(CorePublishOptions {
+            cwd: options.cwd.map(std::path::PathBuf::from),
+            dry_run: options.dry_run.unwrap_or(false),
+            tag: options.tag,
+            access: options.access,
+        })
+        .map(|report| PublishReport {
+            root: report.root.display().to_string(),
+            order: report.order,
+            published: report.published,
+            skipped: report.skipped,
+        }),
+    )
 }
 
 #[napi]

@@ -53,9 +53,26 @@ export type GitExports = {
     "parse-github-remote": (url: string) => string | undefined;
 };
 
+export type PublishReport = {
+    root: string;
+    order: string[];
+    published: string[];
+    skipped: string[];
+};
+
+export type PublisherExports = {
+    "publish-workspace": (options: {
+        cwd?: string;
+        dryRun?: boolean;
+        tag?: string;
+        access?: string;
+    }) => PublishReport;
+};
+
 export type NiftyNative = {
     gitmoji: GitmojiExports;
     git: GitExports;
+    publisher: PublisherExports;
 };
 
 type NativeBinding = {
@@ -90,6 +107,12 @@ type NativeBinding = {
     ) => CommitRecord[];
     gitDetectGithubRepo: (repoRoot: string) => string | null;
     gitParseGithubRemote: (url: string) => string | null;
+    publisherPublishWorkspace: (options: {
+        cwd?: string | null;
+        dryRun?: boolean | null;
+        tag?: string | null;
+        access?: string | null;
+    }) => PublishReport;
 };
 
 const PLATFORM_PACKAGES: Record<string, string> = {
@@ -151,6 +174,15 @@ function wrapBinding(binding: NativeBinding): NiftyNative {
             "collect-commits": (repoRoot, fromRef, toRef) => binding.gitCollectCommits(repoRoot, fromRef, toRef),
             "detect-github-repo": (repoRoot) => binding.gitDetectGithubRepo(repoRoot) ?? undefined,
             "parse-github-remote": (url) => binding.gitParseGithubRemote(url) ?? undefined,
+        },
+        publisher: {
+            "publish-workspace": (options) =>
+                binding.publisherPublishWorkspace({
+                    ...(options.cwd !== undefined ? { cwd: options.cwd } : {}),
+                    ...(options.dryRun !== undefined ? { dryRun: options.dryRun } : {}),
+                    ...(options.tag !== undefined ? { tag: options.tag } : {}),
+                    ...(options.access !== undefined ? { access: options.access } : {}),
+                }),
         },
     };
 }

@@ -16,6 +16,7 @@ nifty-types = { path = "../nifty-types" }
 nifty-formatter = { path = "../nifty-formatter" }
 nifty-git = { path = "../nifty-git" }
 nifty-github = { path = "../nifty-github" }
+nifty-publisher = { path = "../nifty-publisher" }
 serde_json = "1"
 
 [build-dependencies]
