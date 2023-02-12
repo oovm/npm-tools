@@ -3,20 +3,26 @@ import { join } from "node:path";
 
 import { findWorkspaceRoot } from "./workspace.js";
 
+export type BumpKind = "patch" | "minor" | "major";
+
 export type BumpOptions = {
-    version: string;
+    /** Explicit target version. When set, overrides `kind`. */
+    version?: string;
+    kind?: BumpKind;
     cwd?: string;
     dryRun?: boolean;
 };
 
 export type BumpReport = {
     root: string;
-    version: string;
+    from: string;
+    to: string;
+    kind?: BumpKind;
     cargo: string[];
     npm: string[];
 };
 
-const DEFAULT_VERSION = "0.0.0";
+const DEFAULT_KIND: BumpKind = "patch";
 
 export async function runBump(argv: string[]): Promise<void> {
     const options = parseBumpArgs(argv);
@@ -25,7 +31,8 @@ export async function runBump(argv: string[]): Promise<void> {
 }
 
 function parseBumpArgs(argv: string[]): BumpOptions {
-    let version = DEFAULT_VERSION;
+    let version: string | undefined;
+    let kind: BumpKind = DEFAULT_KIND;
     let cwd: string | undefined;
     let dryRun = false;
 
@@ -37,16 +44,32 @@ function parseBumpArgs(argv: string[]): BumpOptions {
             cwd = argv[++i];
         } else if (arg === "--version" || arg === "-v") {
             version = argv[++i];
+        } else if (arg === "--patch") {
+            kind = "patch";
+        } else if (arg === "--minor") {
+            kind = "minor";
+        } else if (arg === "--major") {
+            kind = "major";
         } else if (arg === "-h" || arg === "--help") {
             printBumpHelp();
             process.exit(0);
         } else if (!arg.startsWith("-")) {
-            version = arg;
+            if (isBumpKind(arg)) {
+                kind = arg;
+            } else {
+                version = arg;
+            }
         }
     }
 
-    assertVersion(version);
-    return { version, cwd, dryRun };
+    if (version) {
+        assertVersion(version);
+    }
+    return { version, kind, cwd, dryRun };
+}
+
+function isBumpKind(value: string): value is BumpKind {
+    return value === "patch" || value === "minor" || value === "major";
 }
 
 function assertVersion(version: string): void {
@@ -60,10 +83,84 @@ export function bumpWorkspace(options: BumpOptions): BumpReport {
     const cratesDir = join(root, "projects", "crates");
     const packagesDir = join(root, "projects", "packages");
 
-    const cargo = collectCargoManifests(cratesDir).map((path) => bumpCargoManifest(path, options.version, options.dryRun));
-    const npm = collectPackageManifests(packagesDir).map((path) => bumpPackageManifest(path, options.version, options.dryRun));
+    const cargoPaths = collectCargoManifests(cratesDir);
+    const npmPaths = collectPackageManifests(packagesDir);
+    const from = readWorkspaceVersion(cargoPaths, npmPaths);
+    const to = options.version ?? bumpSemver(from, options.kind ?? DEFAULT_KIND);
+    assertVersion(to);
 
-    return { root, version: options.version, cargo, npm };
+    const cargo = cargoPaths.map((path) => bumpCargoManifest(path, to, options.dryRun));
+    const npm = npmPaths.map((path) => bumpPackageManifest(path, to, options.dryRun));
+
+    return {
+        root,
+        from,
+        to,
+        kind: options.version ? undefined : options.kind ?? DEFAULT_KIND,
+        cargo,
+        npm,
+    };
+}
+
+function readWorkspaceVersion(cargoPaths: string[], npmPaths: string[]): string {
+    const versions = new Set<string>();
+    for (const path of cargoPaths) {
+        versions.add(readCargoVersion(path));
+    }
+    for (const path of npmPaths) {
+        versions.add(readPackageVersion(path));
+    }
+    if (versions.size === 0) {
+        throw new Error("no crate or package versions found in workspace");
+    }
+    if (versions.size > 1) {
+        throw new Error(`workspace versions are out of sync: ${[...versions].sort().join(", ")}`);
+    }
+    return [...versions][0];
+}
+
+function readCargoVersion(path: string): string {
+    const original = readFileSync(path, "utf8");
+    const match = original.match(/^version\s*=\s*"([^"]*)"/m);
+    if (!match) {
+        throw new Error(`no [package].version found in ${path}`);
+    }
+    return match[1];
+}
+
+function readPackageVersion(path: string): string {
+    const parsed = JSON.parse(readFileSync(path, "utf8")) as { version?: string };
+    if (!parsed.version) {
+        throw new Error(`no version field in ${path}`);
+    }
+    return parsed.version;
+}
+
+export function bumpSemver(version: string, kind: BumpKind): string {
+    const match = version.match(/^(\d+)\.(\d+)\.(\d+)(?:-.*)?$/);
+    if (!match) {
+        throw new Error(`cannot bump non-semver version ${version}`);
+    }
+    let major = Number(match[1]);
+    let minor = Number(match[2]);
+    let patch = Number(match[3]);
+
+    switch (kind) {
+        case "patch":
+            patch += 1;
+            break;
+        case "minor":
+            minor += 1;
+            patch = 0;
+            break;
+        case "major":
+            major += 1;
+            minor = 0;
+            patch = 0;
+            break;
+    }
+
+    return `${major}.${minor}.${patch}`;
 }
 
 function collectCargoManifests(cratesDir: string): string[] {
@@ -114,7 +211,8 @@ function bumpPackageManifest(path: string, version: string, dryRun?: boolean): s
 
 function printReport(report: BumpReport, dryRun?: boolean): void {
     const prefix = dryRun ? "would bump" : "bumped";
-    console.log(`${prefix} workspace ${report.root} to ${report.version}`);
+    const kind = report.kind ? ` (${report.kind})` : "";
+    console.log(`${prefix} workspace ${report.root} ${report.from} -> ${report.to}${kind}`);
     for (const path of report.cargo) {
         console.log(`  cargo: ${path}`);
     }
@@ -124,11 +222,14 @@ function printReport(report: BumpReport, dryRun?: boolean): void {
 }
 
 function printBumpHelp(): void {
-    console.log(`nifty bump [version] — set all crate and package versions in the workspace
+    console.log(`nifty bump — align all crate and package versions in the workspace
 
 Usage:
-  nifty bump                 # default 0.0.0
-  nifty bump 0.0.0
+  nifty bump                 # bump patch (default)
+  nifty bump patch
+  nifty bump minor
+  nifty bump major
+  nifty bump 1.2.3           # set explicit version
   nifty bump --version 1.2.3
   nifty bump --dry-run
   nifty bump -C <cwd>

@@ -1,5 +1,5 @@
 export { runCli } from "./main.js";
-export { bumpWorkspace, runBump, type BumpOptions, type BumpReport } from "./bump.js";
+export { bumpSemver, bumpWorkspace, runBump, type BumpKind, type BumpOptions, type BumpReport } from "./bump.js";
 export { runPublish, type PublishOptions, type PublishReport } from "./publish.js";
 export { runUpdate } from "./update.js";
 export { runLint } from "./lint.js";

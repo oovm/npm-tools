@@ -51,7 +51,7 @@ Usage:
   nifty lint [--from ref] [--to ref] [-s subject] [-C cwd]
   nifty check [--from ref] [--to ref] [-s subject] [-C cwd]
   nifty upload (--release | --pages | --both) [options]
-  nifty bump [version] [--dry-run] [-C cwd]
+  nifty bump [patch|minor|major|version] [--dry-run] [-C cwd]
   nifty publish [--dry-run] [--tag <tag>] [--access public] [-C cwd]
 `);
 }
