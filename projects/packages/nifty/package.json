@@ -5,14 +5,14 @@
     "type": "module",
     "license": "MPL-2.0",
     "bin": {
-        "nifty": "./bin/nifty.mjs"
+        "nifty": "cli/nifty.mjs"
     },
     "exports": {
         ".": "./src/index.ts",
         "./cli": "./src/cli/index.ts"
     },
     "files": [
-        "bin/nifty.mjs",
+        "cli/nifty.mjs",
         "src"
     ],
     "scripts": {
