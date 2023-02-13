@@ -1,4 +1,5 @@
 import { runBump } from "./bump.js";
+import { bootstrapNiftyConfig } from "./context.js";
 import { runLint } from "./lint.js";
 import { runPublish } from "./publish.js";
 import { runUpdate } from "./update.js";
@@ -13,6 +14,7 @@ export async function runCli(argv: string[]): Promise<number> {
     }
 
     try {
+        await bootstrapNiftyConfig(rest);
         switch (command) {
             case "update":
                 await runUpdate(rest);

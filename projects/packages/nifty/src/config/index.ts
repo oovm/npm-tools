@@ -7,7 +7,15 @@ export {
     type ProjectKind,
     type ProjectLayout,
 } from "./detectProject.js";
-export { authorMapToJson, findConfigFile, loadConfig, type LoadConfigOptions, type LoadedNiftyConfig } from "./loadConfig.js";
+export {
+    authorMapToJson,
+    defaultConfigPath,
+    ensureConfigFile,
+    findConfigFile,
+    loadConfig,
+    type LoadConfigOptions,
+    type LoadedNiftyConfig,
+} from "./loadConfig.js";
 export {
     CONFIG_FILE_NAMES,
     type NiftyAuthorEntry,
