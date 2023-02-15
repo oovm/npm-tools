@@ -1,0 +1,81 @@
+lockfileVersion: '9.0'
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
+importers:
+
+  .:
+    devDependencies:
+      '@doki-land/nifty':
+        specifier: workspace:*
+        version: link:projects/packages/nifty
+
+  projects/packages/nifty:
+    dependencies:
+      jiti:
+        specifier: ^2.4.2
+        version: 2.7.0
+    devDependencies:
+      '@types/node':
+        specifier: ^22.13.10
+        version: 22.20.4
+      typescript:
+        specifier: ^5.8.3
+        version: 5.9.3
+    optionalDependencies:
+      '@doki-land/nifty-darwin-arm64':
+        specifier: workspace:*
+        version: link:../nifty-darwin-arm64
+      '@doki-land/nifty-darwin-x64':
+        specifier: workspace:*
+        version: link:../nifty-darwin-x64
+      '@doki-land/nifty-linux-arm64':
+        specifier: workspace:*
+        version: link:../nifty-linux-arm64
+      '@doki-land/nifty-linux-x64':
+        specifier: workspace:*
+        version: link:../nifty-linux-x64
+      '@doki-land/nifty-win32-x64':
+        specifier: workspace:*
+        version: link:../nifty-win32-x64
+
+  projects/packages/nifty-darwin-arm64: {}
+
+  projects/packages/nifty-darwin-x64: {}
+
+  projects/packages/nifty-linux-arm64: {}
+
+  projects/packages/nifty-linux-x64: {}
+
+  projects/packages/nifty-win32-x64: {}
+
+packages:
+
+  '@types/node@22.20.4':
+    resolution: {integrity: sha512-zJRE40jpHtKqE/C4fgHrAKQLJuSpzEnP9ff9Y7YtoR3Wd2pwqzlekDeEuUQXjRd+QCYnVnNwuJYmhdk9XV8gvA==}
+
+  jiti@2.7.0:
+    resolution: {integrity: sha512-AC/7JofJvZGrrneWNaEnJeOLUx+JlGt7tNa0wZiRPT4MY1wmfKjt2+6O2p2uz2+skll8OZZmJMNqeke7kKbNgQ==}
+    hasBin: true
+
+  typescript@5.9.3:
+    resolution: {integrity: sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw==}
+    engines: {node: '>=14.17'}
+    hasBin: true
+
+  undici-types@6.21.0:
+    resolution: {integrity: sha512-iwDZqg0QAGrg9Rav5H4n0M64c3mkR59cJ6wQp+7C4nI0gsmExaedaYLNO44eT4AtBBwjbTiGPMlt2Md0T9H9JQ==}
+
+snapshots:
+
+  '@types/node@22.20.4':
+    dependencies:
+      undici-types: 6.21.0
+
+  jiti@2.7.0: {}
+
+  typescript@5.9.3: {}
+
+  undici-types@6.21.0: {}

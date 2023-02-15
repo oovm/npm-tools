@@ -22,11 +22,11 @@
         "jiti": "^2.4.2"
     },
     "optionalDependencies": {
-        "@doki-land/nifty-darwin-arm64": "file:../nifty-darwin-arm64",
-        "@doki-land/nifty-darwin-x64": "file:../nifty-darwin-x64",
-        "@doki-land/nifty-linux-arm64": "file:../nifty-linux-arm64",
-        "@doki-land/nifty-linux-x64": "file:../nifty-linux-x64",
-        "@doki-land/nifty-win32-x64": "file:../nifty-win32-x64"
+        "@doki-land/nifty-darwin-arm64": "workspace:*",
+        "@doki-land/nifty-darwin-x64": "workspace:*",
+        "@doki-land/nifty-linux-arm64": "workspace:*",
+        "@doki-land/nifty-linux-x64": "workspace:*",
+        "@doki-land/nifty-win32-x64": "workspace:*"
     },
     "devDependencies": {
         "@types/node": "^22.13.10",
