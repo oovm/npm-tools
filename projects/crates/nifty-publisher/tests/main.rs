@@ -1,7 +1,7 @@
 use std::fs;
 use std::process::Command;
 
-use nifty_publisher::{PublishOptions, plan_publish_order, publish_workspace};
+use nifty_publisher::{OtpOverrides, PublishOptions, plan_publish_order, publish_workspace};
 use tempfile::tempdir;
 
 fn write_package(root: &std::path::Path, dir_name: &str, name: &str, private: bool, deps_json: &str) {
@@ -77,6 +77,8 @@ fn publish_workspace_dry_run_restores_manifest() {
         dry_run: true,
         tag: None,
         access: Some("public".to_string()),
+        npm: None,
+        otp: OtpOverrides::default(),
     })
     .expect("publish");
 
