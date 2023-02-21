@@ -10,7 +10,7 @@ use nifty_git::{
     CommitRecord as CoreCommit, RangeInfo as CoreRange, TagInfo as CoreTag, collect_commits, detect_github_repo,
     discover_root, format_tag_list, list_tag_infos, list_version_tags, parse_github_remote_repo, resolve_range,
 };
-use nifty_publisher::PublishOptions as CorePublishOptions;
+use nifty_publisher::{OtpOverrides as CoreOtpOverrides, PublishOptions as CorePublishOptions, TrustOptions as CoreTrustOptions};
 use nifty_types::{
     GithubAuthor as CoreAuthor, avatar_url, display_login, github_from_noreply_email, known_gitmojis,
     leading_gitmoji, load_author_map_from_json, parse_subject, profile_url, resolve_github_author,
@@ -268,16 +268,42 @@ pub struct PublishWorkspaceOptions {
     pub dry_run: Option<bool>,
     pub tag: Option<String>,
     pub access: Option<String>,
+    pub npm: Option<String>,
+    pub otp: Option<String>,
+    pub totp_secret: Option<String>,
+    pub token: Option<String>,
+}
+
+#[napi(object)]
+pub struct TrustWorkspaceOptions {
+    pub cwd: Option<String>,
+    pub dry_run: Option<bool>,
+    pub only: Option<String>,
+    pub npm: Option<String>,
+    pub otp: Option<String>,
+    pub totp_secret: Option<String>,
+    pub token: Option<String>,
+}
+
+#[napi(object)]
+pub struct TrustReport {
+    pub root: String,
+    pub configured: Vec<String>,
+    pub skipped: Vec<String>,
+    pub failed: Vec<String>,
 }
 
 #[napi]
 pub fn publisher_publish_workspace(options: PublishWorkspaceOptions) -> Result<PublishReport> {
+    let otp = map_otp_options(&options);
     map_err(
         nifty_publisher::publish_workspace(CorePublishOptions {
             cwd: options.cwd.map(std::path::PathBuf::from),
             dry_run: options.dry_run.unwrap_or(false),
             tag: options.tag,
             access: options.access,
+            npm: options.npm.map(std::path::PathBuf::from),
+            otp,
         })
         .map(|report| PublishReport {
             root: report.root.display().to_string(),
@@ -286,6 +312,42 @@ pub fn publisher_publish_workspace(options: PublishWorkspaceOptions) -> Result<P
             skipped: report.skipped,
         }),
     )
+}
+
+#[napi]
+pub fn publisher_trust_workspace(options: TrustWorkspaceOptions) -> Result<TrustReport> {
+    let otp = map_trust_otp_options(&options);
+    map_err(
+        nifty_publisher::trust_workspace(CoreTrustOptions {
+            cwd: options.cwd.map(std::path::PathBuf::from),
+            dry_run: options.dry_run.unwrap_or(false),
+            only: options.only,
+            npm: options.npm.map(std::path::PathBuf::from),
+            otp,
+        })
+        .map(|report| TrustReport {
+            root: report.root.display().to_string(),
+            configured: report.configured,
+            skipped: report.skipped,
+            failed: report.failed,
+        }),
+    )
+}
+
+fn map_otp_options(options: &PublishWorkspaceOptions) -> CoreOtpOverrides {
+    CoreOtpOverrides {
+        totp_secret: options.totp_secret.clone(),
+        static_otp: options.otp.clone(),
+        token: options.token.clone(),
+    }
+}
+
+fn map_trust_otp_options(options: &TrustWorkspaceOptions) -> CoreOtpOverrides {
+    CoreOtpOverrides {
+        totp_secret: options.totp_secret.clone(),
+        static_otp: options.otp.clone(),
+        token: options.token.clone(),
+    }
 }
 
 #[napi]
