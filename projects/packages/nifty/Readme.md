@@ -10,14 +10,21 @@
 | `cli/nifty.mjs` | npm `bin` shim（jiti 加载 `src/cli`） |
 | `src/` | TypeScript API |
 
-Rust 侧无 `bin` / `cli`。安装后：
+Rust 侧无 `bin` / `cli`。
+
+**本仓开发**（pnpm workspace，`projects/packages/*`）：
+
+```bash
+pnpm install          # 链接 @doki-land/nifty → node_modules/.bin/nifty
+pnpm run build:napi   # 构建 native addon
+pnpm exec nifty bump
+pnpm exec nifty publish --dry-run
+```
+
+**发布后消费**：
 
 ```bash
 npm install @doki-land/nifty
-npm run build:napi   # 开发本仓时构建 native addon
-nifty bump              # 全仓 patch +1（默认）
-nifty publish --dry-run # 按依赖拓扑顺序发布 npm 包
-nifty update
-nifty lint
-nifty upload --release
+nifty bump
+nifty publish --dry-run
 ```

@@ -60,13 +60,33 @@ export type PublishReport = {
     skipped: string[];
 };
 
+export type TrustReport = {
+    root: string;
+    configured: string[];
+    skipped: string[];
+    failed: string[];
+};
+
 export type PublisherExports = {
     "publish-workspace": (options: {
         cwd?: string;
         dryRun?: boolean;
         tag?: string;
         access?: string;
+        npm?: string;
+        otp?: string;
+        totpSecret?: string;
+        token?: string;
     }) => PublishReport;
+    "trust-workspace": (options: {
+        cwd?: string;
+        dryRun?: boolean;
+        only?: string;
+        npm?: string;
+        otp?: string;
+        totpSecret?: string;
+        token?: string;
+    }) => TrustReport;
 };
 
 export type NiftyNative = {
@@ -112,7 +132,20 @@ type NativeBinding = {
         dryRun?: boolean | null;
         tag?: string | null;
         access?: string | null;
+        npm?: string | null;
+        otp?: string | null;
+        totpSecret?: string | null;
+        token?: string | null;
     }) => PublishReport;
+    publisherTrustWorkspace: (options: {
+        cwd?: string | null;
+        dryRun?: boolean | null;
+        only?: string | null;
+        npm?: string | null;
+        otp?: string | null;
+        totpSecret?: string | null;
+        token?: string | null;
+    }) => TrustReport;
 };
 
 const PLATFORM_PACKAGES: Record<string, string> = {
@@ -182,6 +215,20 @@ function wrapBinding(binding: NativeBinding): NiftyNative {
                     ...(options.dryRun !== undefined ? { dryRun: options.dryRun } : {}),
                     ...(options.tag !== undefined ? { tag: options.tag } : {}),
                     ...(options.access !== undefined ? { access: options.access } : {}),
+                    ...(options.npm !== undefined ? { npm: options.npm } : {}),
+                    ...(options.otp !== undefined ? { otp: options.otp } : {}),
+                    ...(options.totpSecret !== undefined ? { totpSecret: options.totpSecret } : {}),
+                    ...(options.token !== undefined ? { token: options.token } : {}),
+                }),
+            "trust-workspace": (options) =>
+                binding.publisherTrustWorkspace({
+                    ...(options.cwd !== undefined ? { cwd: options.cwd } : {}),
+                    ...(options.dryRun !== undefined ? { dryRun: options.dryRun } : {}),
+                    ...(options.only !== undefined ? { only: options.only } : {}),
+                    ...(options.npm !== undefined ? { npm: options.npm } : {}),
+                    ...(options.otp !== undefined ? { otp: options.otp } : {}),
+                    ...(options.totpSecret !== undefined ? { totpSecret: options.totpSecret } : {}),
+                    ...(options.token !== undefined ? { token: options.token } : {}),
                 }),
         },
     };

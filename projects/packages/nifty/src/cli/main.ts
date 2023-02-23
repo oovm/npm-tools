@@ -2,6 +2,7 @@ import { runBump } from "./bump.js";
 import { bootstrapNiftyConfig } from "./context.js";
 import { runLint } from "./lint.js";
 import { runPublish } from "./publish.js";
+import { runTrust } from "./trust.js";
 import { runUpdate } from "./update.js";
 import { runUpload } from "./upload.js";
 
@@ -34,6 +35,9 @@ export async function runCli(argv: string[]): Promise<number> {
             case "publish":
                 await runPublish(rest);
                 return 0;
+            case "trust":
+                await runTrust(rest);
+                return 0;
             default:
                 console.error(`unknown command: ${command}`);
                 printHelp();
@@ -55,5 +59,6 @@ Usage:
   nifty upload (--release | --pages | --both) [options]
   nifty bump [patch|minor|major|version] [--dry-run] [-C cwd]
   nifty publish [--dry-run] [--tag <tag>] [--access public] [-C cwd]
+  nifty trust [--only <pkg>] [--dry-run] [-C cwd]
 `);
 }
