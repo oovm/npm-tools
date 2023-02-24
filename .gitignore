@@ -9,6 +9,9 @@ time-travel.*
 .idea/
 *.iml
 
+# Node
+node_modules/
+
 # Rust
 target/
 Cargo.lock
@@ -22,3 +25,7 @@ projects/packages/*/node_modules/
 projects/packages/*/package-lock.json
 projects/crates/nifty-napi/node_modules/
 projects/crates/nifty-napi/package-lock.json
+
+# npm publish / trust local secrets
+.env.placeholder.local
+scripts/.placeholder-npm-cache.json

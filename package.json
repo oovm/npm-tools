@@ -7,8 +7,12 @@
         "fmt": "cargo fmt --all",
         "p": "git push && git push --tags --prune",
         "reset": "git reset Head~ --soft",
-        "u": "node projects/packages/nifty/cli/nifty.mjs update",
-        "bump": "node projects/packages/nifty/cli/nifty.mjs bump",
-        "publish": "node projects/packages/nifty/cli/nifty.mjs publish"
+        "u": "nifty update",
+        "bump": "nifty bump",
+        "publish": "nifty publish",
+        "trust": "nifty trust"
+    },
+    "devDependencies": {
+        "@doki-land/nifty": "workspace:*"
     }
 }
