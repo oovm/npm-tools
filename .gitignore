@@ -28,4 +28,5 @@ projects/crates/nifty-napi/package-lock.json
 
 # npm publish / trust local secrets
 .env.placeholder.local
-scripts/.placeholder-npm-cache.json
+.cache/*
+!.cache/npm-placeholder.json.example

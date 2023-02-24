@@ -1,5 +1,6 @@
 use serde_json::Value;
 
+use crate::cache::PlaceholderCache;
 use crate::npm::NpmRunner;
 use crate::otp::{OtpAuth, OtpOverrides};
 use crate::workspace::{find_workspace_root, list_workspace_packages};
@@ -13,6 +14,7 @@ pub const TRUST_ENV: &str = "NPM_PUBLISH";
 pub struct TrustOptions {
     pub cwd: Option<std::path::PathBuf>,
     pub dry_run: bool,
+    pub refresh: bool,
     pub only: Option<String>,
     pub npm: Option<std::path::PathBuf>,
     pub otp: OtpOverrides,
@@ -33,13 +35,8 @@ pub fn trust_workspace(options: TrustOptions) -> Result<TrustReport> {
         .unwrap_or_else(|| std::env::current_dir().expect("current dir"));
     let root = find_workspace_root(&cwd)?;
     let auth = OtpAuth::load(&root, options.otp);
-    if !auth.has_otp() {
-        return Err(
-            "npm trust requires 2FA: set NPM_TOTP_SECRET in .env.placeholder.local or pass --otp / --totp-secret"
-                .into(),
-        );
-    }
-
+    let mut cache = PlaceholderCache::load(&root);
+    let has_otp = auth.has_otp();
     let runner = NpmRunner::new(options.npm.as_deref(), auth);
     let packages = list_workspace_packages(&root)?;
     let names = packages
@@ -56,14 +53,14 @@ pub fn trust_workspace(options: TrustOptions) -> Result<TrustReport> {
     }
 
     let mut report = TrustReport {
-        root,
+        root: root.clone(),
         configured: Vec::new(),
         skipped: Vec::new(),
         failed: Vec::new(),
     };
 
     for name in names {
-        match configure_trust(&runner, &name, options.dry_run) {
+        match configure_trust(&runner, &mut cache, &name, options.dry_run, options.refresh, has_otp) {
             Ok(TrustOutcome::Configured) => report.configured.push(name),
             Ok(TrustOutcome::Skipped) => report.skipped.push(name),
             Err(message) => {
@@ -72,6 +69,8 @@ pub fn trust_workspace(options: TrustOptions) -> Result<TrustReport> {
             }
         }
     }
+
+    cache.save(&root)?;
 
     if !report.failed.is_empty() {
         return Err(format!("trust failed for {} package(s)", report.failed.len()));
@@ -84,7 +83,26 @@ enum TrustOutcome {
     Skipped,
 }
 
-fn configure_trust(runner: &NpmRunner, package: &str, dry_run: bool) -> Result<TrustOutcome> {
+fn configure_trust(
+    runner: &NpmRunner,
+    cache: &mut PlaceholderCache,
+    package: &str,
+    dry_run: bool,
+    refresh: bool,
+    has_otp: bool,
+) -> Result<TrustOutcome> {
+    if cache.trust_matches_cached(package, refresh) {
+        println!("trusted publisher already configured for {package} (cache)");
+        return Ok(TrustOutcome::Skipped);
+    }
+
+    if !has_otp {
+        return Err(
+            "npm trust requires 2FA for live trust list: set NPM_TOTP_SECRET in .env.placeholder.local or pass --otp / --totp-secret"
+                .into(),
+        );
+    }
+
     let list = runner.run(&["trust", "list", package, "--json"], None)?;
     if list.status != 0 {
         let blob = format!("{}\n{}", list.stdout, list.stderr);
@@ -95,7 +113,8 @@ fn configure_trust(runner: &NpmRunner, package: &str, dry_run: bool) -> Result<T
     }
 
     let configs = parse_trust_list(&list.stdout)?;
-    let classification = classify_configs(&configs);
+    cache.record_trust_list(package, configs.clone());
+    let classification = crate::cache::classify_configs(&configs);
     if classification.matches {
         return Ok(TrustOutcome::Skipped);
     }
@@ -141,60 +160,3 @@ fn parse_trust_list(stdout: &str) -> Result<Vec<Value>> {
     Ok(Vec::new())
 }
 
-struct TrustClassification {
-    matches: bool,
-}
-
-fn classify_configs(configs: &[Value]) -> TrustClassification {
-    if configs.iter().any(trust_exact) {
-        return TrustClassification { matches: true };
-    }
-    if configs.iter().any(trust_matches) {
-        return TrustClassification { matches: true };
-    }
-    TrustClassification { matches: false }
-}
-
-fn trust_exact(config: &Value) -> bool {
-    trust_matches(config) && trust_fields(config).env == TRUST_ENV
-}
-
-fn trust_matches(config: &Value) -> bool {
-    if let Some(raw) = config.get("raw").and_then(|value| value.as_str()) {
-        return raw.contains(TRUST_REPO) && raw.contains(TRUST_FILE) && raw.contains(TRUST_ENV);
-    }
-    let fields = trust_fields(config);
-    fields.repo == TRUST_REPO && fields.file == TRUST_FILE
-}
-
-struct TrustFields {
-    repo: String,
-    file: String,
-    env: String,
-}
-
-fn trust_fields(config: &Value) -> TrustFields {
-    let claims = config.get("claims").unwrap_or(config);
-    TrustFields {
-        repo: pick_string(config, claims, &["repository", "repo"]),
-        file: pick_string(config, claims, &["file", "workflow", "workflowFile"]),
-        env: pick_string(config, claims, &["environment", "env"]),
-    }
-}
-
-fn pick_string(config: &Value, claims: &Value, keys: &[&str]) -> String {
-    for &key in keys {
-        if let Some(value) = config.get(key).and_then(|value| value.as_str()) {
-            return value.to_string();
-        }
-        if let Some(value) = claims.get(key).and_then(|value| value.as_str()) {
-            return value.to_string();
-        }
-        if let Some(workflow) = claims.get("workflow_ref").and_then(Value::as_object) {
-            if let Some(value) = workflow.get(key).and_then(|value| value.as_str()) {
-                return value.to_string();
-            }
-        }
-    }
-    String::new()
-}

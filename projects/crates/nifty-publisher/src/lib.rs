@@ -1,5 +1,6 @@
 //! Publish npm workspace packages in dependency order.
 
+mod cache;
 mod graph;
 mod manifest;
 mod npm;
@@ -11,6 +12,7 @@ use std::collections::BTreeMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 
+pub use cache::{PlaceholderCache, CACHE_DIR_NAME, CACHE_FILE_NAME};
 pub use graph::plan_publish_order;
 pub use otp::{OtpAuth, OtpOverrides};
 pub use trust::{TrustOptions, TrustReport, TRUST_ENV, TRUST_FILE, TRUST_REPO};
@@ -23,6 +25,7 @@ pub type Result<T> = std::result::Result<T, String>;
 pub struct PublishOptions {
     pub cwd: Option<PathBuf>,
     pub dry_run: bool,
+    pub refresh: bool,
     pub tag: Option<String>,
     pub access: Option<String>,
     pub npm: Option<PathBuf>,
@@ -36,6 +39,7 @@ pub struct PublishReport {
     pub order: Vec<String>,
     pub published: Vec<String>,
     pub skipped: Vec<String>,
+    pub skipped_versions: Vec<String>,
 }
 
 /// Discover workspace npm packages, sort them with `petgraph`, and run `npm publish`.
@@ -46,6 +50,8 @@ pub fn publish_workspace(options: PublishOptions) -> Result<PublishReport> {
         .unwrap_or_else(|| std::env::current_dir().expect("current dir"));
     let root = find_workspace_root(&cwd)?;
     let auth = OtpAuth::load(&root, options.otp);
+    let mut cache = cache::PlaceholderCache::load(&root);
+    let runner = npm::NpmRunner::new(options.npm.as_deref(), auth.clone());
     let packages = list_workspace_packages(&root)?;
     let by_name = packages
         .iter()
@@ -63,11 +69,26 @@ pub fn publish_workspace(options: PublishOptions) -> Result<PublishReport> {
 
     let access = options.access.as_deref().or(Some("public"));
     let mut published = Vec::new();
+    let mut skipped_versions = Vec::new();
     for name in &order {
         let package = by_name
             .get(name)
             .ok_or_else(|| format!("missing workspace package {name}"))?;
-        publish_package(
+        let live = runner.view_version(name)?;
+        let resolved = cache::resolve_published_version(&mut cache, name, live);
+        if cache::should_skip_publish(
+            &cache,
+            name,
+            &package.version,
+            &resolved,
+            options.refresh,
+            options.dry_run,
+        ) {
+            println!("skip publish {name}@{} (already on registry)", package.version);
+            skipped_versions.push(name.clone());
+            continue;
+        }
+        let result = publish_package(
             package,
             &by_name,
             options.dry_run,
@@ -75,16 +96,39 @@ pub fn publish_workspace(options: PublishOptions) -> Result<PublishReport> {
             access,
             options.npm.as_deref(),
             &auth,
-        )?;
-        published.push(name.clone());
+        );
+        match result {
+            Ok(()) => {
+                if !options.dry_run {
+                    cache.record_version(name, &package.version);
+                    cache.save(&root)?;
+                }
+                published.push(name.clone());
+            }
+            Err(message) if already_published(&message) => {
+                cache.record_version(name, &package.version);
+                cache.save(&root)?;
+                println!("skip publish {name}@{} (registry says already published)", package.version);
+                skipped_versions.push(name.clone());
+            }
+            Err(message) => return Err(message),
+        }
     }
+
+    cache.save(&root)?;
 
     Ok(PublishReport {
         root,
         order,
         published,
         skipped,
+        skipped_versions,
     })
+}
+
+fn already_published(message: &str) -> bool {
+    let lower = message.to_ascii_lowercase();
+    lower.contains("cannot publish over") || lower.contains("previously published")
 }
 
 pub fn trust_workspace(options: TrustOptions) -> Result<TrustReport> {

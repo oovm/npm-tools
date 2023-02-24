@@ -75,6 +75,7 @@ fn publish_workspace_dry_run_restores_manifest() {
     let report = publish_workspace(PublishOptions {
         cwd: Some(root.path().to_path_buf()),
         dry_run: true,
+        refresh: false,
         tag: None,
         access: Some("public".to_string()),
         npm: None,

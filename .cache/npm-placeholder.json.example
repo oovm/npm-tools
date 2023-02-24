@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "trust_expect": {
+    "repo": "oovm/npm-tools",
+    "file": "publish-npm.yml",
+    "env": "NPM_PUBLISH"
+  },
+  "packages": {}
+}

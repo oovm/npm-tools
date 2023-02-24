@@ -36,6 +36,19 @@ impl NpmRunner {
         }
         Ok(())
     }
+
+    pub fn view_version(&self, name: &str) -> Result<Option<String>> {
+        let output = self.run(&["view", name, "version"], None)?;
+        if output.status != 0 {
+            return Ok(None);
+        }
+        let version = output.stdout.trim();
+        if version.is_empty() {
+            Ok(None)
+        } else {
+            Ok(Some(version.to_string()))
+        }
+    }
 }
 
 pub fn run_npm_publish(
