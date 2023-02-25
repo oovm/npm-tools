@@ -260,12 +260,14 @@ pub struct PublishReport {
     pub order: Vec<String>,
     pub published: Vec<String>,
     pub skipped: Vec<String>,
+    pub skipped_versions: Vec<String>,
 }
 
 #[napi(object)]
 pub struct PublishWorkspaceOptions {
     pub cwd: Option<String>,
     pub dry_run: Option<bool>,
+    pub refresh: Option<bool>,
     pub tag: Option<String>,
     pub access: Option<String>,
     pub npm: Option<String>,
@@ -278,6 +280,7 @@ pub struct PublishWorkspaceOptions {
 pub struct TrustWorkspaceOptions {
     pub cwd: Option<String>,
     pub dry_run: Option<bool>,
+    pub refresh: Option<bool>,
     pub only: Option<String>,
     pub npm: Option<String>,
     pub otp: Option<String>,
@@ -300,6 +303,7 @@ pub fn publisher_publish_workspace(options: PublishWorkspaceOptions) -> Result<P
         nifty_publisher::publish_workspace(CorePublishOptions {
             cwd: options.cwd.map(std::path::PathBuf::from),
             dry_run: options.dry_run.unwrap_or(false),
+            refresh: options.refresh.unwrap_or(false),
             tag: options.tag,
             access: options.access,
             npm: options.npm.map(std::path::PathBuf::from),
@@ -310,6 +314,7 @@ pub fn publisher_publish_workspace(options: PublishWorkspaceOptions) -> Result<P
             order: report.order,
             published: report.published,
             skipped: report.skipped,
+            skipped_versions: report.skipped_versions,
         }),
     )
 }
@@ -321,6 +326,7 @@ pub fn publisher_trust_workspace(options: TrustWorkspaceOptions) -> Result<Trust
         nifty_publisher::trust_workspace(CoreTrustOptions {
             cwd: options.cwd.map(std::path::PathBuf::from),
             dry_run: options.dry_run.unwrap_or(false),
+            refresh: options.refresh.unwrap_or(false),
             only: options.only,
             npm: options.npm.map(std::path::PathBuf::from),
             otp,
