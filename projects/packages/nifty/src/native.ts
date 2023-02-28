@@ -58,6 +58,7 @@ export type PublishReport = {
     order: string[];
     published: string[];
     skipped: string[];
+    skippedVersions: string[];
 };
 
 export type TrustReport = {
@@ -71,6 +72,7 @@ export type PublisherExports = {
     "publish-workspace": (options: {
         cwd?: string;
         dryRun?: boolean;
+        refresh?: boolean;
         tag?: string;
         access?: string;
         npm?: string;
@@ -81,6 +83,7 @@ export type PublisherExports = {
     "trust-workspace": (options: {
         cwd?: string;
         dryRun?: boolean;
+        refresh?: boolean;
         only?: string;
         npm?: string;
         otp?: string;
@@ -130,6 +133,7 @@ type NativeBinding = {
     publisherPublishWorkspace: (options: {
         cwd?: string | null;
         dryRun?: boolean | null;
+        refresh?: boolean | null;
         tag?: string | null;
         access?: string | null;
         npm?: string | null;
@@ -140,6 +144,7 @@ type NativeBinding = {
     publisherTrustWorkspace: (options: {
         cwd?: string | null;
         dryRun?: boolean | null;
+        refresh?: boolean | null;
         only?: string | null;
         npm?: string | null;
         otp?: string | null;
@@ -213,6 +218,7 @@ function wrapBinding(binding: NativeBinding): NiftyNative {
                 binding.publisherPublishWorkspace({
                     ...(options.cwd !== undefined ? { cwd: options.cwd } : {}),
                     ...(options.dryRun !== undefined ? { dryRun: options.dryRun } : {}),
+                    ...(options.refresh !== undefined ? { refresh: options.refresh } : {}),
                     ...(options.tag !== undefined ? { tag: options.tag } : {}),
                     ...(options.access !== undefined ? { access: options.access } : {}),
                     ...(options.npm !== undefined ? { npm: options.npm } : {}),
@@ -224,6 +230,7 @@ function wrapBinding(binding: NativeBinding): NiftyNative {
                 binding.publisherTrustWorkspace({
                     ...(options.cwd !== undefined ? { cwd: options.cwd } : {}),
                     ...(options.dryRun !== undefined ? { dryRun: options.dryRun } : {}),
+                    ...(options.refresh !== undefined ? { refresh: options.refresh } : {}),
                     ...(options.only !== undefined ? { only: options.only } : {}),
                     ...(options.npm !== undefined ? { npm: options.npm } : {}),
                     ...(options.otp !== undefined ? { otp: options.otp } : {}),

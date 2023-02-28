@@ -5,6 +5,7 @@ import { basename, join, relative, resolve } from "node:path";
 
 import { detectProjectLayout } from "../config/detectProject.js";
 import { loadNiftyNative } from "../native.js";
+import { findWorkspaceRoot } from "./workspace.js";
 
 const USER_AGENT = "nifty-upload";
 
@@ -12,6 +13,8 @@ type UploadOptions = {
     release: boolean;
     pages: boolean;
     both: boolean;
+    /** Upload `projects/packages/nifty-*/lib/*.node` platform addons. */
+    native: boolean;
     dir: string;
     tag?: string;
     repo?: string;
@@ -72,6 +75,7 @@ function parseUploadArgs(argv: string[]): UploadOptions {
         release: false,
         pages: false,
         both: false,
+        native: false,
         dir: "dist",
         draft: false,
         generateNotes: true,
@@ -83,7 +87,12 @@ function parseUploadArgs(argv: string[]): UploadOptions {
         if (arg === "--release") options.release = true;
         else if (arg === "--pages") options.pages = true;
         else if (arg === "--both") options.both = true;
+        else if (arg === "--native") options.native = true;
         else if (arg === "-d" || arg === "--dir") options.dir = argv[++i];
+        else if (arg === "-h" || arg === "--help") {
+            printUploadHelp();
+            process.exit(0);
+        }
         else if (arg === "-t" || arg === "--tag") options.tag = argv[++i];
         else if (arg === "--repo") options.repo = argv[++i];
         else if (arg === "--token") options.token = argv[++i];
@@ -143,12 +152,60 @@ async function uploadReleaseAssets(
     if (!release) {
         release = await apiCreateRelease(owner, name, tag, options.name ?? tag, notes, options.draft, token);
     }
-    const dir = resolve(options.cwd ?? process.cwd(), options.dir);
-    for (const file of collectFiles(dir)) {
-        const asset = relative(dir, file).split(/[/\\]/).join("-") || basename(file);
+    const cwd = options.cwd ?? process.cwd();
+    const files = options.native ? collectNativeAddonFiles(findWorkspaceRoot(cwd)) : collectFiles(resolve(cwd, options.dir));
+    for (const file of files) {
+        const asset = options.native
+            ? basename(file)
+            : relative(resolve(cwd, options.dir), file).split(/[/\\]/).join("-") || basename(file);
         await apiUploadAsset(owner, name, release.id, asset, file, token);
         console.log(`release: uploaded ${asset}`);
     }
+}
+
+/** Platform optional-dep packages: `projects/packages/nifty-<platform>/lib/*.node`. */
+export function collectNativeAddonFiles(root: string): string[] {
+    const packagesDir = join(root, "projects", "packages");
+    const files: string[] = [];
+    for (const entry of readdirSync(packagesDir, { withFileTypes: true })) {
+        if (!entry.isDirectory() || !entry.name.startsWith("nifty-") || entry.name === "nifty") {
+            continue;
+        }
+        const libDir = join(packagesDir, entry.name, "lib");
+        if (!existsSync(libDir)) {
+            continue;
+        }
+        for (const node of readdirSync(libDir)) {
+            if (!node.endsWith(".node")) {
+                continue;
+            }
+            files.push(join(libDir, node));
+        }
+    }
+    files.sort();
+    if (files.length === 0) {
+        throw new Error("no native .node files under projects/packages/nifty-*/lib (run build:napi first)");
+    }
+    return files;
+}
+
+function printUploadHelp(): void {
+    console.log(`nifty upload — GitHub Release assets and/or GitHub Pages
+
+Usage:
+  nifty upload --release [--native] [--dir dist] [--tag vX.Y.Z]
+  nifty upload --pages --dir dist
+  nifty upload --both --dir dist
+  nifty upload --release --native --github-action
+
+Options:
+  --native          upload platform .node binaries from projects/packages/nifty-*/lib/
+  --release         upload files to the GitHub Release for --tag
+  --pages           push --dir to gh-pages
+  --both            release + pages
+  -d, --dir <path>  directory tree for --release/--pages (default: dist)
+  --github-action   read GITHUB_TOKEN, GITHUB_REPOSITORY, GITHUB_REF_NAME
+`);
 }
 
 async function deployGithubPages(repo: string, token: string, dir: string): Promise<void> {

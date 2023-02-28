@@ -14,6 +14,7 @@ export async function runTrust(argv: string[]): Promise<void> {
     const report = native.publisher["trust-workspace"]({
         cwd: options.cwd,
         dryRun: options.dryRun,
+        refresh: options.refresh,
         only: options.only,
         ...authPayload(options.auth),
     });
@@ -23,6 +24,7 @@ export async function runTrust(argv: string[]): Promise<void> {
 function parseTrustArgs(argv: string[]) {
     let cwd: string | undefined;
     let dryRun = false;
+    let refresh = false;
     let only: string | undefined;
     const auth = parseAuthArgs(argv);
 
@@ -30,6 +32,8 @@ function parseTrustArgs(argv: string[]) {
         const arg = argv[i];
         if (arg === "--dry-run") {
             dryRun = true;
+        } else if (arg === "--refresh") {
+            refresh = true;
         } else if (arg === "-C" || arg === "--cwd") {
             cwd = argv[++i];
         } else if (arg === "--only") {
@@ -40,7 +44,7 @@ function parseTrustArgs(argv: string[]) {
         }
     }
 
-    return { cwd, dryRun, only, auth };
+    return { cwd, dryRun, refresh, only, auth };
 }
 
 function printReport(report: TrustReport): void {
@@ -65,11 +69,13 @@ function printTrustHelp(): void {
     console.log(`nifty trust — configure npm Trusted Publisher for workspace packages
 
 Reads NPM_TOTP_SECRET / NPM_OTP / NPM_TOKEN from env or .env.placeholder.local.
+Trust list cache lives in .cache/npm-placeholder.json.
 
 Usage:
   nifty trust
   nifty trust --only @doki-land/nifty
   nifty trust --dry-run
+  nifty trust --refresh
   nifty trust --totp-secret <base32>
   nifty trust --otp 123456
   nifty trust -C <cwd>

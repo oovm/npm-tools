@@ -59,6 +59,7 @@ Usage:
   nifty upload (--release | --pages | --both) [options]
   nifty bump [patch|minor|major|version] [--dry-run] [-C cwd]
   nifty publish [--dry-run] [--tag <tag>] [--access public] [-C cwd]
+  nifty upload --release --native [--github-action] [--tag vX.Y.Z]
   nifty trust [--only <pkg>] [--dry-run] [-C cwd]
 `);
 }
