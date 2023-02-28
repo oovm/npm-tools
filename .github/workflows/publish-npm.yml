@@ -1,0 +1,181 @@
+# Trusted Publisher contract (sole npm trusted workflow — keep this filename):
+#   file = publish-npm.yml
+#   repo = oovm/npm-tools
+#   env  = NPM_PUBLISH
+#
+# Release flow:
+#   1. build-native (matrix) — compile .node on each OS, upload-artifact per runner
+#   2. publish (single job) — download all artifacts → install into nifty-*/lib/
+#      → nifty upload --native (GitHub Release assets) → nifty publish (npm)
+
+name: Publish npm
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Must match existing git tag vX.Y.Z (retry only)"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  provenance:
+    name: Bind version ↔ tag ↔ commit
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.bind.outputs.version }}
+      sha: ${{ steps.bind.outputs.sha }}
+      tag: ${{ steps.bind.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Bind publish tag
+        id: bind
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_VERSION: ${{ inputs.version }}
+          GITHUB_REF: ${{ github.ref }}
+          GITHUB_SHA: ${{ github.sha }}
+        run: node scripts/ci/bind-publish-tag.mjs
+
+      - name: Require green CI on tag commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG_SHA: ${{ steps.bind.outputs.sha }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          CI_WORKFLOW_FILE: rust.yml
+        run: node scripts/ci/require-ci-success.mjs --sha=${{ steps.bind.outputs.sha }}
+
+  build-native:
+    name: Native ${{ matrix.short }}
+    needs: provenance
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            short: win32-x64
+            lib: projects/packages/nifty-win32-x64/lib
+          - os: ubuntu-latest
+            short: linux-x64
+            lib: projects/packages/nifty-linux-x64/lib
+          - os: macos-latest
+            short: darwin-arm64
+            lib: projects/packages/nifty-darwin-arm64/lib
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: refs/tags/${{ needs.provenance.outputs.tag }}
+          fetch-depth: 0
+
+      - name: Verify HEAD is bound tag SHA
+        shell: bash
+        run: |
+          set -euo pipefail
+          head="$(git rev-parse HEAD)"
+          want="${{ needs.provenance.outputs.sha }}"
+          if [[ "$head" != "$want" ]]; then
+            echo "Refusing native build: HEAD=$head != bound tag sha=$want" >&2
+            exit 1
+          fi
+
+      - uses: hecrj/setup-rust-action@v1
+        with:
+          rust-version: nightly
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Build Node-API addon
+        run: npm run build:napi
+
+      - name: Upload native .node artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-${{ matrix.short }}
+          path: ${{ matrix.lib }}
+          if-no-files-found: error
+
+  publish:
+    name: Publish npm workspace
+    needs: [provenance, build-native]
+    runs-on: ubuntu-latest
+    environment: NPM_PUBLISH
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: refs/tags/${{ needs.provenance.outputs.tag }}
+          fetch-depth: 0
+
+      - name: Verify HEAD is bound tag SHA
+        shell: bash
+        run: |
+          set -euo pipefail
+          head="$(git rev-parse HEAD)"
+          want="${{ needs.provenance.outputs.sha }}"
+          if [[ "$head" != "$want" ]]; then
+            echo "Refusing publish: HEAD=$head != bound tag sha=$want" >&2
+            exit 1
+          fi
+          echo "publishing ${{ needs.provenance.outputs.tag }} @ $head"
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Ensure npm supports Trusted Publishing
+        run: npm install -g npm@latest
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Download native artifacts from matrix builds
+        uses: actions/download-artifact@v4
+        with:
+          pattern: native-*
+          path: native-artifacts
+          merge-multiple: true
+
+      - name: Install native binaries into platform packages
+        run: node scripts/ci/install-native-artifacts.mjs
+
+      - name: Strip token-style npmrc (OIDC only)
+        shell: bash
+        run: |
+          set -euo pipefail
+          unset NODE_AUTH_TOKEN NPM_TOKEN || true
+          for file in "${HOME}/.npmrc" "${NPM_CONFIG_USERCONFIG:-}" "${RUNNER_TEMP:-}/.npmrc"; do
+            [[ -n "${file}" && -f "${file}" ]] || continue
+            if grep -q '_authToken' "${file}"; then
+              grep -v '_authToken' "${file}" > "${file}.oidc" && mv "${file}.oidc" "${file}"
+              echo "stripped _authToken from ${file}"
+            fi
+          done
+
+      - name: Upload .node assets to GitHub Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_REF_NAME: ${{ needs.provenance.outputs.tag }}
+        run: bash scripts/ci/upload-release.sh
+
+      - name: Publish workspace packages to npm
+        run: pnpm exec nifty publish --access public
