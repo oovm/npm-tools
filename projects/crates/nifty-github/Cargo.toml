@@ -1,6 +1,6 @@
 [package]
 name = "nifty-github"
-version = "0.0.0"
+version = "0.0.1"
 authors = ["Aster <192607617@qq.com>"]
 description = "GitHub REST API helpers for Nifty (user lookup by login or email)"
 license = "MPL-2.0"
