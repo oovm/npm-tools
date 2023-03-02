@@ -1,4 +1,4 @@
-use nifty_uploader::notes::{asset_name, collect_files};
+use nifty_uploader::{asset_name, collect_files};
 
 #[test]
 fn collects_files_recursively() {
