@@ -1,5 +1,6 @@
 {
     "private": true,
+    "packageManager": "pnpm@11.24.0",
     "scripts": {
         "build": "cargo build --release",
         "build:napi": "npm install --prefix projects/crates/nifty-napi && node scripts/build-napi.mjs",
