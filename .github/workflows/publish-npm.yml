@@ -103,7 +103,7 @@ jobs:
         run: pnpm install
 
       - name: Build Node-API addon
-        run: npm run build:napi
+        run: pnpm run build:napi
 
       - name: Upload native .node artifact
         uses: actions/upload-artifact@v4
