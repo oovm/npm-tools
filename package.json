@@ -3,7 +3,7 @@
     "packageManager": "pnpm@11.24.0",
     "scripts": {
         "build": "cargo build --release",
-        "build:napi": "pnpm --dir projects/crates/nifty-napi install && node scripts/build-napi.mjs",
+        "build:napi": "node scripts/build-napi.mjs",
         "test": "cargo test --release",
         "fmt": "cargo fmt --all",
         "p": "git push && git push --tags --prune",
@@ -14,6 +14,7 @@
         "trust": "nifty trust"
     },
     "devDependencies": {
-        "@doki-land/nifty": "workspace:*"
+        "@doki-land/nifty": "workspace:*",
+        "@napi-rs/cli": "^2.18.4"
     }
 }
