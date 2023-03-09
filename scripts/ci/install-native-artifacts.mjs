@@ -1,5 +1,5 @@
 /**
- * Copy downloaded CI native artifacts into `projects/packages/nifty-*/lib/`.
+ * Copy downloaded CI native artifacts into projects/packages/nifty-{platform}/lib/.
  *
  * Input tree: `NATIVE_ARTIFACT_ROOT` (default: `native-artifacts/` at repo root).
  * Output: one `.node` per platform package, ready for `nifty publish`.
