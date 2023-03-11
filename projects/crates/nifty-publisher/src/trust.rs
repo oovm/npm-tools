@@ -103,7 +103,7 @@ fn configure_trust(
         );
     }
 
-    let list = runner.run(&["trust", "list", package, "--json"], None)?;
+    let list = runner.run(&["trust", "list", package], None)?;
     if list.status != 0 {
         let blob = format!("{}\n{}", list.stdout, list.stderr);
         if blob.contains("EOTP") || blob.contains("one-time password") {
@@ -144,7 +144,11 @@ fn configure_trust(
 }
 
 fn parse_trust_list(stdout: &str) -> Result<Vec<Value>> {
-    let data: Value = serde_json::from_str(stdout).map_err(|err| err.to_string())?;
+    let trimmed = stdout.trim();
+    if trimmed.is_empty() || trimmed.contains("No trust configurations found") {
+        return Ok(Vec::new());
+    }
+    let data: Value = serde_json::from_str(trimmed).map_err(|err| err.to_string())?;
     if let Some(array) = data.as_array() {
         return Ok(array.clone());
     }
