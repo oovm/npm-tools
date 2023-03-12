@@ -128,7 +128,10 @@ pub fn publish_workspace(options: PublishOptions) -> Result<PublishReport> {
 
 fn already_published(message: &str) -> bool {
     let lower = message.to_ascii_lowercase();
-    lower.contains("cannot publish over") || lower.contains("previously published")
+    lower.contains("cannot publish over")
+        || lower.contains("previously published")
+        || lower.contains("version already exists")
+        || lower.contains("already been published")
 }
 
 pub fn trust_workspace(options: TrustOptions) -> Result<TrustReport> {

@@ -1,6 +1,9 @@
 use std::path::Path;
 
-use crate::github::{api_create_release, api_release_by_tag, api_upload_asset, release_id, split_repo, GitHubClient};
+use crate::github::{
+    api_create_release, api_release_by_tag, api_upload_asset, release_asset_already_exists, release_id, split_repo,
+    GitHubClient,
+};
 use crate::notes::{asset_name, collect_files};
 use crate::{Result, UploadOptions};
 
@@ -36,9 +39,16 @@ pub fn upload_release_assets(
     for file in files {
         let bytes = std::fs::read(&file).map_err(|err| format!("read {}: {err}", file.display()))?;
         let asset = asset_name(&options.dir, &file);
-        api_upload_asset(&client, &owner, &name, release_id, &asset, &bytes)?;
-        println!("release: uploaded {asset}");
-        uploaded.push(asset);
+        match api_upload_asset(&client, &owner, &name, release_id, &asset, &bytes) {
+            Ok(_) => {
+                println!("release: uploaded {asset}");
+                uploaded.push(asset);
+            }
+            Err(err) if release_asset_already_exists(&err) => {
+                println!("release: skip {asset} (already uploaded)");
+            }
+            Err(err) => return Err(err),
+        }
     }
 
     Ok(uploaded)

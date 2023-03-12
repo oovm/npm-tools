@@ -315,9 +315,15 @@ async function apiUploadAsset(
         },
         body,
     });
-    if (!response.ok) {
-        throw new Error(`GitHub upload ${response.status}: ${await response.text()}`);
+    const text = await response.text();
+    if (response.ok) {
+        return;
     }
+    if (response.status === 422 && text.includes("already_exists")) {
+        console.log(`release: skip ${assetName} (already uploaded)`);
+        return;
+    }
+    throw new Error(`GitHub upload ${response.status}: ${text}`);
 }
 
 function githubHeaders(token: string): Record<string, string> {

@@ -64,15 +64,22 @@ impl GitHubClient {
 
 fn parse_json_response(response: ureq::Response) -> Result<Value> {
     let status = response.status();
+    let status_text = response.status_text().to_string();
+    let body = response.into_string().unwrap_or_default();
     if status == 404 {
         return Err("GitHub resource not found".to_string());
     }
     if !(200..300).contains(&status) {
-        return Err(format!("GitHub API error: {} {}", status, response.status_text()));
+        return Err(format!("GitHub API error: {} {} {}", status, status_text, body));
     }
-    response
-        .into_json()
-        .map_err(|err| format!("parse GitHub JSON: {err}"))
+    if body.is_empty() {
+        return Ok(Value::Null);
+    }
+    serde_json::from_str(&body).map_err(|err| format!("parse GitHub JSON: {err}"))
+}
+
+pub fn release_asset_already_exists(message: &str) -> bool {
+    message.contains("already_exists")
 }
 
 pub fn split_repo(repo: &str) -> Result<(String, String)> {
