@@ -1,4 +1,4 @@
-use nifty_formatter::{author_mention, commit_bullet, format_release_notes, format_subject, ReleaseCommit};
+use nifty_formatter::{author_mention, format_release_notes, format_subject, ReleaseCommit};
 use nifty_types::Section;
 
 #[test]

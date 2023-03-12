@@ -1,5 +1,3 @@
-use std::path::Path;
-
 use crate::github::{
     api_create_release, api_release_by_tag, api_upload_asset, release_asset_already_exists, release_id, split_repo,
     GitHubClient,

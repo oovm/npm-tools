@@ -1,8 +1,6 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use walkdir::WalkDir;
-
 use nifty_formatter::{format_release_notes, ReleaseCommit};
 use nifty_git::{collect_commits, resolve_range};
 use nifty_types::{section_from_name, GithubAuthor};

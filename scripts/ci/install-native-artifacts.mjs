@@ -1,8 +1,8 @@
 /**
  * Copy downloaded CI native artifacts into projects/packages/nifty-{platform}/lib/.
  *
- * Input tree: `NATIVE_ARTIFACT_ROOT` (default: `native-artifacts/` at repo root).
- * Output: one `.node` per platform package, ready for `nifty publish`.
+ * Input tree: NATIVE_ARTIFACT_ROOT (default: native-artifacts/ at repo root).
+ * Output: one .node per platform package, ready for nifty publish (npm only).
  */
 
 import fs from "node:fs";
@@ -64,6 +64,16 @@ function main() {
     if (installed === 0) {
         console.error("install-native-artifacts: no mapped platform .node files installed");
         process.exit(1);
+    }
+
+    const required = ["nifty-win32-x64", "nifty-linux-x64", "nifty-darwin-arm64"];
+    for (const packageDir of required) {
+        const libDir = path.join(ROOT, "projects/packages", packageDir, "lib");
+        const hasNode = fs.existsSync(libDir) && fs.readdirSync(libDir).some((name) => name.endsWith(".node"));
+        if (!hasNode) {
+            console.error(`install-native-artifacts: missing .node under ${packageDir}/lib`);
+            process.exit(1);
+        }
     }
 
     console.log(`install-native-artifacts: ${installed} native binary(ies) ready for npm publish`);

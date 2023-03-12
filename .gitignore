@@ -26,6 +26,9 @@ projects/packages/*/package-lock.json
 projects/crates/nifty-napi/node_modules/
 projects/crates/nifty-napi/package-lock.json
 
+# CI artifact download scratch (local debugging only)
+native-artifacts/
+
 # npm publish / trust local secrets
 .env.placeholder.local
 .cache/*
