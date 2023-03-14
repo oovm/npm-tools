@@ -3,10 +3,10 @@
 #   repo = oovm/npm-tools
 #   env  = NPM_PUBLISH
 #
-# Release flow:
-#   1. build-native (matrix) — compile .node on each OS, upload-artifact per runner
-#   2. publish (single job) — download all artifacts → install into nifty-*/lib/
-#      → nifty upload --native (GitHub Release assets) → nifty publish (npm)
+# Native flow (aligned with vmz-framework):
+#   1. build-native (matrix) — compile .node per OS → Actions artifact
+#   2. publish — download artifacts → install into nifty-*/lib/ → nifty publish (npm OIDC)
+# Platform .node binaries ship only as @doki-land/nifty-* npm packages, not GitHub Release assets.
 
 name: Publish npm
 
@@ -22,7 +22,7 @@ on:
         type: string
 
 permissions:
-  contents: write
+  contents: read
   id-token: write
 
 jobs:
@@ -34,7 +34,8 @@ jobs:
       sha: ${{ steps.bind.outputs.sha }}
       tag: ${{ steps.bind.outputs.tag }}
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout (for tag fetch)
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
@@ -73,7 +74,8 @@ jobs:
             short: darwin-arm64
             lib: projects/packages/nifty-darwin-arm64/lib
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout tag peel
+        uses: actions/checkout@v5
         with:
           ref: refs/tags/${{ needs.provenance.outputs.tag }}
           fetch-depth: 0
@@ -89,15 +91,23 @@ jobs:
             exit 1
           fi
 
-      - uses: hecrj/setup-rust-action@v1
-        with:
-          rust-version: nightly
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@nightly
 
-      - uses: pnpm/action-setup@v4
-
-      - uses: actions/setup-node@v4
+      - name: Cache Cargo
+        uses: Swatinem/rust-cache@v2
         with:
-          node-version: "22"
+          shared-key: publish-native-${{ matrix.short }}
+          cache-on-failure: true
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Setup Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: "24"
+          package-manager-cache: false
 
       - name: Install dependencies
         run: pnpm install
@@ -106,7 +116,7 @@ jobs:
         run: pnpm run build:napi
 
       - name: Upload native .node artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: native-${{ matrix.short }}
           path: ${{ matrix.lib }}
@@ -118,7 +128,8 @@ jobs:
     runs-on: ubuntu-latest
     environment: NPM_PUBLISH
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout tag peel
+        uses: actions/checkout@v5
         with:
           ref: refs/tags/${{ needs.provenance.outputs.tag }}
           fetch-depth: 0
@@ -135,11 +146,14 @@ jobs:
           fi
           echo "publishing ${{ needs.provenance.outputs.tag }} @ $head"
 
-      - uses: pnpm/action-setup@v4
+      - name: Install pnpm
+        uses: pnpm/action-setup@v6
 
-      - uses: actions/setup-node@v4
+      - name: Setup Node
+        uses: actions/setup-node@v5
         with:
-          node-version: "22"
+          node-version: "24"
+          package-manager-cache: false
 
       - name: Ensure npm supports Trusted Publishing
         run: npm install -g npm@latest
@@ -147,14 +161,15 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
-      - name: Download native artifacts from matrix builds
-        uses: actions/download-artifact@v4
+      - name: Download native artifacts
+        uses: actions/download-artifact@v8
         with:
           pattern: native-*
           path: native-artifacts
-          merge-multiple: true
 
       - name: Install native binaries into platform packages
+        env:
+          NATIVE_ARTIFACT_ROOT: ${{ github.workspace }}/native-artifacts
         run: node scripts/ci/install-native-artifacts.mjs
 
       - name: Strip token-style npmrc (OIDC only)
@@ -169,13 +184,6 @@ jobs:
               echo "stripped _authToken from ${file}"
             fi
           done
-
-      - name: Upload .node assets to GitHub Release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_REPOSITORY: ${{ github.repository }}
-          GITHUB_REF_NAME: ${{ needs.provenance.outputs.tag }}
-        run: bash scripts/ci/upload-release.sh
 
       - name: Publish workspace packages to npm
         run: pnpm exec nifty publish --access public
