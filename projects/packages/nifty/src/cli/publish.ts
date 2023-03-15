@@ -27,7 +27,7 @@ export async function runPublish(argv: string[]): Promise<void> {
         access: options.access,
         ...authPayload(options.auth),
     });
-    printReport(report, options.dryRun);
+    printPublishReport(report, options.dryRun);
 }
 
 function parsePublishArgs(argv: string[]) {
@@ -61,7 +61,7 @@ function parsePublishArgs(argv: string[]) {
     return { cwd, dryRun, refresh, tag, access, auth };
 }
 
-function printReport(report: PublishReport, dryRun?: boolean): void {
+export function printPublishReport(report: PublishReport, dryRun?: boolean): void {
     const prefix = dryRun ? "would publish" : "published";
     console.log(`${prefix} workspace ${report.root}`);
     if (report.skipped.length > 0) {

@@ -18,7 +18,7 @@ export async function runTrust(argv: string[]): Promise<void> {
         only: options.only,
         ...authPayload(options.auth),
     });
-    printReport(report);
+    printTrustReport(report);
 }
 
 function parseTrustArgs(argv: string[]) {
@@ -47,7 +47,7 @@ function parseTrustArgs(argv: string[]) {
     return { cwd, dryRun, refresh, only, auth };
 }
 
-function printReport(report: TrustReport): void {
+export function printTrustReport(report: TrustReport): void {
     console.log(`trust workspace ${report.root}`);
     console.log(`  configured: ${report.configured.length}`);
     for (const name of report.configured) {

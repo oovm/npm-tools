@@ -24,7 +24,10 @@ type NpmOutdated = {
 };
 
 export async function runUpdate(argv: string[]): Promise<void> {
-    const options = parseUpdateArgs(argv);
+    await updateWorkspace(parseUpdateArgs(argv));
+}
+
+export async function updateWorkspace(options: UpdateOptions): Promise<void> {
     const cwd = options.cwd ?? process.cwd();
     const layout = detectProjectLayout(cwd);
 

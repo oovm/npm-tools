@@ -27,7 +27,7 @@ const DEFAULT_KIND: BumpKind = "patch";
 export async function runBump(argv: string[]): Promise<void> {
     const options = parseBumpArgs(argv);
     const report = bumpWorkspace(options);
-    printReport(report, options.dryRun);
+    printBumpReport(report, options.dryRun);
 }
 
 function parseBumpArgs(argv: string[]): BumpOptions {
@@ -209,7 +209,7 @@ function bumpPackageManifest(path: string, version: string, dryRun?: boolean): s
     return path;
 }
 
-function printReport(report: BumpReport, dryRun?: boolean): void {
+export function printBumpReport(report: BumpReport, dryRun?: boolean): void {
     const prefix = dryRun ? "would bump" : "bumped";
     const kind = report.kind ? ` (${report.kind})` : "";
     console.log(`${prefix} workspace ${report.root} ${report.from} -> ${report.to}${kind}`);

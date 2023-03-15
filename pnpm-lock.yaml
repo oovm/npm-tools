@@ -17,6 +17,9 @@ importers:
 
   projects/packages/nifty:
     dependencies:
+      '@vmz/commander':
+        specifier: ^0.2.0
+        version: 0.2.0
       jiti:
         specifier: ^2.4.2
         version: 2.7.0
@@ -64,6 +67,10 @@ packages:
   '@types/node@22.20.4':
     resolution: {integrity: sha512-zJRE40jpHtKqE/C4fgHrAKQLJuSpzEnP9ff9Y7YtoR3Wd2pwqzlekDeEuUQXjRd+QCYnVnNwuJYmhdk9XV8gvA==}
 
+  '@vmz/commander@0.2.0':
+    resolution: {integrity: sha512-LHe3WtgYFQbrgBQVJ9f9JDcnCrw2T6JwO8llIqywzvIS+MOeYOLcTEm/3wVuDLvGbB0FaB2ya1wTkLLAOL9Wiw==}
+    engines: {node: '>=20'}
+
   jiti@2.7.0:
     resolution: {integrity: sha512-AC/7JofJvZGrrneWNaEnJeOLUx+JlGt7tNa0wZiRPT4MY1wmfKjt2+6O2p2uz2+skll8OZZmJMNqeke7kKbNgQ==}
     hasBin: true
@@ -83,6 +90,8 @@ snapshots:
   '@types/node@22.20.4':
     dependencies:
       undici-types: 6.21.0
+
+  '@vmz/commander@0.2.0': {}
 
   jiti@2.7.0: {}
 

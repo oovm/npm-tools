@@ -2,7 +2,7 @@ import { loadNiftyNative } from "../native.js";
 
 const KNOWN_GITMOJIS = ["✨", "🎨", "🚀", "🐛", "🚑", "🔥", "💥", "♻️", "🔧", "📝", "👷", "🧹", "⬆️", "🧪", "🔨", "📦"];
 
-type LintOptions = {
+export type LintOptions = {
     subjects: string[];
     from?: string;
     to?: string;
@@ -18,6 +18,13 @@ type LintDiagnostic = {
 
 export async function runLint(argv: string[], check: boolean): Promise<void> {
     const options = parseLintArgs(argv);
+    const errorCount = await lintCommits(options, check);
+    if (check && errorCount > 0) {
+        throw new Error(`found ${errorCount} lint error(s)`);
+    }
+}
+
+export async function lintCommits(options: LintOptions, check: boolean): Promise<number> {
     const native = loadNiftyNative();
     const subjects: string[] = [];
 
@@ -38,10 +45,7 @@ export async function runLint(argv: string[], check: boolean): Promise<void> {
         console.log(`${prefix} [${item.rule}] ${item.message}${suffix}`);
     }
 
-    const errorCount = diagnostics.filter((item) => item.severity === "error").length;
-    if (check && errorCount > 0) {
-        throw new Error(`found ${errorCount} lint error(s)`);
-    }
+    return diagnostics.filter((item) => item.severity === "error").length;
 }
 
 function parseLintArgs(argv: string[]): LintOptions {

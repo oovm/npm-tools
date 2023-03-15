@@ -8,7 +8,7 @@ import { loadNiftyNative } from "../native.js";
 
 const USER_AGENT = "nifty-upload";
 
-type UploadOptions = {
+export type UploadOptions = {
     release: boolean;
     pages: boolean;
     both: boolean;
@@ -30,7 +30,10 @@ type GithubRelease = {
 };
 
 export async function runUpload(argv: string[]): Promise<void> {
-    const options = parseUploadArgs(argv);
+    await uploadFromOptions(parseUploadArgs(argv));
+}
+
+export async function uploadFromOptions(options: UploadOptions): Promise<void> {
     if (options.githubAction) {
         applyGithubActionDefaults(options);
     }
@@ -128,7 +131,7 @@ async function resolveNotes(
     if (!options.generateNotes) return "";
     try {
         const range = native.git["resolve-range"](repoRoot, tag.replace(/^v/, ""), undefined, tag);
-        const commits = native.git["collect-commits"](repoRoot, range.fromRef, range.toRef);
+        const commits = native.git["collect-commits"](repoRoot, range["from-ref"], range["to-ref"]);
         return commits.map((commit) => `- ${commit.body}`).join("\n");
     } catch {
         return "";
