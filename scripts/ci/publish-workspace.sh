@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
-# Tag publish: merge matrix native artifacts into platform packages, then npm publish (OIDC).
+# Tag publish: stage matrix native artifacts, then npm publish (OIDC).
+# Uses published @doki-land/nifty when available (see scripts/ci/nifty.mjs).
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$ROOT"
 
-node scripts/ci/install-native-artifacts.mjs
-exec pnpm exec nifty publish --access public "$@"
+node scripts/ci/nifty.mjs install-native --from "${NATIVE_ARTIFACT_ROOT:-native-artifacts}"
+exec node scripts/ci/nifty.mjs publish --access public "$@"

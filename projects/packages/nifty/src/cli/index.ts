@@ -5,4 +5,5 @@ export { runTrust, type TrustReport } from "./trust.js";
 export { runUpdate } from "./update.js";
 export { runLint } from "./lint.js";
 export { runUpload } from "./upload.js";
+export { installNativeFromOptions, type InstallNativeOptions } from "./install-native.js";
 export { findWorkspaceRoot, listWorkspacePackages, type WorkspacePackage } from "./workspace.js";
