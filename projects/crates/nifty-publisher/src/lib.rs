@@ -88,6 +88,11 @@ pub fn publish_workspace(options: PublishOptions) -> Result<PublishReport> {
             skipped_versions.push(name.clone());
             continue;
         }
+        if is_platform_package(name) && !has_staged_native_binary(package) {
+            println!("skip publish {name} (no staged native binary)");
+            continue;
+        }
+        println!("publishing {name}@{version}", name = name, version = package.version);
         let result = publish_package(
             package,
             &by_name,
@@ -124,6 +129,24 @@ pub fn publish_workspace(options: PublishOptions) -> Result<PublishReport> {
         skipped,
         skipped_versions,
     })
+}
+
+fn is_platform_package(name: &str) -> bool {
+    name.starts_with("@doki-land/nifty-")
+}
+
+fn has_staged_native_binary(package: &NpmPackage) -> bool {
+    let lib_dir = package.dir.join("lib");
+    if !lib_dir.is_dir() {
+        return false;
+    }
+    fs::read_dir(&lib_dir)
+        .map(|entries| {
+            entries
+                .filter_map(|entry| entry.ok())
+                .any(|entry| entry.path().extension().is_some_and(|ext| ext == "node"))
+        })
+        .unwrap_or(false)
 }
 
 fn already_published(message: &str) -> bool {

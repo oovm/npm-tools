@@ -25,9 +25,17 @@ pub struct OtpOverrides {
     pub token: Option<String>,
 }
 
+fn oidc_ci_publish() -> bool {
+    std::env::var("GITHUB_ACTIONS").ok().as_deref() == Some("true")
+        && std::env::var("CI").ok().as_deref() == Some("true")
+}
+
 impl OtpAuth {
     /// 从 CLI 覆盖项、进程环境、仓库根 `.env.placeholder.local` 加载。
     pub fn load(workspace_root: &Path, overrides: OtpOverrides) -> Self {
+        if oidc_ci_publish() {
+            return OtpAuth::default();
+        }
         let file_env = load_local_env(&workspace_root.join(ENV_FILE_NAME));
         OtpAuth {
             totp_secret: first_non_empty(&[

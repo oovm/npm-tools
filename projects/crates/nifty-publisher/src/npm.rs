@@ -30,9 +30,15 @@ impl NpmRunner {
 
     pub fn run_inherit(&self, args: &[&str], cwd: Option<&Path>) -> Result<()> {
         let argv = with_otp(args, &self.auth);
-        let output = run_command(&self.program, &argv, cwd, true, &self.auth)?;
+        let output = run_command(&self.program, &argv, cwd, false, &self.auth)?;
         if output.status != 0 {
-            return Err(format!("npm command failed (exit {})", output.status));
+            return Err(format_npm_failure(&argv, &output));
+        }
+        if !output.stdout.is_empty() {
+            print!("{}", output.stdout);
+        }
+        if !output.stderr.is_empty() {
+            eprint!("{}", output.stderr);
         }
         Ok(())
     }
@@ -176,6 +182,34 @@ fn cleanup_user_npmrc(path: Option<PathBuf>) {
     if let Some(path) = path {
         let _ = std::fs::remove_file(path);
     }
+}
+
+fn format_npm_failure(argv: &[String], output: &NpmOutput) -> String {
+    let blob = format!("{}\n{}", output.stdout, output.stderr);
+    let joined = argv.join(" ");
+    let status = output.status;
+    if is_oidc_auth_failure(&blob) {
+        return format!(
+            "npm OIDC/trusted publish failed for `{joined}` (exit {status}). \
+Configure Trusted Publisher: file=publish-npm.yml env=NPM_PUBLISH repo=oovm/npm-tools. \
+npm output:\n{blob}"
+        );
+    }
+    if blob.trim().is_empty() {
+        return format!("npm command failed (exit {status}): `{joined}`");
+    }
+    format!("npm command failed (exit {status}): `{joined}`\n{blob}")
+}
+
+fn is_oidc_auth_failure(blob: &str) -> bool {
+    let lower = blob.to_ascii_lowercase();
+    lower.contains("eneedauth")
+        || lower.contains("unable to authenticate")
+        || lower.contains("not authorized")
+        || lower.contains("trusted publisher")
+        || lower.contains("identity token")
+        || lower.contains("do not have permission")
+        || lower.contains("access token expired")
 }
 
 fn resolve_npm_executable(explicit: Option<&Path>) -> PathBuf {
