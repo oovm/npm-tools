@@ -5,7 +5,7 @@
 #
 # Native flow (aligned with vmz-framework):
 #   1. build-native (matrix) — compile .node per OS → Actions artifact
-#   2. publish — download artifacts → install into nifty-*/lib/ → nifty publish (npm OIDC)
+#   2. publish — download artifacts → nifty install-native → nifty publish (npm OIDC, via scripts/ci/nifty.mjs)
 # Platform .node binaries ship only as @doki-land/nifty-* npm packages, not GitHub Release assets.
 
 name: Publish npm
@@ -169,8 +169,8 @@ jobs:
 
       - name: Install native binaries into platform packages
         env:
-          NATIVE_ARTIFACT_ROOT: ${{ github.workspace }}/native-artifacts
-        run: node scripts/ci/install-native-artifacts.mjs
+          PUBLISH_VERSION: ${{ needs.provenance.outputs.version }}
+        run: node scripts/ci/nifty.mjs install-native --from native-artifacts
 
       - name: Strip token-style npmrc (OIDC only)
         shell: bash
@@ -186,4 +186,9 @@ jobs:
           done
 
       - name: Publish workspace packages to npm
-        run: pnpm exec nifty publish --access public
+        env:
+          PUBLISH_VERSION: ${{ needs.provenance.outputs.version }}
+        run: |
+          set -euo pipefail
+          unset NODE_AUTH_TOKEN NPM_TOKEN || true
+          node scripts/ci/nifty.mjs publish --access public

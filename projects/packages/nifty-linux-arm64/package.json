@@ -4,6 +4,7 @@
     "description": "Nifty Node-API binary for Linux arm64 (glibc)",
     "type": "module",
     "license": "MPL-2.0",
+    "private": true,
     "main": "./index.js",
     "files": [
         "index.js",

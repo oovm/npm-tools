@@ -25,8 +25,6 @@
     },
     "optionalDependencies": {
         "@doki-land/nifty-darwin-arm64": "workspace:*",
-        "@doki-land/nifty-darwin-x64": "workspace:*",
-        "@doki-land/nifty-linux-arm64": "workspace:*",
         "@doki-land/nifty-linux-x64": "workspace:*",
         "@doki-land/nifty-win32-x64": "workspace:*"
     },
