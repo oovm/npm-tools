@@ -6,6 +6,8 @@ use serde_json::Value;
 use crate::workspace::NpmPackage;
 use crate::Result;
 
+const PUBLISH_REPOSITORY_URL: &str = "git+https://github.com/oovm/npm-tools.git";
+
 const DEPENDENCY_FIELDS: [&str; 4] = [
     "dependencies",
     "devDependencies",
@@ -29,7 +31,36 @@ pub fn patch_manifest_for_publish(
         object.insert(field.to_string(), Value::Object(patched));
     }
 
+    object.remove("private");
+    ensure_publish_metadata(object);
+
     Ok(format!("{}\n", serde_json::to_string_pretty(&value).map_err(|err| err.to_string())?))
+}
+
+fn ensure_publish_metadata(object: &mut serde_json::Map<String, Value>) {
+    let has_repo_url = object
+        .get("repository")
+        .and_then(Value::as_object)
+        .and_then(|repo| repo.get("url"))
+        .and_then(Value::as_str)
+        .is_some_and(|url| !url.is_empty());
+    if !has_repo_url {
+        object.insert(
+            "repository".to_string(),
+            serde_json::json!({
+                "type": "git",
+                "url": PUBLISH_REPOSITORY_URL
+            }),
+        );
+    }
+
+    let publish_config = object
+        .entry("publishConfig".to_string())
+        .or_insert_with(|| Value::Object(serde_json::Map::new()));
+    if let Value::Object(map) = publish_config {
+        map.entry("access".to_string())
+            .or_insert_with(|| Value::String("public".to_string()));
+    }
 }
 
 fn patch_dependency_entries(
