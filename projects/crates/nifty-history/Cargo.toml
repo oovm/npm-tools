@@ -1,0 +1,25 @@
+[package]
+name = "nifty-history"
+version = "0.0.1"
+authors = ["Aster <192607617@qq.com>"]
+description = "Commit reword/retime and release reference changelog for Nifty"
+repository = "https://github.com/oovm/npm-tools"
+documentation = "https://docs.rs/nifty-history"
+readme = "Readme.md"
+license = "MPL-2.0"
+edition = "2021"
+
+[dependencies]
+chrono = "0.4"
+gix = { version = "0.68", default-features = false, features = ["revision", "max-performance-safe"] }
+gix-error = "0.3.2"
+rand = "0.8"
+regex = { version = "1.11", default-features = false, features = ["std", "unicode-perl", "unicode-case"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+tracing = "0.1"
+ureq = { version = "2.12", default-features = false, features = ["json"] }
+urlencoding = "2.1"
+
+[dev-dependencies]
+tempfile = "3.14"
