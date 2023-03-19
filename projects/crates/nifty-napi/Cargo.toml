@@ -17,6 +17,8 @@ nifty-formatter = { path = "../nifty-formatter" }
 nifty-git = { path = "../nifty-git" }
 nifty-github = { path = "../nifty-github" }
 nifty-publisher = { path = "../nifty-publisher" }
+nifty-history = { path = "../nifty-history" }
+gix = { version = "0.68", default-features = false, features = ["revision"] }
 serde_json = "1"
 
 [build-dependencies]

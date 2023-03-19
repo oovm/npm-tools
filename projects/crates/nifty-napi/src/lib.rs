@@ -1,5 +1,7 @@
 //! Node-API export surface for Nifty (gitmoji + gix git helpers).
 
+mod git_tools;
+
 use std::collections::HashMap;
 use std::path::Path;
 
@@ -282,6 +284,7 @@ pub struct TrustWorkspaceOptions {
     pub dry_run: Option<bool>,
     pub refresh: Option<bool>,
     pub only: Option<String>,
+    pub packages: Option<Vec<String>>,
     pub npm: Option<String>,
     pub otp: Option<String>,
     pub totp_secret: Option<String>,
@@ -328,6 +331,7 @@ pub fn publisher_trust_workspace(options: TrustWorkspaceOptions) -> Result<Trust
             dry_run: options.dry_run.unwrap_or(false),
             refresh: options.refresh.unwrap_or(false),
             only: options.only,
+            packages: options.packages,
             npm: options.npm.map(std::path::PathBuf::from),
             otp,
         })
