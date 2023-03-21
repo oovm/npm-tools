@@ -68,6 +68,81 @@ export type TrustReport = {
     failed: string[];
 };
 
+export type RewordPlannedChange = {
+    oldOid: string;
+    oldSubject: string;
+    newSubject: string;
+    parentsRelinked: boolean;
+    messageChanged: boolean;
+};
+
+export type RewordRewriteReport = {
+    changes: RewordPlannedChange[];
+    oldTip: string;
+    newTip?: string;
+    refName: string;
+    dryRun: boolean;
+};
+
+export type HistoryExports = {
+    "reword-export": (options: {
+        cwd?: string;
+        base: string;
+        ref?: string;
+        path: string;
+    }) => { count: number; path: string };
+    "reword-rewrite": (options: {
+        cwd?: string;
+        base: string;
+        ref?: string;
+        path: string;
+        dryRun?: boolean;
+    }) => RewordRewriteReport;
+    "retime-range": (options: {
+        cwd?: string;
+        commit: string;
+        startDate?: string;
+        endDate?: string;
+        branch?: string;
+        tip?: string;
+    }) => { branch: string; newTip: string; rewritten: number };
+    "retime-root": (options: {
+        cwd?: string;
+        startDate?: string;
+        endDate?: string;
+        branch?: string;
+        tip?: string;
+        message?: string;
+    }) => { branch: string; newTip: string; rewritten: number };
+    "changelog-render": (options: {
+        cwd?: string;
+        version?: string;
+        fromRef?: string;
+        toRef?: string;
+        write?: boolean;
+        tags?: boolean;
+        repo?: string;
+        authorMap?: string;
+        releasesDir?: string;
+    }) => {
+        notes: string;
+        version: string;
+        fromRef?: string;
+        toRef: string;
+        commitCount: number;
+        writtenPath?: string;
+        rangeLabel: string;
+    };
+    "changelog-lookup": (options: {
+        cwd?: string;
+        email?: string;
+        login?: string;
+        map?: string;
+        githubToken?: string;
+        fetch?: boolean;
+    }) => GithubAuthor;
+};
+
 export type PublisherExports = {
     "publish-workspace": (options: {
         cwd?: string;
@@ -85,6 +160,7 @@ export type PublisherExports = {
         dryRun?: boolean;
         refresh?: boolean;
         only?: string;
+        packages?: string[];
         npm?: string;
         otp?: string;
         totpSecret?: string;
@@ -95,6 +171,7 @@ export type PublisherExports = {
 export type NiftyNative = {
     gitmoji: GitmojiExports;
     git: GitExports;
+    history: HistoryExports;
     publisher: PublisherExports;
 };
 
@@ -146,11 +223,80 @@ type NativeBinding = {
         dryRun?: boolean | null;
         refresh?: boolean | null;
         only?: string | null;
+        packages?: string[] | null;
         npm?: string | null;
         otp?: string | null;
         totpSecret?: string | null;
         token?: string | null;
     }) => TrustReport;
+    gitToolsRewordExport: (options: {
+        cwd?: string | null;
+        base: string;
+        ref?: string | null;
+        path: string;
+    }) => { count: number; path: string };
+    gitToolsRewordRewrite: (options: {
+        cwd?: string | null;
+        base: string;
+        ref?: string | null;
+        path: string;
+        dryRun?: boolean | null;
+    }) => {
+        changes: Array<{
+            oldOid: string;
+            oldSubject: string;
+            newSubject: string;
+            parentsRelinked: boolean;
+            messageChanged: boolean;
+        }>;
+        oldTip: string;
+        newTip?: string | null;
+        refName: string;
+        dryRun: boolean;
+    };
+    gitToolsRetimeRange: (options: {
+        cwd?: string | null;
+        commit: string;
+        startDate?: string | null;
+        endDate?: string | null;
+        branch?: string | null;
+        tip?: string | null;
+    }) => { branch: string; newTip: string; rewritten: number };
+    gitToolsRetimeRoot: (options: {
+        cwd?: string | null;
+        startDate?: string | null;
+        endDate?: string | null;
+        branch?: string | null;
+        tip?: string | null;
+        message?: string | null;
+    }) => { branch: string; newTip: string; rewritten: number };
+    gitToolsChangelogRender: (options: {
+        cwd?: string | null;
+        version?: string | null;
+        fromRef?: string | null;
+        toRef?: string | null;
+        write?: boolean | null;
+        tags?: boolean | null;
+        repo?: string | null;
+        authorMap?: string | null;
+        releasesDir?: string | null;
+    }) => {
+        notes: string;
+        version: string;
+        fromRef?: string | null;
+        toRef: string;
+        commitCount: number;
+        writtenPath?: string | null;
+        rangeLabel: string;
+    };
+    gitToolsChangelogLookup: (options: {
+        cwd?: string | null;
+        email?: string | null;
+        login?: string | null;
+        map?: string | null;
+        githubToken?: string | null;
+        fetch?: boolean | null;
+    }) => GithubAuthor;
 };
 
 const PLATFORM_PACKAGES: Record<string, string> = {
@@ -213,6 +359,82 @@ function wrapBinding(binding: NativeBinding): NiftyNative {
             "detect-github-repo": (repoRoot) => binding.gitDetectGithubRepo(repoRoot) ?? undefined,
             "parse-github-remote": (url) => binding.gitParseGithubRemote(url) ?? undefined,
         },
+        history: {
+            "reword-export": (options) =>
+                binding.gitToolsRewordExport({
+                    ...(options.cwd !== undefined ? { cwd: options.cwd } : {}),
+                    base: options.base,
+                    ...(options.ref !== undefined ? { ref: options.ref } : {}),
+                    path: options.path,
+                }),
+            "reword-rewrite": (options) => {
+                const report = binding.gitToolsRewordRewrite({
+                    ...(options.cwd !== undefined ? { cwd: options.cwd } : {}),
+                    base: options.base,
+                    ...(options.ref !== undefined ? { ref: options.ref } : {}),
+                    path: options.path,
+                    ...(options.dryRun !== undefined ? { dryRun: options.dryRun } : {}),
+                });
+                return {
+                    changes: report.changes,
+                    oldTip: report.oldTip,
+                    newTip: report.newTip ?? undefined,
+                    refName: report.refName,
+                    dryRun: report.dryRun,
+                };
+            },
+            "retime-range": (options) =>
+                binding.gitToolsRetimeRange({
+                    ...(options.cwd !== undefined ? { cwd: options.cwd } : {}),
+                    commit: options.commit,
+                    ...(options.startDate !== undefined ? { startDate: options.startDate } : {}),
+                    ...(options.endDate !== undefined ? { endDate: options.endDate } : {}),
+                    ...(options.branch !== undefined ? { branch: options.branch } : {}),
+                    ...(options.tip !== undefined ? { tip: options.tip } : {}),
+                }),
+            "retime-root": (options) =>
+                binding.gitToolsRetimeRoot({
+                    ...(options.cwd !== undefined ? { cwd: options.cwd } : {}),
+                    ...(options.startDate !== undefined ? { startDate: options.startDate } : {}),
+                    ...(options.endDate !== undefined ? { endDate: options.endDate } : {}),
+                    ...(options.branch !== undefined ? { branch: options.branch } : {}),
+                    ...(options.tip !== undefined ? { tip: options.tip } : {}),
+                    ...(options.message !== undefined ? { message: options.message } : {}),
+                }),
+            "changelog-render": (options) => {
+                const report = binding.gitToolsChangelogRender({
+                    ...(options.cwd !== undefined ? { cwd: options.cwd } : {}),
+                    ...(options.version !== undefined ? { version: options.version } : {}),
+                    ...(options.fromRef !== undefined ? { fromRef: options.fromRef } : {}),
+                    ...(options.toRef !== undefined ? { toRef: options.toRef } : {}),
+                    ...(options.write !== undefined ? { write: options.write } : {}),
+                    ...(options.tags !== undefined ? { tags: options.tags } : {}),
+                    ...(options.repo !== undefined ? { repo: options.repo } : {}),
+                    ...(options.authorMap !== undefined ? { authorMap: options.authorMap } : {}),
+                    ...(options.releasesDir !== undefined ? { releasesDir: options.releasesDir } : {}),
+                });
+                return {
+                    notes: report.notes,
+                    version: report.version,
+                    fromRef: report.fromRef ?? undefined,
+                    toRef: report.toRef,
+                    commitCount: report.commitCount,
+                    writtenPath: report.writtenPath ?? undefined,
+                    rangeLabel: report.rangeLabel,
+                };
+            },
+            "changelog-lookup": (options) => {
+                const author = binding.gitToolsChangelogLookup({
+                    ...(options.cwd !== undefined ? { cwd: options.cwd } : {}),
+                    ...(options.email !== undefined ? { email: options.email } : {}),
+                    ...(options.login !== undefined ? { login: options.login } : {}),
+                    ...(options.map !== undefined ? { map: options.map } : {}),
+                    ...(options.githubToken !== undefined ? { githubToken: options.githubToken } : {}),
+                    ...(options.fetch !== undefined ? { fetch: options.fetch } : {}),
+                });
+                return mapAuthor(author) ?? {};
+            },
+        },
         publisher: {
             "publish-workspace": (options) =>
                 binding.publisherPublishWorkspace({
@@ -232,6 +454,7 @@ function wrapBinding(binding: NativeBinding): NiftyNative {
                     ...(options.dryRun !== undefined ? { dryRun: options.dryRun } : {}),
                     ...(options.refresh !== undefined ? { refresh: options.refresh } : {}),
                     ...(options.only !== undefined ? { only: options.only } : {}),
+                    ...(options.packages !== undefined ? { packages: options.packages } : {}),
                     ...(options.npm !== undefined ? { npm: options.npm } : {}),
                     ...(options.otp !== undefined ? { otp: options.otp } : {}),
                     ...(options.totpSecret !== undefined ? { totpSecret: options.totpSecret } : {}),

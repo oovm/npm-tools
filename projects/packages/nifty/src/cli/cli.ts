@@ -4,9 +4,12 @@ import { fileURLToPath } from "node:url";
 import { createCli } from "@vmz/commander";
 
 import { registerBumpCommand } from "./bump-cmd.js";
+import { registerChangeLogsCommand } from "./change-logs-cmd.js";
 import { registerInstallNativeCommand } from "./install-native-cmd.js";
 import { registerLintCommands } from "./lint-cmd.js";
 import { registerPublishCommand } from "./publish-cmd.js";
+import { registerRetimeCommand } from "./retime-cmd.js";
+import { registerRewordCommand } from "./reword-cmd.js";
 import { registerTrustCommand } from "./trust-cmd.js";
 import { registerUpdateCommand } from "./update-cmd.js";
 import { registerUploadCommand } from "./upload-cmd.js";
@@ -25,6 +28,9 @@ function buildNiftyCli() {
     registerBumpCommand(cli);
     registerPublishCommand(cli);
     registerTrustCommand(cli);
+    registerRewordCommand(cli);
+    registerRetimeCommand(cli);
+    registerChangeLogsCommand(cli);
 
     return cli;
 }

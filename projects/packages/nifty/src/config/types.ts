@@ -16,6 +16,20 @@ export type NiftyConfig = {
     cargoRoot?: string;
     /** npm package root override. */
     npmRoot?: string;
+    /** npm publish / Trusted Publisher (CI uses publish-npm.yml). */
+    publish?: {
+        /** Package names to trust (includes registry-only native sidecars). */
+        packages?: string[];
+    };
+    /** Release reference changelog defaults (`nifty change-logs`). */
+    changelog?: {
+        /** GitHub `owner/repo` for contrib.rocks (default: parse `origin`). */
+        repo?: string;
+        /** Email → GitHub map path (default: `documentation/maintenance/author-github.json`). */
+        authorMap?: string;
+        /** `--write` output directory (default: `documentation/maintenance/releases`). */
+        releasesDir?: string;
+    };
     /** Rule-based lint configuration. */
     lint?: {
         rules?: Array<{
