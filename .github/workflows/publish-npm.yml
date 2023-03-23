@@ -5,7 +5,7 @@
 #
 # Native flow (aligned with vmz-framework):
 #   1. build-native (matrix) — compile .node per OS → Actions artifact
-#   2. publish — download artifacts → nifty install-native → nifty publish (npm OIDC, via scripts/ci/nifty.mjs)
+#   2. publish — normalize artifacts → scripts/ci/publish-npm.mjs (npm OIDC)
 # Platform .node binaries ship only as @doki-land/nifty-* npm packages, not GitHub Release assets.
 
 name: Publish npm
@@ -123,7 +123,7 @@ jobs:
           if-no-files-found: error
 
   publish:
-    name: Publish npm workspace
+    name: Publish packages
     needs: [provenance, build-native]
     runs-on: ubuntu-latest
     environment: NPM_PUBLISH
@@ -165,12 +165,27 @@ jobs:
         uses: actions/download-artifact@v8
         with:
           pattern: native-*
-          path: native-artifacts
+          path: dist/native-artifacts
 
-      - name: Install native binaries into platform packages
-        env:
-          PUBLISH_VERSION: ${{ needs.provenance.outputs.version }}
-        run: node scripts/ci/nifty.mjs install-native --from native-artifacts
+      - name: Normalize artifact layout
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p dist/native-flat
+          for d in dist/native-artifacts/native-* dist/native-artifacts/*; do
+            [[ -d "$d" ]] || continue
+            base="$(basename "$d")"
+            short="${base#native-}"
+            mkdir -p "dist/native-flat/$short"
+            cp -r "$d"/. "dist/native-flat/$short/" || true
+          done
+          find dist/native-flat -type f -print
+          for short in win32-x64 linux-x64 darwin-arm64; do
+            if ! find "dist/native-flat/$short" -name 'nifty*.node' -type f | grep -q .; then
+              echo "missing native binary for $short under dist/native-flat" >&2
+              exit 1
+            fi
+          done
 
       - name: Strip token-style npmrc (OIDC only)
         shell: bash
@@ -185,10 +200,8 @@ jobs:
             fi
           done
 
-      - name: Publish workspace packages to npm
+      - name: Publish packages to npm
         env:
-          PUBLISH_VERSION: ${{ needs.provenance.outputs.version }}
-        run: |
-          set -euo pipefail
-          unset NODE_AUTH_TOKEN NPM_TOKEN || true
-          node scripts/ci/nifty.mjs publish --access public
+          NIFTY_NATIVE_ARTIFACTS: ${{ github.workspace }}/dist/native-flat
+          GITHUB_REF: refs/tags/v${{ needs.provenance.outputs.version }}
+        run: node scripts/ci/publish-npm.mjs --version=${{ needs.provenance.outputs.version }}
