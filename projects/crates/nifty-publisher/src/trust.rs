@@ -1,8 +1,9 @@
 use serde_json::Value;
 
-use crate::cache::PlaceholderCache;
+use crate::cache::{PlaceholderCache, TrustExpect};
 use crate::npm::NpmRunner;
 use crate::otp::{OtpAuth, OtpOverrides};
+use crate::trust_expect::resolve_trust_expect;
 use crate::workspace::{find_workspace_root, list_workspace_packages};
 use crate::Result;
 
@@ -16,6 +17,7 @@ pub struct TrustOptions {
     pub dry_run: bool,
     pub refresh: bool,
     pub only: Option<String>,
+    pub packages: Option<Vec<String>>,
     pub npm: Option<std::path::PathBuf>,
     pub otp: OtpOverrides,
 }
@@ -34,23 +36,12 @@ pub fn trust_workspace(options: TrustOptions) -> Result<TrustReport> {
         .clone()
         .unwrap_or_else(|| std::env::current_dir().expect("current dir"));
     let root = find_workspace_root(&cwd)?;
+    let expect = resolve_trust_expect(&root);
+    let names = resolve_trust_package_names(&root, &options)?;
     let auth = OtpAuth::load(&root, options.otp);
-    let mut cache = PlaceholderCache::load(&root);
+    let mut cache = PlaceholderCache::load(&root, &expect);
     let has_otp = auth.has_otp();
     let runner = NpmRunner::new(options.npm.as_deref(), auth);
-    let packages = list_workspace_packages(&root)?;
-    let names = packages
-        .iter()
-        .filter(|package| !package.private)
-        .map(|package| package.name.clone())
-        .filter(|name| options.only.as_ref().map(|only| only == name).unwrap_or(true))
-        .collect::<Vec<_>>();
-
-    if let Some(only) = &options.only {
-        if !names.iter().any(|name| name == only) {
-            return Err(format!("--only {only} is not a workspace package"));
-        }
-    }
 
     let mut report = TrustReport {
         root: root.clone(),
@@ -60,7 +51,15 @@ pub fn trust_workspace(options: TrustOptions) -> Result<TrustReport> {
     };
 
     for name in names {
-        match configure_trust(&runner, &mut cache, &name, options.dry_run, options.refresh, has_otp) {
+        match configure_trust(
+            &runner,
+            &mut cache,
+            &expect,
+            &name,
+            options.dry_run,
+            options.refresh,
+            has_otp,
+        ) {
             Ok(TrustOutcome::Configured) => report.configured.push(name),
             Ok(TrustOutcome::Skipped) => report.skipped.push(name),
             Err(message) => {
@@ -78,6 +77,28 @@ pub fn trust_workspace(options: TrustOptions) -> Result<TrustReport> {
     Ok(report)
 }
 
+fn resolve_trust_package_names(root: &std::path::Path, options: &TrustOptions) -> Result<Vec<String>> {
+    let mut names = if let Some(list) = &options.packages {
+        list.clone()
+    } else {
+        list_workspace_packages(root)?
+            .into_iter()
+            .filter(|package| !package.private)
+            .map(|package| package.name)
+            .collect()
+    };
+    names.sort();
+    names.dedup();
+
+    if let Some(only) = &options.only {
+        if !names.iter().any(|name| name == only) {
+            return Err(format!("--only {only} is not in publish.packages"));
+        }
+        return Ok(vec![only.clone()]);
+    }
+    Ok(names)
+}
+
 enum TrustOutcome {
     Configured,
     Skipped,
@@ -86,6 +107,7 @@ enum TrustOutcome {
 fn configure_trust(
     runner: &NpmRunner,
     cache: &mut PlaceholderCache,
+    expect: &TrustExpect,
     package: &str,
     dry_run: bool,
     refresh: bool,
@@ -114,7 +136,7 @@ fn configure_trust(
 
     let configs = parse_trust_list(&list.stdout)?;
     cache.record_trust_list(package, configs.clone());
-    let classification = crate::cache::classify_configs(&configs);
+    let classification = crate::cache::classify_configs(&configs, expect);
     if classification.matches {
         return Ok(TrustOutcome::Skipped);
     }
@@ -128,9 +150,9 @@ fn configure_trust(
         "trust",
         "github",
         package,
-        &format!("--file={TRUST_FILE}"),
-        &format!("--repo={TRUST_REPO}"),
-        &format!("--env={TRUST_ENV}"),
+        &format!("--file={}", expect.file),
+        &format!("--repo={}", expect.repo),
+        &format!("--env={}", expect.env),
         "--allow-publish",
         "--allow-stage-publish",
         "--yes",
@@ -163,4 +185,3 @@ fn parse_trust_list(stdout: &str) -> Result<Vec<Value>> {
     }
     Ok(Vec::new())
 }
-

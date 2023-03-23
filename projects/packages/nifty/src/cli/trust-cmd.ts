@@ -2,6 +2,7 @@ import type { Cli, ParsedOptions } from "@vmz/commander";
 
 import { loadNiftyNative } from "../native.js";
 import { authPayload } from "./authArgs.js";
+import { loadConfig } from "../config/loadConfig.js";
 import { bootstrapFromOptions } from "./context.js";
 import { printTrustReport } from "./trust.js";
 import { authFromOptions, cwdFrom, flag, str } from "./options.js";
@@ -19,12 +20,14 @@ export function registerTrustCommand(cli: Cli): void {
 
 export async function cmdTrust(options: ParsedOptions): Promise<number> {
     await bootstrapFromOptions(options);
+    const { config } = await loadConfig({ cwd: cwdFrom(options), createIfMissing: false });
     const native = loadNiftyNative();
     const report = native.publisher["trust-workspace"]({
         cwd: cwdFrom(options),
         dryRun: flag(options, "dry-run"),
         refresh: flag(options, "refresh"),
         only: str(options, "only"),
+        packages: config.publish?.packages,
         ...authPayload(authFromOptions(options)),
     });
     printTrustReport(report);

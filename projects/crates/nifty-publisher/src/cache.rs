@@ -5,7 +5,6 @@ use std::path::{Path, PathBuf};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use crate::trust::{TRUST_ENV, TRUST_FILE, TRUST_REPO};
 use crate::Result;
 
 pub const CACHE_DIR_NAME: &str = ".cache";
@@ -40,15 +39,11 @@ pub struct PlaceholderCache {
     pub packages: BTreeMap<String, PackageCacheEntry>,
 }
 
-impl Default for PlaceholderCache {
-    fn default() -> Self {
+impl PlaceholderCache {
+    pub fn empty(expect: TrustExpect) -> Self {
         Self {
             version: 1,
-            trust_expect: TrustExpect {
-                repo: TRUST_REPO.to_string(),
-                file: TRUST_FILE.to_string(),
-                env: TRUST_ENV.to_string(),
-            },
+            trust_expect: expect,
             packages: BTreeMap::new(),
         }
     }
@@ -59,21 +54,21 @@ impl PlaceholderCache {
         workspace_root.join(CACHE_DIR_NAME).join(CACHE_FILE_NAME)
     }
 
-    pub fn load(workspace_root: &Path) -> Self {
+    pub fn load(workspace_root: &Path, expect: &TrustExpect) -> Self {
         let path = Self::path(workspace_root);
-        if let Ok(cache) = read_cache_file(&path) {
+        if let Ok(cache) = read_cache_file(&path, expect) {
             return cache;
         }
         let legacy = workspace_root
             .join(CACHE_DIR_NAME)
             .join("placeholder-npm-cache.json");
         if legacy != path {
-            if let Ok(cache) = read_cache_file(&legacy) {
+            if let Ok(cache) = read_cache_file(&legacy, expect) {
                 let _ = save_cache(workspace_root, &cache);
                 return cache;
             }
         }
-        Self::default()
+        Self::empty(expect.clone())
     }
 
     pub fn save(&self, workspace_root: &Path) -> Result<()> {
@@ -95,11 +90,11 @@ impl PlaceholderCache {
         if !entry.matches {
             return false;
         }
-        classify_configs(&entry.configs).matches
+        classify_configs(&entry.configs, &self.trust_expect).matches
     }
 
     pub fn record_trust_list(&mut self, name: &str, configs: Vec<Value>) {
-        let classification = classify_configs(&configs);
+        let classification = classify_configs(&configs, &self.trust_expect);
         let trust = TrustCacheEntry {
             listed_at: now_iso(),
             configs,
@@ -180,14 +175,11 @@ pub fn should_skip_publish(
     cache.cached_version(name) == Some(target_version)
 }
 
-fn read_cache_file(path: &Path) -> Result<PlaceholderCache> {
+fn read_cache_file(path: &Path, expect: &TrustExpect) -> Result<PlaceholderCache> {
     let raw = fs::read_to_string(path).map_err(|err| err.to_string())?;
     let data: PlaceholderCache = serde_json::from_str(&raw).map_err(|err| err.to_string())?;
-    if data.trust_expect.repo != TRUST_REPO
-        || data.trust_expect.file != TRUST_FILE
-        || data.trust_expect.env != TRUST_ENV
-    {
-        return Ok(PlaceholderCache::default());
+    if data.trust_expect != *expect {
+        return Err("cache trust contract mismatch".into());
     }
     Ok(data)
 }
@@ -199,11 +191,6 @@ fn save_cache(workspace_root: &Path, cache: &PlaceholderCache) -> Result<()> {
     }
     let mut next = cache.clone();
     next.version = 1;
-    next.trust_expect = TrustExpect {
-        repo: TRUST_REPO.to_string(),
-        file: TRUST_FILE.to_string(),
-        env: TRUST_ENV.to_string(),
-    };
     let text = serde_json::to_string_pretty(&next).map_err(|err| err.to_string())?;
     fs::write(path, format!("{text}\n")).map_err(|err| err.to_string())?;
     Ok(())
@@ -214,14 +201,14 @@ pub struct TrustClassification {
     pub match_kind: String,
 }
 
-pub fn classify_configs(configs: &[Value]) -> TrustClassification {
-    if configs.iter().any(trust_exact) {
+pub fn classify_configs(configs: &[Value], expect: &TrustExpect) -> TrustClassification {
+    if configs.iter().any(|config| trust_exact(config, expect)) {
         return TrustClassification {
             matches: true,
             match_kind: "exact".to_string(),
         };
     }
-    if configs.iter().any(trust_matches) {
+    if configs.iter().any(|config| trust_matches(config, expect)) {
         return TrustClassification {
             matches: true,
             match_kind: "loose".to_string(),
@@ -239,16 +226,16 @@ pub fn classify_configs(configs: &[Value]) -> TrustClassification {
     }
 }
 
-fn trust_exact(config: &Value) -> bool {
-    trust_matches(config) && trust_fields(config).env == TRUST_ENV
+fn trust_exact(config: &Value, expect: &TrustExpect) -> bool {
+    trust_matches(config, expect) && trust_fields(config).env == expect.env
 }
 
-fn trust_matches(config: &Value) -> bool {
+fn trust_matches(config: &Value, expect: &TrustExpect) -> bool {
     if let Some(raw) = config.get("raw").and_then(|value| value.as_str()) {
-        return raw.contains(TRUST_REPO) && raw.contains(TRUST_FILE) && raw.contains(TRUST_ENV);
+        return raw.contains(&expect.repo) && raw.contains(&expect.file) && raw.contains(&expect.env);
     }
     let fields = trust_fields(config);
-    fields.repo == TRUST_REPO && fields.file == TRUST_FILE
+    fields.repo == expect.repo && fields.file == expect.file
 }
 
 struct TrustFields {
@@ -295,22 +282,31 @@ fn now_iso() -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::{PlaceholderCache, resolve_published_version, should_skip_publish, VersionSource};
+    use super::{PlaceholderCache, TrustExpect, resolve_published_version, should_skip_publish, VersionSource};
     use tempfile::TempDir;
 
     #[test]
     fn saves_and_loads_cache_file() {
         let dir = TempDir::new().expect("tempdir");
-        let mut cache = PlaceholderCache::default();
+        let expect = TrustExpect {
+            repo: "oovm/npm-tools".to_string(),
+            file: "publish-npm.yml".to_string(),
+            env: "NPM_PUBLISH".to_string(),
+        };
+        let mut cache = PlaceholderCache::empty(expect.clone());
         cache.record_version("@doki-land/nifty", "0.0.1");
         cache.save(dir.path()).expect("save");
-        let loaded = PlaceholderCache::load(dir.path());
+        let loaded = PlaceholderCache::load(dir.path(), &expect);
         assert_eq!(loaded.cached_version("@doki-land/nifty"), Some("0.0.1"));
     }
 
     #[test]
     fn skip_publish_when_versions_match() {
-        let mut cache = PlaceholderCache::default();
+        let mut cache = PlaceholderCache::empty(TrustExpect {
+            repo: "oovm/npm-tools".to_string(),
+            file: "publish-npm.yml".to_string(),
+            env: "NPM_PUBLISH".to_string(),
+        });
         cache.record_version("@doki-land/nifty", "0.0.1");
         let resolved = resolve_published_version(&mut cache, "@doki-land/nifty", Some("0.0.1".into()));
         assert!(should_skip_publish(&cache, "@doki-land/nifty", "0.0.1", &resolved, false, false));

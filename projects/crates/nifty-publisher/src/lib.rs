@@ -6,6 +6,7 @@ mod manifest;
 mod npm;
 mod otp;
 mod trust;
+mod trust_expect;
 mod workspace;
 
 use std::collections::BTreeMap;
@@ -50,7 +51,8 @@ pub fn publish_workspace(options: PublishOptions) -> Result<PublishReport> {
         .unwrap_or_else(|| std::env::current_dir().expect("current dir"));
     let root = find_workspace_root(&cwd)?;
     let auth = OtpAuth::load(&root, options.otp);
-    let mut cache = cache::PlaceholderCache::load(&root);
+    let trust_expect = trust_expect::resolve_trust_expect(&root);
+    let mut cache = cache::PlaceholderCache::load(&root, &trust_expect);
     let runner = npm::NpmRunner::new(options.npm.as_deref(), auth.clone());
     let packages = list_workspace_packages(&root)?;
     let by_name = packages

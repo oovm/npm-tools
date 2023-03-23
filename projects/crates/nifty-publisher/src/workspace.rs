@@ -52,18 +52,24 @@ pub fn find_workspace_root(cwd: &Path) -> Result<PathBuf> {
         if crates.is_dir() && packages.is_dir() {
             return Ok(candidate);
         }
+        if candidate.join("pnpm-workspace.yaml").is_file() {
+            return Ok(candidate);
+        }
     }
-    Err("could not find Nifty workspace (expected projects/crates and projects/packages)".into())
+    Err("could not find workspace root (Nifty hybrid or pnpm-workspace.yaml)".into())
 }
 
 pub fn list_workspace_packages(root: &Path) -> Result<Vec<NpmPackage>> {
-    let packages_dir = root.join("projects").join("packages");
-    if !packages_dir.is_dir() {
-        return Ok(Vec::new());
+    let nifty_packages = root.join("projects").join("packages");
+    if nifty_packages.is_dir() {
+        return list_packages_in_dir(&nifty_packages);
     }
+    list_pnpm_workspace_packages(root)
+}
 
+fn list_packages_in_dir(packages_dir: &Path) -> Result<Vec<NpmPackage>> {
     let mut packages = Vec::new();
-    for entry in fs::read_dir(&packages_dir).map_err(|err| err.to_string())? {
+    for entry in fs::read_dir(packages_dir).map_err(|err| err.to_string())? {
         let entry = entry.map_err(|err| err.to_string())?;
         if !entry.file_type().map_err(|err| err.to_string())?.is_dir() {
             continue;
@@ -77,9 +83,91 @@ pub fn list_workspace_packages(root: &Path) -> Result<Vec<NpmPackage>> {
         }
         packages.push(load_package(&entry.path(), manifest_path)?);
     }
-
     packages.sort_by(|left, right| left.name.cmp(&right.name));
     Ok(packages)
+}
+
+fn list_pnpm_workspace_packages(root: &Path) -> Result<Vec<NpmPackage>> {
+    let yaml_path = root.join("pnpm-workspace.yaml");
+    let text = fs::read_to_string(&yaml_path).map_err(|err| err.to_string())?;
+    let patterns = parse_pnpm_workspace_patterns(&text);
+    if patterns.is_empty() {
+        return Err(format!("no packages globs in {}", yaml_path.display()));
+    }
+
+    let mut seen = HashSet::new();
+    let mut packages = Vec::new();
+    for pattern in patterns {
+        for dir in expand_workspace_glob(root, &pattern)? {
+            let manifest_path = dir.join("package.json");
+            if !manifest_path.is_file() {
+                continue;
+            }
+            let package = load_package(&dir, manifest_path)?;
+            if package.private || !seen.insert(package.name.clone()) {
+                continue;
+            }
+            packages.push(package);
+        }
+    }
+    packages.sort_by(|left, right| left.name.cmp(&right.name));
+    Ok(packages)
+}
+
+fn parse_pnpm_workspace_patterns(text: &str) -> Vec<String> {
+    let mut patterns = Vec::new();
+    let mut in_packages = false;
+    for line in text.lines() {
+        let trimmed = line.trim();
+        if trimmed.starts_with("packages:") {
+            in_packages = true;
+            continue;
+        }
+        if !in_packages {
+            continue;
+        }
+        if trimmed.is_empty() || trimmed.starts_with('#') {
+            continue;
+        }
+        if !trimmed.starts_with('-') {
+            if patterns.is_empty() {
+                continue;
+            }
+            break;
+        }
+        let value = trimmed
+            .trim_start_matches('-')
+            .trim()
+            .trim_matches('\'')
+            .trim_matches('"');
+        if !value.is_empty() {
+            patterns.push(value.to_string());
+        }
+    }
+    patterns
+}
+
+fn expand_workspace_glob(root: &Path, pattern: &str) -> Result<Vec<PathBuf>> {
+    let normalized = pattern.replace('\\', "/");
+    if normalized.ends_with("/*") {
+        let base = root.join(normalized.trim_end_matches("/*"));
+        if !base.is_dir() {
+            return Ok(Vec::new());
+        }
+        let mut dirs = Vec::new();
+        for entry in fs::read_dir(&base).map_err(|err| err.to_string())? {
+            let entry = entry.map_err(|err| err.to_string())?;
+            if entry.file_type().map_err(|err| err.to_string())?.is_dir() {
+                dirs.push(entry.path());
+            }
+        }
+        return Ok(dirs);
+    }
+    let path = root.join(normalized);
+    if path.is_dir() {
+        return Ok(vec![path]);
+    }
+    Ok(Vec::new())
 }
 
 pub fn load_package(dir: &Path, manifest_path: PathBuf) -> Result<NpmPackage> {
