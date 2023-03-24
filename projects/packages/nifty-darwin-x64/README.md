@@ -1,0 +1,12 @@
+# @doki-land/nifty-darwin-x64
+
+Prebuilt Node-API native addon for **macOS x64 (Intel)**.
+
+This package is installed automatically as an optional dependency of [`@doki-land/nifty`](https://www.npmjs.com/package/@doki-land/nifty) when published for that platform. You normally do not install it directly.
+
+- [Main package](https://www.npmjs.com/package/@doki-land/nifty)
+- [Source](https://github.com/oovm/npm-tools/tree/dev/projects/packages/nifty-darwin-x64)
+
+## License
+
+[MPL-2.0](https://www.npmjs.com/package/@doki-land/nifty-darwin-x64?activeTab=code)

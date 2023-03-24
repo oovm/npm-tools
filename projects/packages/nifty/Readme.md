@@ -1,30 +1,29 @@
 # @doki-land/nifty
 
-**Gitmoji is the default Nifty convention.**
+[![npm version](https://img.shields.io/npm/v/@doki-land/nifty.svg)](https://www.npmjs.com/package/@doki-land/nifty)
 
-| Layer | Role |
-| --- | --- |
-| `@doki-land/nifty-<platform>` | Node-API `.node`（gitmoji + gix） |
-| `nifty-publisher` | Rust：`petgraph` 拓扑排序 + `npm publish` |
-| `src/cli/` | CLI 实现（`update` / `lint` / `check` / `upload` / `bump` / `publish`） |
-| `cli/nifty.mjs` | npm `bin` shim（jiti 加载 `src/cli`） |
-| `src/` | TypeScript API |
+**Gitmoji-first** commit conventions and release tooling for hybrid **Cargo + npm** workspaces.
 
-Rust 侧无 `bin` / `cli`。
+## Install
 
-**本仓开发**（pnpm workspace，`projects/packages/*`）：
-
-```bash
-pnpm install          # 链接 @doki-land/nifty → node_modules/.bin/nifty
-pnpm run build:napi   # 构建 native addon
-pnpm exec nifty bump
-pnpm exec nifty publish --dry-run
-```
-
-**发布后消费**：
-
-```bash
+`ash
 npm install @doki-land/nifty
-nifty bump
-nifty publish --dry-run
-```
+`
+
+## CLI
+
+`ash
+nifty --help
+`
+
+See the [npm-tools README](https://github.com/oovm/npm-tools/blob/dev/README.md) for development.
+
+## Links
+
+- [npm package](https://www.npmjs.com/package/@doki-land/nifty)
+- [Source](https://github.com/oovm/npm-tools)
+- [Issues](https://github.com/oovm/npm-tools/issues)
+
+## License
+
+[MPL-2.0](https://www.npmjs.com/package/@doki-land/nifty?activeTab=code)
