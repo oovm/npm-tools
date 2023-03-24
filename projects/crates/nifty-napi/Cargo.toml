@@ -1,6 +1,6 @@
 [package]
 name = "nifty-napi"
-version = "0.0.1"
+version = "0.0.2"
 authors = ["Aster <192607617@qq.com>"]
 description = "Node-API bindings for Nifty gitmoji and gix helpers"
 license = "MPL-2.0"
