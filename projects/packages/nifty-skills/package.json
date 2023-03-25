@@ -1,0 +1,26 @@
+{
+    "name": "@doki-land/nifty-skills",
+    "version": "0.0.2",
+    "description": "Agent Skills for Nifty gitmoji commits, npm release, and git history tooling",
+    "type": "module",
+    "license": "MPL-2.0",
+    "files": [
+        "skills",
+        "README.md"
+    ],
+    "publishConfig": {
+        "access": "public"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/oovm/npm-tools.git",
+        "directory": "projects/packages/nifty-skills"
+    },
+    "homepage": "https://github.com/oovm/npm-tools/tree/dev/projects/packages/nifty-skills#readme",
+    "bugs": {
+        "url": "https://github.com/oovm/npm-tools/issues"
+    },
+    "scripts": {
+        "typecheck": "node -e \"console.log('docs-only skill package')\""
+    }
+}

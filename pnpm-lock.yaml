@@ -49,6 +49,8 @@ importers:
 
   projects/packages/nifty-linux-x64: {}
 
+  projects/packages/nifty-skills: {}
+
   projects/packages/nifty-win32-x64: {}
 
 packages:
