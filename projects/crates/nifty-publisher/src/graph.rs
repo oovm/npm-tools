@@ -79,6 +79,8 @@ mod tests {
             dev_dependencies: BTreeMap::new(),
             optional_dependencies: BTreeMap::new(),
             peer_dependencies: BTreeMap::new(),
+            os: None,
+            cpu: None,
         };
         NpmPackage {
             name: name.to_string(),

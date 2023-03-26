@@ -80,6 +80,8 @@ fn publish_workspace_dry_run_restores_manifest() {
         access: Some("public".to_string()),
         npm: None,
         otp: OtpOverrides::default(),
+        only: None,
+        packages: None,
     })
     .expect("publish");
 

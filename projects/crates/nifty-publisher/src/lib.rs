@@ -31,6 +31,10 @@ pub struct PublishOptions {
     pub access: Option<String>,
     pub npm: Option<PathBuf>,
     pub otp: OtpOverrides,
+    /// Publish a single package name (`--package` when passed once).
+    pub only: Option<String>,
+    /// Publish an explicit subset (multiple `--package` flags).
+    pub packages: Option<Vec<String>>,
 }
 
 /// Result of [`publish_workspace`].
@@ -50,6 +54,7 @@ pub fn publish_workspace(options: PublishOptions) -> Result<PublishReport> {
         .clone()
         .unwrap_or_else(|| std::env::current_dir().expect("current dir"));
     let root = find_workspace_root(&cwd)?;
+    let publish_targets = resolve_publish_targets(&options)?;
     let auth = OtpAuth::load(&root, options.otp);
     let trust_expect = trust_expect::resolve_trust_expect(&root);
     let mut cache = cache::PlaceholderCache::load(&root, &trust_expect);
@@ -68,6 +73,7 @@ pub fn publish_workspace(options: PublishOptions) -> Result<PublishReport> {
         &packages.iter().filter(|package| !package.private).cloned().collect::<Vec<_>>(),
         &by_name,
     )?;
+    let order = filter_publish_order(order, &by_name, &publish_targets)?;
 
     let access = options.access.as_deref().or(Some("public"));
     let mut published = Vec::new();
@@ -90,7 +96,7 @@ pub fn publish_workspace(options: PublishOptions) -> Result<PublishReport> {
             skipped_versions.push(name.clone());
             continue;
         }
-        if is_platform_package(name) && !has_staged_native_binary(package) {
+        if is_native_binary_package(package) && !has_staged_native_binary(package) {
             println!("skip publish {name} (no staged native binary)");
             continue;
         }
@@ -133,8 +139,17 @@ pub fn publish_workspace(options: PublishOptions) -> Result<PublishReport> {
     })
 }
 
-fn is_platform_package(name: &str) -> bool {
-    name.starts_with("@doki-land/nifty-")
+fn is_native_binary_package(package: &NpmPackage) -> bool {
+    package
+        .manifest
+        .os
+        .as_ref()
+        .is_some_and(|os| !os.is_empty())
+        && package
+            .manifest
+            .cpu
+            .as_ref()
+            .is_some_and(|cpu| !cpu.is_empty())
 }
 
 fn has_staged_native_binary(package: &NpmPackage) -> bool {
@@ -161,6 +176,140 @@ fn already_published(message: &str) -> bool {
 
 pub fn trust_workspace(options: TrustOptions) -> Result<TrustReport> {
     trust::trust_workspace(options)
+}
+
+fn filter_publish_order(
+    order: Vec<String>,
+    by_name: &BTreeMap<String, NpmPackage>,
+    targets: &[String],
+) -> Result<Vec<String>> {
+    if targets.is_empty() {
+        return Ok(order);
+    }
+
+    for name in targets {
+        let Some(package) = by_name.get(name) else {
+            return Err(format!("workspace package not found: {name}"));
+        };
+        if package.private {
+            return Err(format!("cannot publish private package: {name}"));
+        }
+    }
+
+    let target_set = targets.iter().collect::<std::collections::BTreeSet<_>>();
+    let filtered = order.into_iter().filter(|name| target_set.contains(name)).collect::<Vec<_>>();
+    if filtered.is_empty() {
+        return Err(format!(
+            "no publishable packages matched filter: {}",
+            targets.join(", ")
+        ));
+    }
+    Ok(filtered)
+}
+
+fn resolve_publish_targets(options: &PublishOptions) -> Result<Vec<String>> {
+    if let Some(only) = &options.only {
+        return Ok(vec![only.clone()]);
+    }
+    if let Some(packages) = &options.packages {
+        let mut names = packages.clone();
+        names.sort();
+        names.dedup();
+        return Ok(names);
+    }
+    Ok(Vec::new())
+}
+
+#[cfg(test)]
+mod native_binary_tests {
+    use std::collections::BTreeMap;
+    use std::path::PathBuf;
+
+    use super::is_native_binary_package;
+    use crate::workspace::{NpmPackage, PackageManifest};
+
+    fn package(name: &str, os: Option<Vec<String>>, cpu: Option<Vec<String>>) -> NpmPackage {
+        let manifest = PackageManifest {
+            name: name.to_string(),
+            version: "0.0.0".to_string(),
+            private: false,
+            dependencies: BTreeMap::new(),
+            dev_dependencies: BTreeMap::new(),
+            optional_dependencies: BTreeMap::new(),
+            peer_dependencies: BTreeMap::new(),
+            os,
+            cpu,
+        };
+        NpmPackage {
+            name: name.to_string(),
+            version: "0.0.0".to_string(),
+            dir: PathBuf::from(name),
+            manifest_path: PathBuf::from(name).join("package.json"),
+            private: false,
+            manifest,
+        }
+    }
+
+    #[test]
+    fn skills_is_not_native_binary_package() {
+        assert!(!is_native_binary_package(&package("@doki-land/nifty-skills", None, None)));
+    }
+
+    #[test]
+    fn platform_shard_requires_os_and_cpu() {
+        assert!(is_native_binary_package(&package(
+            "@doki-land/nifty-win32-x64",
+            Some(vec!["win32".to_string()]),
+            Some(vec!["x64".to_string()]),
+        )));
+    }
+}
+
+#[cfg(test)]
+mod publish_filter_tests {
+    use std::collections::BTreeMap;
+    use std::path::PathBuf;
+
+    use super::filter_publish_order;
+    use crate::workspace::{NpmPackage, PackageManifest};
+
+    fn package(name: &str) -> NpmPackage {
+        let manifest = PackageManifest {
+            name: name.to_string(),
+            version: "0.0.0".to_string(),
+            private: false,
+            dependencies: BTreeMap::new(),
+            dev_dependencies: BTreeMap::new(),
+            optional_dependencies: BTreeMap::new(),
+            peer_dependencies: BTreeMap::new(),
+            os: None,
+            cpu: None,
+        };
+        NpmPackage {
+            name: name.to_string(),
+            version: "0.0.0".to_string(),
+            dir: PathBuf::from(name),
+            manifest_path: PathBuf::from(name).join("package.json"),
+            private: false,
+            manifest,
+        }
+    }
+
+    #[test]
+    fn keeps_subset_in_topo_order() {
+        let by_name = BTreeMap::from([
+            ("@scope/platform".to_string(), package("@scope/platform")),
+            ("@scope/main".to_string(), package("@scope/main")),
+            ("@scope/skills".to_string(), package("@scope/skills")),
+        ]);
+        let order = vec![
+            "@scope/platform".to_string(),
+            "@scope/main".to_string(),
+            "@scope/skills".to_string(),
+        ];
+        let filtered = filter_publish_order(order, &by_name, &["@scope/skills".to_string()]).expect("filter");
+        assert_eq!(filtered, vec!["@scope/skills".to_string()]);
+    }
 }
 
 fn publish_package(

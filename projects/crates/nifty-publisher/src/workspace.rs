@@ -30,6 +30,11 @@ pub struct PackageManifest {
     pub optional_dependencies: BTreeMap<String, String>,
     #[serde(default)]
     pub peer_dependencies: BTreeMap<String, String>,
+    /// Present on optional native binary packages (`@doki-land/nifty-*` platform shards).
+    #[serde(default)]
+    pub os: Option<Vec<String>>,
+    #[serde(default)]
+    pub cpu: Option<Vec<String>>,
 }
 
 /// One npm package directory in the workspace.
