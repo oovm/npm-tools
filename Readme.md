@@ -7,6 +7,7 @@ Monorepo for [**Nifty**](https://www.npmjs.com/package/@doki-land/nifty) — git
 | npm | Description |
 | --- | --- |
 | [`@doki-land/nifty`](https://www.npmjs.com/package/@doki-land/nifty) | CLI + TypeScript API |
+| [`@doki-land/nifty-skills`](https://www.npmjs.com/package/@doki-land/nifty-skills) | Agent Skills for Nifty workflows |
 | [`@doki-land/nifty-win32-x64`](https://www.npmjs.com/package/@doki-land/nifty-win32-x64) | Windows x64 native binding |
 | [`@doki-land/nifty-linux-x64`](https://www.npmjs.com/package/@doki-land/nifty-linux-x64) | Linux x64 native binding |
 | [`@doki-land/nifty-darwin-arm64`](https://www.npmjs.com/package/@doki-land/nifty-darwin-arm64) | macOS Apple Silicon native binding |

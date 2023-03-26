@@ -43,7 +43,10 @@ const NATIVE_PLATFORMS = [
     },
 ];
 
-const JS_PACKAGES = [{ dir: "projects/packages/nifty", publishName: "@doki-land/nifty" }];
+const JS_PACKAGES = [
+    { dir: "projects/packages/nifty", publishName: "@doki-land/nifty" },
+    { dir: "projects/packages/nifty-skills", publishName: "@doki-land/nifty-skills" },
+];
 
 function fail(msg) {
     console.error(`ci-publish-npm: ${msg}`);
