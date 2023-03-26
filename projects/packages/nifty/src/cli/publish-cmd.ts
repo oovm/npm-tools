@@ -4,12 +4,13 @@ import { loadNiftyNative } from "../native.js";
 import { authPayload } from "./authArgs.js";
 import { bootstrapFromOptions } from "./context.js";
 import { printPublishReport } from "./publish.js";
-import { authFromOptions, cwdFrom, flag, str } from "./options.js";
+import { authFromOptions, cwdFrom, flag, str, strList } from "./options.js";
 
 export function registerPublishCommand(cli: Cli): void {
     cli.command("publish", "cli.cmd.publish")
         .option("--dry-run", "cli.opt.dry-run")
         .option("--refresh", "cli.opt.refresh")
+        .option("--package <name>", "cli.opt.package")
         .option("--tag <tag>", "cli.opt.tag")
         .option("--access <access>", "cli.opt.access")
         .option("--otp <code>", "cli.opt.otp")
@@ -20,6 +21,7 @@ export function registerPublishCommand(cli: Cli): void {
 
 export async function cmdPublish(options: ParsedOptions): Promise<number> {
     await bootstrapFromOptions(options);
+    const packages = strList(options, "package");
     const native = loadNiftyNative();
     const report = native.publisher["publish-workspace"]({
         cwd: cwdFrom(options),
@@ -27,6 +29,8 @@ export async function cmdPublish(options: ParsedOptions): Promise<number> {
         refresh: flag(options, "refresh"),
         tag: str(options, "tag"),
         access: str(options, "access") ?? "public",
+        ...(packages.length === 1 ? { only: packages[0] } : {}),
+        ...(packages.length > 1 ? { packages } : {}),
         ...authPayload(authFromOptions(options)),
     });
     printPublishReport(report, flag(options, "dry-run"));

@@ -276,6 +276,8 @@ pub struct PublishWorkspaceOptions {
     pub otp: Option<String>,
     pub totp_secret: Option<String>,
     pub token: Option<String>,
+    pub only: Option<String>,
+    pub packages: Option<Vec<String>>,
 }
 
 #[napi(object)]
@@ -311,6 +313,8 @@ pub fn publisher_publish_workspace(options: PublishWorkspaceOptions) -> Result<P
             access: options.access,
             npm: options.npm.map(std::path::PathBuf::from),
             otp,
+            only: options.only,
+            packages: options.packages,
         })
         .map(|report| PublishReport {
             root: report.root.display().to_string(),

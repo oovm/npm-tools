@@ -42,6 +42,7 @@
   "cli.opt.major": "Bump major segment",
   "cli.opt.access": "npm publish --access",
   "cli.opt.only": "Limit trust to one package name",
+  "cli.opt.package": "Publish only this workspace package (repeatable)",
   "cli.opt.otp": "One-time npm password (6 digits)",
   "cli.opt.totp-secret": "Base32 TOTP secret (overrides env)",
   "cli.opt.npm-token": "npm auth token (overrides NPM_TOKEN)",

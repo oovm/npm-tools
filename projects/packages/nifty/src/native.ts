@@ -148,6 +148,8 @@ export type PublisherExports = {
         cwd?: string;
         dryRun?: boolean;
         refresh?: boolean;
+        only?: string;
+        packages?: string[];
         tag?: string;
         access?: string;
         npm?: string;
@@ -217,6 +219,8 @@ type NativeBinding = {
         otp?: string | null;
         totpSecret?: string | null;
         token?: string | null;
+        only?: string | null;
+        packages?: string[] | null;
     }) => PublishReport;
     publisherTrustWorkspace: (options: {
         cwd?: string | null;
@@ -441,6 +445,8 @@ function wrapBinding(binding: NativeBinding): NiftyNative {
                     ...(options.cwd !== undefined ? { cwd: options.cwd } : {}),
                     ...(options.dryRun !== undefined ? { dryRun: options.dryRun } : {}),
                     ...(options.refresh !== undefined ? { refresh: options.refresh } : {}),
+                    ...(options.only !== undefined ? { only: options.only } : {}),
+                    ...(options.packages !== undefined ? { packages: options.packages } : {}),
                     ...(options.tag !== undefined ? { tag: options.tag } : {}),
                     ...(options.access !== undefined ? { access: options.access } : {}),
                     ...(options.npm !== undefined ? { npm: options.npm } : {}),
