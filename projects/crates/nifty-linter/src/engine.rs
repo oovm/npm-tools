@@ -1,19 +1,28 @@
 use crate::context::{CommitInput, LintContext};
 use crate::rule::{default_rules, LintDiagnostic, RuleConfig, RuleSeverity};
-use crate::rules::lint_commit;
+use crate::rules::{lint_cargo_workspace, lint_commit};
+use nifty_config::{detect_project_layout, ProjectKind};
 
 pub type Result<T> = std::result::Result<T, String>;
 
 /// Run lint rules and return diagnostics.
 pub fn run_lint(options: LintOptions) -> Result<LintReport> {
-    let commits = load_commits(&options)?;
-    let rules = merge_rules(options.rules);
+    let subject_only = is_subject_only(&options);
+    let rules = merge_rules(options.rules.clone());
+    let commits = load_commits(&options, subject_only)?;
     let ctx = LintContext::new(commits, rules);
-    let diagnostics = ctx
+    let mut diagnostics = ctx
         .commits
         .iter()
         .flat_map(|commit| lint_commit(&ctx, commit))
-        .collect();
+        .collect::<Vec<_>>();
+
+    if should_scan_cargo(&options, subject_only) {
+        if let Some(root) = resolve_cargo_scan_root(&options) {
+            diagnostics.extend(lint_cargo_workspace(&ctx, &root));
+        }
+    }
+
     Ok(LintReport { diagnostics })
 }
 
@@ -42,8 +51,12 @@ fn merge_rules(custom: Option<Vec<RuleConfig>>) -> Vec<RuleConfig> {
     merged
 }
 
-fn load_commits(options: &LintOptions) -> Result<Vec<CommitInput>> {
+fn load_commits(options: &LintOptions, subject_only: bool) -> Result<Vec<CommitInput>> {
     let mut commits = options.subjects.iter().cloned().map(CommitInput::subject_only).collect::<Vec<_>>();
+
+    if subject_only {
+        return Ok(commits);
+    }
 
     if options.repo_root.is_some() || options.from_ref.is_some() || options.to_ref.is_some() {
         let repo_root = options
@@ -70,14 +83,44 @@ fn load_commits(options: &LintOptions) -> Result<Vec<CommitInput>> {
     Ok(commits)
 }
 
+fn is_subject_only(options: &LintOptions) -> bool {
+    !options.subjects.is_empty()
+        && options.from_ref.is_none()
+        && options.to_ref.is_none()
+        && options.repo_root.is_none()
+}
+
+fn should_scan_cargo(options: &LintOptions, subject_only: bool) -> bool {
+    if options.scan_cargo == Some(false) || subject_only {
+        return false;
+    }
+    options.scan_cargo.unwrap_or(true)
+}
+
+fn resolve_cargo_scan_root(options: &LintOptions) -> Option<std::path::PathBuf> {
+    let start = options
+        .repo_root
+        .clone()
+        .or_else(|| options.cwd.clone())
+        .or_else(|| std::env::current_dir().ok())?;
+    let layout = detect_project_layout(&start);
+    match layout.kind {
+        ProjectKind::Cargo | ProjectKind::Hybrid => layout.cargo_workspace_root.or(Some(layout.root)),
+        ProjectKind::Npm | ProjectKind::Unknown => None,
+    }
+}
+
 /// Lint execution options.
 #[derive(Debug, Clone, Default)]
 pub struct LintOptions {
     pub repo_root: Option<std::path::PathBuf>,
+    pub cwd: Option<std::path::PathBuf>,
     pub from_ref: Option<String>,
     pub to_ref: Option<String>,
     pub subjects: Vec<String>,
     pub rules: Option<Vec<RuleConfig>>,
+    /// Run cargo workspace hygiene rules (ported from `cargo cry`). Default: true unless `--subject` only.
+    pub scan_cargo: Option<bool>,
 }
 
 /// Lint output summary.
@@ -108,12 +151,21 @@ impl LintReport {
             return;
         }
         for item in &self.diagnostics {
+            let location = match (&item.path, item.line) {
+                (Some(path), Some(line)) => format!("{path}:{line}"),
+                (Some(path), None) => path.clone(),
+                _ => "-".to_string(),
+            };
             let hash = item.hash.as_deref().unwrap_or("-");
             let subject = item.subject.as_deref().unwrap_or("-");
-            println!(
-                "[{:?}] {} ({}) {}",
-                item.severity, item.rule, hash, subject
-            );
+            if item.subject.is_some() {
+                println!(
+                    "[{:?}] {} ({}) {}",
+                    item.severity, item.rule, hash, subject
+                );
+            } else {
+                println!("[{:?}] {} {}", item.severity, item.rule, location);
+            }
             println!("  {}", item.message);
         }
         println!(

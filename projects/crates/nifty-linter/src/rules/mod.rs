@@ -1,3 +1,5 @@
+mod cargo;
+
 use nifty_formatter::format_subject;
 use nifty_types::{known_gitmojis, leading_gitmoji, parse_subject, strip_gitmoji, validate_subject};
 
@@ -6,6 +8,7 @@ use crate::rule::{
     LintDiagnostic, RULE_GITMOJI_BODY, RULE_GITMOJI_FORMAT, RULE_GITMOJI_KNOWN, RULE_GITMOJI_SUBJECT,
 };
 
+pub use cargo::lint_cargo_workspace;
 pub fn lint_commit(ctx: &LintContext, commit: &CommitInput) -> Vec<LintDiagnostic> {
     let mut out = Vec::new();
     for rule in [

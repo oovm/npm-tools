@@ -1,8 +1,8 @@
 # nifty-linter
 
-Rule-based lint/check for Nifty gitmoji commit conventions.
+Rule-based lint/check for Nifty gitmoji commit conventions and cargo workspace hygiene (ported from `cargo cry`).
 
-## Rules
+## Gitmoji rules
 
 | Rule | Default | Description |
 | --- | --- | --- |
@@ -10,6 +10,23 @@ Rule-based lint/check for Nifty gitmoji commit conventions.
 | `gitmoji/known` | error | Gitmoji must be in the Nifty known list |
 | `gitmoji/body` | warning | Body after gitmoji must not be empty |
 | `gitmoji/format` | warning | Subject should match `format_subject(gitmoji, body)` |
+
+## Cargo workspace rules (`cargo cry`)
+
+| Rule | Default | Description |
+| --- | --- | --- |
+| `cargo/readme-case` | error | `README.md` must be lowercase `readme.md` |
+| `cargo/package-section` | error | `Cargo.toml` must declare `[package]` |
+| `cargo/readme-missing` | error | Crate root must contain `readme.md` |
+| `cargo/missing-docs` | error | `missing_docs` lint at least `warn` |
+| `cargo/workspace-inherit` | error | Member `package.*` fields should use `workspace = true` |
+| `cargo/workspace-dep` | error | Shared deps should use `workspace = true` |
+| `cargo/doc-include-str` | error | Long `src/readme.md` must use `#![doc = include_str!(...)]` |
+| `cargo/misplaced-test` | error | No `#[test]` / `mod tests` under `src/` |
+| `cargo/misplaced-root-rs` | error | No loose `.rs` files beside `Cargo.toml` |
+| `cargo/large-file` | warning | Rust sources over 1000 lines |
+
+Cargo rules run automatically on hybrid/cargo repos when linting commits. Pass `--no-cargo` to skip them. Use `--subject` alone to lint only gitmoji rules.
 
 ## CLI
 
@@ -19,7 +36,18 @@ Via [`@doki-land/nifty`](https://www.npmjs.com/package/@doki-land/nifty):
 nifty lint
 nifty lint --subject "✨ Add feature"
 nifty lint --from v0.1.0 --to HEAD
+nifty lint --no-cargo
 nifty check
+```
+
+Configure rule severity in `nifty.config.ts`:
+
+```ts
+export default {
+  lint: {
+    rules: [{ id: "cargo/large-file", severity: "warning", enabled: true }],
+  },
+};
 ```
 
 ## Library

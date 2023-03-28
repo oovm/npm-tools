@@ -49,5 +49,26 @@ pub fn diagnostic(
         message: message.into(),
         subject: Some(commit.subject.clone()),
         hash: commit.hash.clone(),
+        path: None,
+        line: None,
+    })
+}
+
+pub fn file_diagnostic(
+    ctx: &LintContext,
+    rule_id: &'static str,
+    message: impl Into<String>,
+    path: &std::path::Path,
+    line: Option<u32>,
+) -> Option<LintDiagnostic> {
+    let severity = ctx.severity_for(rule_id)?;
+    Some(LintDiagnostic {
+        rule: rule_id.to_string(),
+        severity,
+        message: message.into(),
+        subject: None,
+        hash: None,
+        path: Some(path.display().to_string()),
+        line,
     })
 }
