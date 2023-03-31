@@ -9,7 +9,14 @@ use serde_json::Value;
 
 use crate::Result;
 
-/// One outdated npm dependency from `npm outdated --json`.
+/// Package manager used for JavaScript dependency updates.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum PackageManager {
+    Npm,
+    Pnpm,
+}
+
+/// One outdated JavaScript dependency from `npm outdated --json` or `pnpm outdated --json`.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct NpmOutdated {
     pub name: String,
@@ -19,6 +26,10 @@ pub struct NpmOutdated {
 }
 
 pub fn discover_package_dirs(layout: &ProjectLayout) -> Result<Vec<PathBuf>> {
+    if detect_package_manager(layout) == PackageManager::Pnpm {
+        return Ok(vec![layout.root.clone()]);
+    }
+
     let mut roots = BTreeSet::new();
 
     if let Some(root) = &layout.npm_workspace_root {
@@ -50,11 +61,20 @@ pub fn discover_package_dirs(layout: &ProjectLayout) -> Result<Vec<PathBuf>> {
 }
 
 pub fn list_outdated(package_dir: &Path) -> Result<Vec<NpmOutdated>> {
-    let output = Command::new("npm")
-        .args(["outdated", "--json"])
+    list_outdated_with(package_dir, detect_package_manager_at(package_dir))
+}
+
+fn list_outdated_with(package_dir: &Path, manager: PackageManager) -> Result<Vec<NpmOutdated>> {
+    let (program, args): (&str, &[&str]) = match manager {
+        PackageManager::Npm => ("npm", &["outdated", "--json"]),
+        PackageManager::Pnpm => ("pnpm", &["outdated", "-r", "--json"]),
+    };
+
+    let output = Command::new(program)
+        .args(args)
         .current_dir(package_dir)
         .output()
-        .map_err(|err| format!("failed to run npm outdated: {err}"))?;
+        .map_err(|err| format!("failed to run {program} outdated: {err}"))?;
 
     let stdout = String::from_utf8_lossy(&output.stdout);
     if stdout.trim().is_empty() {
@@ -62,18 +82,7 @@ pub fn list_outdated(package_dir: &Path) -> Result<Vec<NpmOutdated>> {
     }
 
     let parsed: Value = serde_json::from_str(&stdout).map_err(|err| err.to_string())?;
-    let Some(object) = parsed.as_object() else {
-        return Ok(Vec::new());
-    };
-
-    let mut out = Vec::new();
-    for (name, entry) in object {
-        if let Some(item) = parse_outdated_entry(name, entry) {
-            out.push(item);
-        }
-    }
-    out.sort_by(|a, b| a.name.cmp(&b.name));
-    Ok(out)
+    Ok(parse_outdated_json(&parsed, manager))
 }
 
 pub fn select_outdated(outdated: &[NpmOutdated], package_dir: &Path) -> Result<Vec<NpmOutdated>> {
@@ -82,7 +91,7 @@ pub fn select_outdated(outdated: &[NpmOutdated], package_dir: &Path) -> Result<V
         .map(|item| format!("{} {} -> {} (latest {})", item.name, item.current, item.wanted, item.latest))
         .collect();
     let defaults = vec![true; labels.len()];
-    let prompt = format!("Select npm upgrades ({})", package_dir.display());
+    let prompt = format!("Select JavaScript upgrades ({})", package_dir.display());
     let picked = MultiSelect::new()
         .with_prompt(prompt)
         .items(&labels)
@@ -94,32 +103,100 @@ pub fn select_outdated(outdated: &[NpmOutdated], package_dir: &Path) -> Result<V
 }
 
 pub fn apply_npm_upgrades(package_dir: &Path, selected: &[NpmOutdated]) -> Result<()> {
+    let manager = detect_package_manager_at(package_dir);
     for item in selected {
         let spec = format!("{}@{}", item.name, item.latest);
-        let status = Command::new("npm")
-            .args(["install", &spec])
-            .current_dir(package_dir)
-            .status()
-            .map_err(|err| format!("failed to run npm install: {err}"))?;
-        if !status.success() {
-            return Err(format!("npm install failed for {}", item.name));
+        let status = match manager {
+            PackageManager::Npm => Command::new("npm")
+                .args(["install", &spec])
+                .current_dir(package_dir)
+                .status(),
+            PackageManager::Pnpm => Command::new("pnpm")
+                .args(["up", "-r", &spec])
+                .current_dir(package_dir)
+                .status(),
         }
-        println!("npm ({}): upgraded {} -> {}", package_dir.display(), item.name, item.latest);
+        .map_err(|err| format!("failed to run package manager install: {err}"))?;
+        if !status.success() {
+            return Err(format!("package manager install failed for {}", item.name));
+        }
+        println!(
+            "{} ({}): upgraded {} -> {}",
+            manager_label(manager),
+            package_dir.display(),
+            item.name,
+            item.latest
+        );
     }
     Ok(())
 }
 
 pub fn apply_npm_update_all(package_dir: &Path) -> Result<()> {
-    let status = Command::new("npm")
-        .args(["update"])
-        .current_dir(package_dir)
-        .status()
-        .map_err(|err| format!("failed to run npm update: {err}"))?;
-    if !status.success() {
-        return Err(format!("npm update failed in {}", package_dir.display()));
+    let manager = detect_package_manager_at(package_dir);
+    let status = match manager {
+        PackageManager::Npm => Command::new("npm").args(["update"]).current_dir(package_dir).status(),
+        PackageManager::Pnpm => Command::new("pnpm").args(["update", "-r"]).current_dir(package_dir).status(),
     }
-    println!("npm ({}): updated dependencies", package_dir.display());
+    .map_err(|err| format!("failed to run {} update: {err}", manager_label(manager)))?;
+    if !status.success() {
+        return Err(format!(
+            "{} update failed in {}",
+            manager_label(manager),
+            package_dir.display()
+        ));
+    }
+    println!("{} ({}): updated dependencies", manager_label(manager), package_dir.display());
     Ok(())
+}
+
+fn detect_package_manager(layout: &ProjectLayout) -> PackageManager {
+    detect_package_manager_at(&layout.root)
+}
+
+fn detect_package_manager_at(dir: &Path) -> PackageManager {
+    if dir.join("pnpm-workspace.yaml").is_file() || dir.join("pnpm-lock.yaml").is_file() {
+        return PackageManager::Pnpm;
+    }
+    PackageManager::Npm
+}
+
+fn manager_label(manager: PackageManager) -> &'static str {
+    match manager {
+        PackageManager::Npm => "npm",
+        PackageManager::Pnpm => "pnpm",
+    }
+}
+
+fn parse_outdated_json(parsed: &Value, manager: PackageManager) -> Vec<NpmOutdated> {
+    let mut out = Vec::new();
+    match manager {
+        PackageManager::Npm => {
+            if let Some(object) = parsed.as_object() {
+                for (name, entry) in object {
+                    if let Some(item) = parse_outdated_entry(name, entry) {
+                        out.push(item);
+                    }
+                }
+            }
+        }
+        PackageManager::Pnpm => {
+            if let Some(object) = parsed.as_object() {
+                for (_, entry) in object {
+                    if let Some(nested) = entry.as_object() {
+                        for (name, dep) in nested {
+                            if let Some(item) = parse_outdated_entry(name, dep) {
+                                out.push(item);
+                            }
+                        }
+                    } else if let Some(item) = parse_outdated_entry("dependency", entry) {
+                        out.push(item);
+                    }
+                }
+            }
+        }
+    }
+    out.sort_by(|a, b| a.name.cmp(&b.name));
+    out
 }
 
 fn parse_outdated_entry(name: &str, entry: &Value) -> Option<NpmOutdated> {
@@ -136,7 +213,7 @@ fn parse_outdated_entry(name: &str, entry: &Value) -> Option<NpmOutdated> {
 
 #[cfg(test)]
 mod tests {
-    use super::parse_outdated_entry;
+    use super::{parse_outdated_entry, parse_outdated_json, PackageManager};
     use serde_json::json;
 
     #[test]
@@ -152,5 +229,21 @@ mod tests {
         .expect("entry");
         assert_eq!(item.name, "typescript");
         assert_eq!(item.latest, "5.9.2");
+    }
+
+    #[test]
+    fn parses_pnpm_recursive_outdated_json() {
+        let parsed = json!({
+            "projects/packages/nifty": {
+                "typescript": {
+                    "current": "5.8.3",
+                    "wanted": "5.8.3",
+                    "latest": "5.9.2"
+                }
+            }
+        });
+        let items = parse_outdated_json(&parsed, PackageManager::Pnpm);
+        assert_eq!(items.len(), 1);
+        assert_eq!(items[0].name, "typescript");
     }
 }

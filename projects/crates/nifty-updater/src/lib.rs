@@ -77,7 +77,7 @@ fn update_cargo(layout: &ProjectLayout, interactive: bool) -> Result<()> {
 fn update_npm(layout: &ProjectLayout, interactive: bool) -> Result<()> {
     let packages = npm::discover_package_dirs(layout)?;
     if packages.is_empty() {
-        println!("npm: no package.json directories found");
+        println!("js: no package.json directories found");
         return Ok(());
     }
 
@@ -91,14 +91,14 @@ fn update_npm(layout: &ProjectLayout, interactive: bool) -> Result<()> {
 fn update_npm_dir(package_dir: &Path, interactive: bool) -> Result<()> {
     let outdated = npm::list_outdated(package_dir)?;
     if outdated.is_empty() {
-        println!("npm ({}): dependencies already up to date", package_dir.display());
+        println!("js ({}): dependencies already up to date", package_dir.display());
         return Ok(());
     }
 
     if interactive {
         let selected = npm::select_outdated(&outdated, package_dir)?;
         if selected.is_empty() {
-            println!("npm ({}): no upgrades selected", package_dir.display());
+            println!("js ({}): no upgrades selected", package_dir.display());
             return Ok(());
         }
         npm::apply_npm_upgrades(package_dir, &selected)?;

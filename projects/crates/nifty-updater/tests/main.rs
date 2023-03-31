@@ -12,5 +12,6 @@ fn discovers_hybrid_package_dirs() {
     let layout = detect_project_layout(&root.join("projects/packages/nifty"));
     assert_eq!(layout.kind, ProjectKind::Hybrid);
     let packages = discover_package_dirs(&layout).expect("packages");
-    assert!(packages.iter().any(|path| path.ends_with("projects/packages/nifty")));
+    assert_eq!(packages.len(), 1);
+    assert_eq!(packages[0], root);
 }
