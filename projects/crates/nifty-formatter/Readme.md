@@ -1,21 +1,42 @@
 # nifty-formatter
 
-Nifty formatting helpers for gitmoji subjects and release note markdown.
+Nifty formatting helpers and workspace formatter.
+
+## Gitmoji and release notes
 
 - `format_subject` — gitmoji-prefixed commit subjects
-- `author_mention` / `commit_bullet` — release note bullets
+- `commit_bullet` / `author_mention` — release reference bullets
 - `format_release_section` / `format_release_notes` — grouped changelog markdown
 
-Built on [`nifty-types`](https://docs.rs/nifty-types) for parsing and section metadata.
+## Workspace format (`nifty format`)
 
-```rust
-use nifty_formatter::{format_subject, commit_bullet};
+| Target | Engine |
+| --- | --- |
+| `*.rs` (Cargo workspace) | `cargo fmt --all` |
+| `*.ts` / `*.js` / `*.json` | `oxc_formatter` (git pin `oxfmt_v0.70.0`) |
 
-let subject = format_subject("✨", "Add feature");
-let bullet = commit_bullet("Add feature", "dev@example.com", "Dev", &Default::default());
+Default JS style matches sibling repos' `biome.json`: 4 spaces, single quotes, line width 144.
+
+```bash
+nifty format
+nifty format --check
 ```
 
-Part of [npm-tools](https://github.com/oovm/npm-tools). Consumed by `@doki-land/nifty` through `nifty-napi`.
+## Library
+
+```rust
+use nifty_formatter::{format_source, run_format, RunFormatOptions};
+
+let report = run_format(RunFormatOptions {
+    check: false,
+    cwd: None,
+})?;
+```
+
+## Links
+
+- [Source](https://github.com/oovm/npm-tools/tree/dev/projects/crates/nifty-formatter)
+- [docs.rs](https://docs.rs/nifty-formatter)
 
 ## License
 

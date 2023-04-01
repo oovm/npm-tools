@@ -33,6 +33,7 @@ description: >-
 | `nifty publish` | Publish workspace npm packages (OIDC or token + TOTP) |
 | `nifty trust` | Configure npm Trusted Publisher |
 | `nifty update` | Bump Cargo and npm dependencies |
+| `nifty format` | Format Rust via `cargo fmt` and JS/TS/JSON via `oxc_formatter` |
 | `nifty upload` | GitHub Release assets or GitHub Pages |
 | `nifty install-native` | Stage CI `.node` artifacts into platform packages |
 | `nifty reword` | Rewrite commit messages at the object layer |

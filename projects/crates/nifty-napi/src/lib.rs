@@ -1,5 +1,6 @@
 //! Node-API export surface for Nifty (gitmoji + gix git helpers).
 
+mod formatter;
 mod git_tools;
 mod lint;
 mod updater;

@@ -1,6 +1,7 @@
 {
   "cli.intro": "nifty — gitmoji-first release tooling for hybrid cargo + npm workspaces",
   "cli.cmd.update": "Update Cargo and npm/pnpm dependencies",
+  "cli.cmd.format": "Format Rust with cargo fmt and JS/TS/JSON with oxc_formatter",
   "cli.cmd.lint": "Lint commit subjects and cargo workspace hygiene",
   "cli.cmd.check": "Lint commit subjects, cargo workspace hygiene, and fail on errors",
   "cli.cmd.upload": "Upload generic assets to GitHub Release or GitHub Pages",
@@ -35,6 +36,7 @@
   "cli.opt.draft": "Create a draft GitHub Release",
   "cli.opt.no-generate-notes": "Skip auto-generated release notes",
   "cli.opt.github-action": "Read GITHUB_TOKEN, GITHUB_REPOSITORY, GITHUB_REF_NAME",
+  "cli.opt.check": "Check formatting without writing files",
   "cli.opt.dry-run": "Print actions without writing or publishing",
   "cli.opt.refresh": "Ignore publish/trust cache and re-check registry",
   "cli.opt.version": "Explicit semver target version",

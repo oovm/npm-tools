@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import { createCli } from "@vmz/commander";
 
 import { registerBumpCommand } from "./bump-cmd.js";
+import { registerFormatCommand } from "./format-cmd.js";
 import { registerChangeLogsCommand } from "./change-logs-cmd.js";
 import { registerInstallNativeCommand } from "./install-native-cmd.js";
 import { registerLintCommands } from "./lint-cmd.js";
@@ -22,6 +23,7 @@ function buildNiftyCli() {
         .option("-C, --cwd <dir>", "cli.opt.cwd");
 
     registerUpdateCommand(cli);
+    registerFormatCommand(cli);
     registerLintCommands(cli);
     registerUploadCommand(cli);
     registerInstallNativeCommand(cli);

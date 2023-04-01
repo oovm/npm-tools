@@ -177,6 +177,16 @@ export type UpdaterExports = {
     run: (options: { cwd?: string; interactive?: boolean }) => void;
 };
 
+export type FormatReportRecord = {
+    formatted: number;
+    unchanged: number;
+    errors: string[];
+};
+
+export type FormatterExports = {
+    run: (options: { cwd?: string; check?: boolean }) => FormatReportRecord;
+};
+
 export type PublisherExports = {
     "publish-workspace": (options: {
         cwd?: string;
@@ -210,6 +220,7 @@ export type NiftyNative = {
     history: HistoryExports;
     lint: LintExports;
     updater: UpdaterExports;
+    formatter: FormatterExports;
     publisher: PublisherExports;
 };
 
@@ -380,6 +391,11 @@ type NativeBinding = {
         warningCount: number;
     };
     updaterRun: (options: { cwd?: string | null; interactive?: boolean | null }) => void;
+    formatterRun: (options: { cwd?: string | null; check?: boolean | null }) => {
+        formatted: number;
+        unchanged: number;
+        errors: string[];
+    };
 };
 
 const PLATFORM_PACKAGES: Record<string, string> = {
@@ -568,6 +584,12 @@ function wrapBinding(binding: NativeBinding): NiftyNative {
                     ...(options.interactive !== undefined ? { interactive: options.interactive } : {}),
                 });
             },
+        },
+        formatter: {
+            run: (options) => binding.formatterRun({
+                ...(options.cwd !== undefined ? { cwd: options.cwd } : {}),
+                ...(options.check !== undefined ? { check: options.check } : {}),
+            }),
         },
         publisher: {
             "publish-workspace": (options) =>
