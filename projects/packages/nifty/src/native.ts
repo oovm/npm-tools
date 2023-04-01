@@ -143,6 +143,40 @@ export type HistoryExports = {
     }) => GithubAuthor;
 };
 
+export type LintDiagnosticRecord = {
+    rule: string;
+    severity: "error" | "warning" | "info";
+    message: string;
+    subject?: string;
+    hash?: string;
+    path?: string;
+    line?: number;
+};
+
+export type LintRunOptions = {
+    cwd?: string;
+    fromRef?: string;
+    toRef?: string;
+    subjects?: string[];
+    rules?: Array<{ id: string; enabled?: boolean; severity?: "error" | "warning" | "info" }>;
+    scanCargo?: boolean;
+};
+
+export type LintReportRecord = {
+    diagnostics: LintDiagnosticRecord[];
+    errorCount: number;
+    warningCount: number;
+};
+
+export type LintExports = {
+    run: (options: LintRunOptions) => LintReportRecord;
+    check: (options: LintRunOptions) => LintReportRecord;
+};
+
+export type UpdaterExports = {
+    run: (options: { cwd?: string; interactive?: boolean }) => void;
+};
+
 export type PublisherExports = {
     "publish-workspace": (options: {
         cwd?: string;
@@ -174,6 +208,8 @@ export type NiftyNative = {
     gitmoji: GitmojiExports;
     git: GitExports;
     history: HistoryExports;
+    lint: LintExports;
+    updater: UpdaterExports;
     publisher: PublisherExports;
 };
 
@@ -301,6 +337,49 @@ type NativeBinding = {
         githubToken?: string | null;
         fetch?: boolean | null;
     }) => GithubAuthor;
+    lintRun: (options: {
+        cwd?: string | null;
+        fromRef?: string | null;
+        toRef?: string | null;
+        subjects?: string[] | null;
+        rules?: Array<{ id: string; enabled?: boolean | null; severity?: string | null }> | null;
+        scanCargo?: boolean | null;
+        check?: boolean | null;
+    }) => {
+        diagnostics: Array<{
+            rule: string;
+            severity: string;
+            message: string;
+            subject?: string | null;
+            hash?: string | null;
+            path?: string | null;
+            line?: number | null;
+        }>;
+        errorCount: number;
+        warningCount: number;
+    };
+    lintCheck: (options: {
+        cwd?: string | null;
+        fromRef?: string | null;
+        toRef?: string | null;
+        subjects?: string[] | null;
+        rules?: Array<{ id: string; enabled?: boolean | null; severity?: string | null }> | null;
+        scanCargo?: boolean | null;
+        check?: boolean | null;
+    }) => {
+        diagnostics: Array<{
+            rule: string;
+            severity: string;
+            message: string;
+            subject?: string | null;
+            hash?: string | null;
+            path?: string | null;
+            line?: number | null;
+        }>;
+        errorCount: number;
+        warningCount: number;
+    };
+    updaterRun: (options: { cwd?: string | null; interactive?: boolean | null }) => void;
 };
 
 const PLATFORM_PACKAGES: Record<string, string> = {
@@ -318,6 +397,45 @@ function mapAuthor(raw: GithubAuthor | null | undefined): GithubAuthor | undefin
     return {
         id: raw.id !== undefined && raw.id !== null ? BigInt(raw.id) : undefined,
         login: raw.login ?? undefined,
+    };
+}
+
+function mapLintOptions(options: LintRunOptions) {
+    return {
+        ...(options.cwd !== undefined ? { cwd: options.cwd } : {}),
+        ...(options.fromRef !== undefined ? { fromRef: options.fromRef } : {}),
+        ...(options.toRef !== undefined ? { toRef: options.toRef } : {}),
+        ...(options.subjects !== undefined ? { subjects: options.subjects } : {}),
+        ...(options.rules !== undefined ? { rules: options.rules } : {}),
+        ...(options.scanCargo !== undefined ? { scanCargo: options.scanCargo } : {}),
+    };
+}
+
+function mapLintReport(raw: {
+    diagnostics: Array<{
+        rule: string;
+        severity: string;
+        message: string;
+        subject?: string | null;
+        hash?: string | null;
+        path?: string | null;
+        line?: number | null;
+    }>;
+    errorCount: number;
+    warningCount: number;
+}): LintReportRecord {
+    return {
+        errorCount: raw.errorCount,
+        warningCount: raw.warningCount,
+        diagnostics: raw.diagnostics.map((item) => ({
+            rule: item.rule,
+            severity: item.severity as LintDiagnosticRecord["severity"],
+            message: item.message,
+            subject: item.subject ?? undefined,
+            hash: item.hash ?? undefined,
+            path: item.path ?? undefined,
+            line: item.line ?? undefined,
+        })),
     };
 }
 
@@ -437,6 +555,18 @@ function wrapBinding(binding: NativeBinding): NiftyNative {
                     ...(options.fetch !== undefined ? { fetch: options.fetch } : {}),
                 });
                 return mapAuthor(author) ?? {};
+            },
+        },
+        lint: {
+            run: (options) => mapLintReport(binding.lintRun(mapLintOptions(options))),
+            check: (options) => mapLintReport(binding.lintCheck(mapLintOptions(options))),
+        },
+        updater: {
+            run: (options) => {
+                binding.updaterRun({
+                    ...(options.cwd !== undefined ? { cwd: options.cwd } : {}),
+                    ...(options.interactive !== undefined ? { interactive: options.interactive } : {}),
+                });
             },
         },
         publisher: {

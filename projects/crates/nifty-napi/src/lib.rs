@@ -1,6 +1,8 @@
 //! Node-API export surface for Nifty (gitmoji + gix git helpers).
 
 mod git_tools;
+mod lint;
+mod updater;
 
 use std::collections::HashMap;
 use std::path::Path;

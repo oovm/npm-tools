@@ -2,7 +2,7 @@ import type { Cli, ParsedOptions } from "@vmz/commander";
 
 import { bootstrapFromOptions } from "./context.js";
 import { lintCommits, type LintOptions } from "./lint.js";
-import { cwdFrom, str, strList } from "./options.js";
+import { cwdFrom, flag, str, strList } from "./options.js";
 
 export function registerLintCommands(cli: Cli): void {
     registerLintLike(cli, "lint", "cli.cmd.lint", false);
@@ -14,6 +14,7 @@ function registerLintLike(cli: Cli, name: string, helpId: string, check: boolean
         .option("--from <ref>", "cli.opt.from")
         .option("--to <ref>", "cli.opt.to")
         .option("-s, --subject <text>...", "cli.opt.subject")
+        .option("--no-cargo", "cli.opt.no-cargo")
         .action(async (options) => cmdLint(options, check));
 }
 
@@ -24,6 +25,7 @@ export async function cmdLint(options: ParsedOptions, check: boolean): Promise<n
         from: str(options, "from"),
         to: str(options, "to"),
         cwd: cwdFrom(options),
+        scanCargo: flag(options, "no-cargo") ? false : undefined,
     };
     const errorCount = await lintCommits(lintOptions, check);
     if (check && errorCount > 0) {

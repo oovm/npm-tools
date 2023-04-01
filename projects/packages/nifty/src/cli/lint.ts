@@ -1,19 +1,28 @@
+import { loadConfig } from "../config/loadConfig.js";
 import { loadNiftyNative } from "../native.js";
-
-const KNOWN_GITMOJIS = ["✨", "🎨", "🚀", "🐛", "🚑", "🔥", "💥", "♻️", "🔧", "📝", "👷", "🧹", "⬆️", "🧪", "🔨", "📦"];
 
 export type LintOptions = {
     subjects: string[];
     from?: string;
     to?: string;
     cwd?: string;
+    scanCargo?: boolean;
 };
 
 type LintDiagnostic = {
     rule: string;
-    severity: "error" | "warning";
+    severity: "error" | "warning" | "info";
     message: string;
     subject?: string;
+    hash?: string;
+    path?: string;
+    line?: number;
+};
+
+type LintRuleConfig = {
+    id: string;
+    enabled?: boolean;
+    severity?: "error" | "warning" | "info";
 };
 
 export async function runLint(argv: string[], check: boolean): Promise<void> {
@@ -26,26 +35,51 @@ export async function runLint(argv: string[], check: boolean): Promise<void> {
 
 export async function lintCommits(options: LintOptions, check: boolean): Promise<number> {
     const native = loadNiftyNative();
-    const subjects: string[] = [];
+    const cwd = options.cwd ?? process.cwd();
+    const { config } = await loadConfig({ cwd, createIfMissing: false });
+    const rules: LintRuleConfig[] | undefined = config.lint?.rules?.map((rule) => ({
+        id: rule.id,
+        enabled: rule.enabled,
+        severity: rule.severity,
+    }));
 
-    if (options.subjects.length > 0) {
-        subjects.push(...options.subjects);
+    const runner = check ? native.lint.check : native.lint.run;
+    const report = runner({
+        cwd,
+        fromRef: options.from,
+        toRef: options.to,
+        subjects: options.subjects.length > 0 ? options.subjects : undefined,
+        rules,
+        scanCargo: options.scanCargo,
+    });
+
+    for (const item of report.diagnostics) {
+        printDiagnostic(item);
+    }
+
+    if (report.diagnostics.length > 0) {
+        console.log(`lint: ${report.errorCount} error(s), ${report.warningCount} warning(s)`);
     } else {
-        const cwd = options.cwd ?? process.cwd();
-        const repoRoot = native.git["discover-root"](cwd);
-        const toRef = options.to ?? "HEAD";
-        const commits = native.git["collect-commits"](repoRoot, options.from, toRef);
-        subjects.push(...commits.map((commit) => commit.subject));
+        console.log("lint: no issues found");
     }
 
-    const diagnostics = subjects.flatMap((subject) => lintSubject(subject, native));
-    for (const item of diagnostics) {
-        const prefix = item.severity === "error" ? "error" : "warning";
-        const suffix = item.subject ? ` (${item.subject})` : "";
-        console.log(`${prefix} [${item.rule}] ${item.message}${suffix}`);
-    }
+    return report.errorCount;
+}
 
-    return diagnostics.filter((item) => item.severity === "error").length;
+function printDiagnostic(item: LintDiagnostic): void {
+    const prefix = item.severity === "error" ? "error" : item.severity === "warning" ? "warning" : "info";
+    if (item.subject) {
+        console.log(`${prefix} [${item.rule}] ${item.message} (${item.subject})`);
+        return;
+    }
+    const location =
+        item.path !== undefined
+            ? item.line !== undefined
+                ? `${item.path}:${item.line}`
+                : item.path
+            : undefined;
+    const suffix = location ? ` @ ${location}` : "";
+    console.log(`${prefix} [${item.rule}] ${item.message}${suffix}`);
 }
 
 function parseLintArgs(argv: string[]): LintOptions {
@@ -60,54 +94,9 @@ function parseLintArgs(argv: string[]): LintOptions {
             options.cwd = argv[++i];
         } else if (arg === "-s" || arg === "--subject") {
             options.subjects.push(argv[++i]);
+        } else if (arg === "--no-cargo") {
+            options.scanCargo = false;
         }
     }
     return options;
-}
-
-function lintSubject(subject: string, native: ReturnType<typeof loadNiftyNative>): LintDiagnostic[] {
-    const out: LintDiagnostic[] = [];
-    if (!native.gitmoji["validate-subject"](subject)) {
-        out.push({
-            rule: "gitmoji/subject",
-            severity: "error",
-            message: "commit subject must start with a known gitmoji followed by a space",
-            subject,
-        });
-        return out;
-    }
-
-    const gitmoji = native.gitmoji["leading-gitmoji"](subject);
-    if (gitmoji && !KNOWN_GITMOJIS.includes(gitmoji)) {
-        out.push({
-            rule: "gitmoji/known",
-            severity: "error",
-            message: `gitmoji ${gitmoji} is not in the Nifty known gitmoji list`,
-            subject,
-        });
-    }
-
-    const body = native.gitmoji["strip-gitmoji"](subject).trim();
-    if (!body) {
-        out.push({
-            rule: "gitmoji/body",
-            severity: "warning",
-            message: "commit subject body must not be empty after the gitmoji prefix",
-            subject,
-        });
-    }
-
-    if (gitmoji) {
-        const expected = native.gitmoji["format-subject"](gitmoji, body);
-        if (expected !== subject.trim()) {
-            out.push({
-                rule: "gitmoji/format",
-                severity: "warning",
-                message: `subject should be formatted as ${expected}`,
-                subject,
-            });
-        }
-    }
-
-    return out;
 }
