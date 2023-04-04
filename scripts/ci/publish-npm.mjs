@@ -148,25 +148,39 @@ function versionExists(name, version) {
     return r.status === 0 && r.stdout === version;
 }
 
+function isLowerThanLatestTagError(blob) {
+    return /Cannot implicitly apply the "latest" tag because previously published version/i.test(blob);
+}
+
 /**
  * @param {string} stagingDir
  * @param {string} name
  * @param {string} version
+ * @param {{ npmTag?: string }} [opts]
  * @returns {"published"|"exists"|"auth"|"missing"|"other"}
  */
-function npmPublish(stagingDir, name, version) {
-    const args = ["publish", "--access", "public"];
-    console.log(`\n=== ${name}@${version} npm ${args.join(" ")} ===`);
-    const r = run("npm", args, { cwd: stagingDir });
-    if (r.stdout) process.stdout.write(`${r.stdout}\n`);
-    if (r.stderr) process.stderr.write(`${r.stderr}\n`);
-    const blob = `${r.stdout}\n${r.stderr}`;
-    if (r.status === 0) return "published";
-    if (isAlreadyPublished(blob) || versionExists(name, version)) return "exists";
-    if (isAuthFailure(blob)) return "auth";
-    if (isMissingPackage(blob)) return "missing";
-    if (versionExists(name, version)) return "exists";
-    console.error(blob.slice(0, 1200));
+function npmPublish(stagingDir, name, version, opts = {}) {
+    const tags = opts.npmTag ? [opts.npmTag] : [undefined, `v${version}`];
+    for (const npmTag of tags) {
+        const args = ["publish", "--access", "public"];
+        if (npmTag) args.push("--tag", npmTag);
+        console.log(`\n=== ${name}@${version} npm ${args.join(" ")} ===`);
+        const r = run("npm", args, { cwd: stagingDir });
+        if (r.stdout) process.stdout.write(`${r.stdout}\n`);
+        if (r.stderr) process.stderr.write(`${r.stderr}\n`);
+        const blob = `${r.stdout}\n${r.stderr}`;
+        if (r.status === 0) return "published";
+        if (isAlreadyPublished(blob) || versionExists(name, version)) return "exists";
+        if (isAuthFailure(blob)) return "auth";
+        if (isMissingPackage(blob)) return "missing";
+        if (versionExists(name, version)) return "exists";
+        if (!npmTag && isLowerThanLatestTagError(blob)) {
+            console.log(` retrying ${name}@${version} with --tag v${version}`);
+            continue;
+        }
+        console.error(blob.slice(0, 1200));
+        return "other";
+    }
     return "other";
 }
 
@@ -241,7 +255,7 @@ function publishNative(version, artifactsRoot) {
             repository: { type: "git", url: REPO_URL },
         });
 
-        const outcome = npmPublish(stage, name, version);
+        const outcome = npmPublish(stage, name, version, { npmTag: `v${version}` });
         if (outcome === "published") published += 1;
         else if (outcome === "exists") {
             console.log(` ✓ ${name}@${version} already on registry — skip`);
@@ -352,6 +366,16 @@ console.log(" Trusted Publisher contract: publish-npm.yml + env NPM_PUBLISH\n");
 
 delete process.env.NODE_AUTH_TOKEN;
 delete process.env.NPM_TOKEN;
+
+function buildJsPackages() {
+    console.log("\n=== build @doki-land/nifty (tsc -> dist) ===");
+    const r = run("pnpm", ["run", "build:package"]);
+    if (r.status !== 0) {
+        fail(`build:package failed:\n${r.stderr}\n${r.stdout}`);
+    }
+}
+
+buildJsPackages();
 
 const artifactsRoot = process.env.NIFTY_NATIVE_ARTIFACTS || path.join(ROOT, "dist", "native-flat");
 
