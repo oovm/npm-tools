@@ -1,6 +1,6 @@
 [package]
 name = "nifty-formatter"
-version = "0.0.3"
+version = "0.0.4"
 authors = ["Aster <192607617@qq.com>"]
 description = "Nifty formatting: gitmoji subjects, release bullets, and changelog sections"
 repository = "https://github.com/oovm/npm-tools"

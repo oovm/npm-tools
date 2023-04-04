@@ -83,9 +83,9 @@ fn discover_default_targets(root: &Path) -> Result<Vec<PathBuf>, String> {
     collect_problem_metadata(root, &mut paths);
     collect_root_sources(root, &mut paths);
 
-    for name in ["package.json", "pnpm-workspace.yaml", "biome.json", "oxfmtrc.json"] {
+    for name in ["package.json", "biome.json", "oxfmtrc.json"] {
         let candidate = root.join(name);
-        if candidate.is_file() {
+        if candidate.is_file() && is_format_target(&candidate) {
             paths.push(candidate);
         }
     }

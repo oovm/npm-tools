@@ -1,0 +1,3 @@
+🐛 Skip pnpm-workspace.yaml in nifty format walk targets
+
+Oxc cannot format YAML. Bump workspace to 0.0.4 for republish.
