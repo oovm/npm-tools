@@ -367,16 +367,6 @@ console.log(" Trusted Publisher contract: publish-npm.yml + env NPM_PUBLISH\n");
 delete process.env.NODE_AUTH_TOKEN;
 delete process.env.NPM_TOKEN;
 
-function buildJsPackages() {
-    console.log("\n=== build @doki-land/nifty (tsc -> dist) ===");
-    const r = run("pnpm", ["run", "build:package"]);
-    if (r.status !== 0) {
-        fail(`build:package failed:\n${r.stderr}\n${r.stdout}`);
-    }
-}
-
-buildJsPackages();
-
 const artifactsRoot = process.env.NIFTY_NATIVE_ARTIFACTS || path.join(ROOT, "dist", "native-flat");
 
 const native = publishNative(version, artifactsRoot);
