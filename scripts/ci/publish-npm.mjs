@@ -160,7 +160,7 @@ function isLowerThanLatestTagError(blob) {
  * @returns {"published"|"exists"|"auth"|"missing"|"other"}
  */
 function npmPublish(stagingDir, name, version, opts = {}) {
-    const tags = opts.npmTag ? [opts.npmTag] : [undefined, `v${version}`];
+    const tags = opts.npmTag ? [opts.npmTag] : [undefined, `release-${version}`];
     for (const npmTag of tags) {
         const args = ["publish", "--access", "public"];
         if (npmTag) args.push("--tag", npmTag);
@@ -175,7 +175,7 @@ function npmPublish(stagingDir, name, version, opts = {}) {
         if (isMissingPackage(blob)) return "missing";
         if (versionExists(name, version)) return "exists";
         if (!npmTag && isLowerThanLatestTagError(blob)) {
-            console.log(` retrying ${name}@${version} with --tag v${version}`);
+            console.log(` retrying ${name}@${version} with --tag release-${version}`);
             continue;
         }
         console.error(blob.slice(0, 1200));
@@ -255,7 +255,7 @@ function publishNative(version, artifactsRoot) {
             repository: { type: "git", url: REPO_URL },
         });
 
-        const outcome = npmPublish(stage, name, version, { npmTag: `v${version}` });
+        const outcome = npmPublish(stage, name, version, { npmTag: `release-${version}` });
         if (outcome === "published") published += 1;
         else if (outcome === "exists") {
             console.log(` ✓ ${name}@${version} already on registry — skip`);
