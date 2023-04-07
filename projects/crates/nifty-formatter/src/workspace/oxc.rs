@@ -63,7 +63,8 @@ pub fn format_source_with_options(
     source: &str,
     options: JsFormatOptions,
 ) -> Result<FormatFileResult, String> {
-    let source_type = SourceType::from_path(path).map_err(|err| err.to_string())?;
+    let source_type = SourceType::from_path(path)
+        .map_err(|err| format!("{}: {err}", path.display()))?;
     let allocator = Allocator::new();
     let formatted = format(&allocator, source, source_type, options)
         .map_err(|err| format!("{}: {err}", path.display()))?;

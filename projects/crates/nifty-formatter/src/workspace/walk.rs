@@ -54,7 +54,6 @@ fn expand_includes(root: &Path, includes: &[String]) -> Result<Vec<PathBuf>, Str
             continue;
         }
         if pattern.contains("**/metadata.json") {
-            collect_problem_metadata(root, &mut paths);
             continue;
         }
         let candidate = root.join(pattern);
@@ -80,7 +79,6 @@ fn discover_default_targets(root: &Path) -> Result<Vec<PathBuf>, String> {
         }
     }
 
-    collect_problem_metadata(root, &mut paths);
     collect_root_sources(root, &mut paths);
 
     for name in ["package.json", "biome.json", "oxfmtrc.json"] {
@@ -167,7 +165,7 @@ fn collect_tree(root: &Path, out: &mut Vec<PathBuf>) {
 
 fn is_format_target(path: &Path) -> bool {
     match path.extension().and_then(|ext| ext.to_str()) {
-        Some("ts" | "mts" | "cts" | "js" | "mjs" | "cjs" | "json" | "jsonc") => true,
+        Some("ts" | "mts" | "cts" | "js" | "mjs" | "cjs" | "jsx" | "tsx" | "json" | "jsonc") => true,
         _ => false,
     }
 }
