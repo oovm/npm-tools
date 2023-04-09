@@ -15,7 +15,7 @@
         "trust": "nifty trust"
     },
     "devDependencies": {
-        "@doki-land/nifty": "workspace:*",
+        "@doki-land/nifty": "^0.0.4",
         "@napi-rs/cli": "^2.18.4"
     }
 }

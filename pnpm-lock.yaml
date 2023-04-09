@@ -9,8 +9,8 @@ importers:
   .:
     devDependencies:
       '@doki-land/nifty':
-        specifier: workspace:*
-        version: link:projects/packages/nifty
+        specifier: ^0.0.4
+        version: 0.0.4
       '@napi-rs/cli':
         specifier: ^2.18.4
         version: 2.18.4
@@ -55,6 +55,25 @@ importers:
 
 packages:
 
+  '@doki-land/nifty-darwin-arm64@0.0.4':
+    resolution: {integrity: sha512-fLXM9Ypmr2C9bRyrAVwNW9RFXtn5l2YIV73X5qMkzwWONOXNNoz9dgmC9zmL00y9kucf/15P1VQgV91aBVOoNw==}
+    cpu: [arm64]
+    os: [darwin]
+
+  '@doki-land/nifty-linux-x64@0.0.4':
+    resolution: {integrity: sha512-erJBxd6NiQGor8c3zqFBh7mWBPJDhi3LnyV3OZm0uin9zIfXxnKY+8zaWbbWKUesAZH6KotXnEEXgj2SuEZslw==}
+    cpu: [x64]
+    os: [linux]
+
+  '@doki-land/nifty-win32-x64@0.0.4':
+    resolution: {integrity: sha512-HzjCugbZAUY2exYPfps0x9i2+xwJczfzVE+zdXmem6ztwA0gQIuvEnINBvF3Oy21DFxJDrf1a9ER6/lNF/Y1bQ==}
+    cpu: [x64]
+    os: [win32]
+
+  '@doki-land/nifty@0.0.4':
+    resolution: {integrity: sha512-2lpJ0RiFVAeUf3Sl+ml5c3brbEEthrPeMQu19qnODEUYv87WgyiH05xlT9cQmGbRoRn5UrTP+MqjCBv6bn6k/A==}
+    hasBin: true
+
   '@napi-rs/cli@2.18.4':
     resolution: {integrity: sha512-SgJeA4df9DE2iAEpr3M2H0OKl/yjtg1BnRI5/JyowS71tUWhrfSu2LT0V3vlHET+g1hBVlrO60PmEXwUEKp8Mg==}
     engines: {node: '>= 10'}
@@ -80,6 +99,24 @@ packages:
     resolution: {integrity: sha512-iwDZqg0QAGrg9Rav5H4n0M64c3mkR59cJ6wQp+7C4nI0gsmExaedaYLNO44eT4AtBBwjbTiGPMlt2Md0T9H9JQ==}
 
 snapshots:
+
+  '@doki-land/nifty-darwin-arm64@0.0.4':
+    optional: true
+
+  '@doki-land/nifty-linux-x64@0.0.4':
+    optional: true
+
+  '@doki-land/nifty-win32-x64@0.0.4':
+    optional: true
+
+  '@doki-land/nifty@0.0.4':
+    dependencies:
+      '@vmz/commander': 0.2.0
+      jiti: 2.7.0
+    optionalDependencies:
+      '@doki-land/nifty-darwin-arm64': 0.0.4
+      '@doki-land/nifty-linux-x64': 0.0.4
+      '@doki-land/nifty-win32-x64': 0.0.4
 
   '@napi-rs/cli@2.18.4': {}
 
