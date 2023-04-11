@@ -13,7 +13,7 @@ Nifty formatting helpers and workspace formatter.
 | Target | Engine |
 | --- | --- |
 | `*.rs` (Cargo workspace) | `cargo fmt --all` |
-| `*.ts` / `*.js` / `*.json` | `oxc_formatter` (git pin `oxfmt_v0.70.0`) |
+| `*.ts` / `*.js` / `*.jsx` / `*.tsx` | `oxc_formatter` (git pin `oxfmt_v0.70.0`) |
 
 Default JS style matches sibling repos' `biome.json`: 4 spaces, single quotes, line width 144.
 
