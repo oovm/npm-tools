@@ -28,7 +28,7 @@ export type LoadedNiftyConfig = {
 };
 
 const DEFAULT_CONFIG_TEMPLATE = `// Nifty project configuration.
-// See @doki-land/nifty for defineConfig, githubToken, authorMap, and lint rules.
+// See @doki-land/nifty for defineConfig, format presets, authorMap, and lint rules.
 export default {};
 `;
 

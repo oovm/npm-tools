@@ -2,6 +2,10 @@
 import { defineConfig } from "@doki-land/nifty";
 
 export default defineConfig({
+    format: {
+        preset: "npm-tools",
+        style: "biome.json",
+    },
     publish: {
         packages: [
             "@doki-land/nifty",

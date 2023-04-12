@@ -18,8 +18,16 @@ pub fn default_format_options() -> JsFormatOptions {
     }
 }
 
-pub fn load_format_options(root: &Path) -> JsFormatOptions {
-    let biome_path = root.join("biome.json");
+pub fn load_format_options(root: &Path, style_config: Option<&Path>) -> JsFormatOptions {
+    let biome_path = style_config
+        .map(|path| {
+            if path.is_absolute() {
+                path.to_path_buf()
+            } else {
+                root.join(path)
+            }
+        })
+        .unwrap_or_else(|| root.join("biome.json"));
     let Ok(raw) = std::fs::read_to_string(&biome_path) else {
         return default_format_options();
     };

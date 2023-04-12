@@ -16,10 +16,13 @@ export {
     type LoadConfigOptions,
     type LoadedNiftyConfig,
 } from "./loadConfig.js";
+export { resolveFormatConfig, type ResolvedFormatOptions } from "./formatPresets.js";
 export {
     CONFIG_FILE_NAMES,
     type NiftyAuthorEntry,
     type NiftyConfig,
     type NiftyConfigEnv,
     type NiftyConfigExport,
+    type NiftyFormatConfig,
+    type NiftyFormatPreset,
 } from "./types.js";

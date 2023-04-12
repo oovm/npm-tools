@@ -28,9 +28,13 @@ export {
     findPackageManifest,
     type LoadConfigOptions,
     type LoadedNiftyConfig,
+    resolveFormatConfig,
     type NiftyAuthorEntry,
     type NiftyConfig,
     type NiftyConfigEnv,
+    type NiftyFormatConfig,
+    type NiftyFormatPreset,
     type ProjectKind,
     type ProjectLayout,
+    type ResolvedFormatOptions,
 } from "./config/index.js";

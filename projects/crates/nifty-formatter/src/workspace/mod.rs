@@ -31,6 +31,11 @@ pub struct FormatReport {
 pub struct RunFormatOptions {
     pub cwd: Option<PathBuf>,
     pub check: bool,
+    pub includes: Option<Vec<String>>,
+    pub excludes: Option<Vec<String>>,
+    pub rust: Option<bool>,
+    pub javascript: Option<bool>,
+    pub style_config: Option<PathBuf>,
 }
 
 pub type Result<T> = std::result::Result<T, String>;
@@ -44,7 +49,8 @@ pub fn run_format(options: RunFormatOptions) -> Result<FormatReport> {
     let layout = detect_project_layout(&cwd);
     let mut report = FormatReport::default();
 
-    if matches!(layout.kind, ProjectKind::Cargo | ProjectKind::Hybrid) {
+    let rust_enabled = options.rust.unwrap_or(matches!(layout.kind, ProjectKind::Cargo | ProjectKind::Hybrid));
+    if rust_enabled && matches!(layout.kind, ProjectKind::Cargo | ProjectKind::Hybrid) {
         let cargo_root = layout
             .cargo_workspace_root
             .clone()
@@ -53,9 +59,17 @@ pub fn run_format(options: RunFormatOptions) -> Result<FormatReport> {
         cargo::apply_cargo_fmt(&mut report, &cargo_root, options.check);
     }
 
-    if matches!(layout.kind, ProjectKind::Npm | ProjectKind::Hybrid) || walk::layout_has_js_targets(&layout.root) {
-        let format_options = oxc::load_format_options(&layout.root);
-        for path in walk::discover_format_targets(&layout.root)? {
+    let javascript_enabled = options.javascript.unwrap_or(true);
+    if javascript_enabled
+        && (matches!(layout.kind, ProjectKind::Npm | ProjectKind::Hybrid)
+            || walk::layout_has_js_targets(&layout.root))
+    {
+        let discover = walk::DiscoverOptions {
+            includes: options.includes.clone(),
+            excludes: options.excludes.clone(),
+        };
+        let format_options = oxc::load_format_options(&layout.root, options.style_config.as_deref());
+        for path in walk::discover_format_targets(&layout.root, &discover)? {
             format_path(&path, options.check, &mut report, &format_options)?;
         }
     }

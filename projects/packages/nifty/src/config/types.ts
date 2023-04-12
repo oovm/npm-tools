@@ -4,6 +4,25 @@ export type NiftyAuthorEntry = {
     login?: string;
 };
 
+/** Built-in workspace format presets (`nifty.config` `format.preset`). */
+export type NiftyFormatPreset = "default" | "npm-tools" | "vmz";
+
+/** Workspace format options (`nifty format` reads `nifty.config` `format`). */
+export type NiftyFormatConfig = {
+    /** Select built-in include roots. Use `vmz` for the VMZ hybrid monorepo. */
+    preset?: NiftyFormatPreset;
+    /** Extra include globs (override preset list when set alone). */
+    includes?: string[];
+    /** Skip paths under these globs after includes expand. */
+    excludes?: string[];
+    /** Run `cargo fmt` (default: true when a Cargo workspace is detected). */
+    rust?: boolean;
+    /** Run `oxc_formatter` on JS/TS targets (default: true). */
+    javascript?: boolean;
+    /** Biome-style formatter config for oxc (default: `biome.json` at project root). */
+    style?: string;
+};
+
 /** Nifty project configuration (`nifty.config.ts` / `nifty.config.js`). */
 export type NiftyConfig = {
     /** GitHub personal access token for email search / profile fetch. */
@@ -38,6 +57,8 @@ export type NiftyConfig = {
             severity?: "error" | "warning" | "info";
         }>;
     };
+    /** Workspace format targets and engines (`nifty format`). */
+    format?: NiftyFormatConfig;
 };
 
 export type NiftyConfigExport = NiftyConfig | ((env: NiftyConfigEnv) => NiftyConfig | Promise<NiftyConfig>);

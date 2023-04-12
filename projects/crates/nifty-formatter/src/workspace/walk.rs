@@ -4,17 +4,26 @@ use walkdir::WalkDir;
 
 const SKIP_DIRS: &[&str] = &["node_modules", "target", ".git", "dist", ".cache"];
 
-pub fn discover_format_targets(root: &Path) -> Result<Vec<PathBuf>, String> {
-    let has_biome = root.join("biome.json").is_file();
-    let mut paths = if let Some(includes) = read_biome_includes(root)? {
+#[derive(Debug, Clone, Default)]
+pub struct DiscoverOptions {
+    pub includes: Option<Vec<String>>,
+    pub excludes: Option<Vec<String>>,
+}
+
+pub fn discover_format_targets(root: &Path, options: &DiscoverOptions) -> Result<Vec<PathBuf>, String> {
+    let mut paths = if let Some(includes) = options.includes.as_ref().filter(|items| !items.is_empty()) {
+        expand_includes(root, includes)?
+    } else if let Some(includes) = read_biome_includes(root)? {
         expand_includes(root, &includes)?
-    } else if has_biome {
-        let mut full = Vec::new();
-        collect_full_repo(root, &mut full);
-        full
+    } else if root.join("biome.json").is_file() {
+        discover_default_targets(root)?
     } else {
         discover_default_targets(root)?
     };
+
+    if let Some(excludes) = options.excludes.as_ref().filter(|items| !items.is_empty()) {
+        paths.retain(|path| !is_excluded(root, path, excludes));
+    }
 
     paths.sort();
     paths.dedup();
@@ -172,7 +181,24 @@ fn is_format_target(path: &Path) -> bool {
 }
 
 pub fn layout_has_js_targets(root: &Path) -> bool {
-    discover_format_targets(root)
+    discover_format_targets(root, &DiscoverOptions::default())
         .map(|paths| !paths.is_empty())
         .unwrap_or(false)
+}
+
+fn is_excluded(root: &Path, path: &Path, excludes: &[String]) -> bool {
+    let relative = path
+        .strip_prefix(root)
+        .unwrap_or(path)
+        .to_string_lossy()
+        .replace('\\', "/");
+    excludes.iter().any(|pattern| glob_matches(&relative, pattern))
+}
+
+fn glob_matches(relative: &str, pattern: &str) -> bool {
+    if pattern.ends_with("/**") {
+        let prefix = pattern.trim_end_matches("/**");
+        return relative == prefix || relative.starts_with(&format!("{prefix}/"));
+    }
+    relative == pattern
 }
