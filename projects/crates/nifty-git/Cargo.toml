@@ -1,6 +1,6 @@
 [package]
 name = "nifty-git"
-version = "0.0.4"
+version = "0.0.5"
 authors = ["Aster <192607617@qq.com>"]
 description = "Git repository helpers for Nifty (gix, gitmoji-aware commit log)"
 license = "MPL-2.0"

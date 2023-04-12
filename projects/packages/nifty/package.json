@@ -1,6 +1,6 @@
 {
     "name": "@doki-land/nifty",
-    "version": "0.0.4",
+    "version": "0.0.5",
     "description": "Gitmoji-first commit conventions and release helpers (Node-API + TypeScript)",
     "type": "module",
     "license": "MPL-2.0",
