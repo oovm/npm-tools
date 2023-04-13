@@ -8,7 +8,7 @@ pub type Result<T> = std::result::Result<T, String>;
 /// Run lint rules and return diagnostics.
 pub fn run_lint(options: LintOptions) -> Result<LintReport> {
     let subject_only = is_subject_only(&options);
-    let rules = merge_rules(options.rules.clone());
+    let rules = merge_rules(options.rules.clone(), options.commit_only.unwrap_or(false));
     let commits = load_commits(&options, subject_only)?;
     let ctx = LintContext::new(commits, rules);
     let mut diagnostics = ctx
@@ -35,12 +35,17 @@ pub fn run_check(options: LintOptions) -> Result<LintReport> {
     Ok(report)
 }
 
-fn merge_rules(custom: Option<Vec<RuleConfig>>) -> Vec<RuleConfig> {
+fn merge_rules(custom: Option<Vec<RuleConfig>>, commit_only: bool) -> Vec<RuleConfig> {
+    let base = if commit_only {
+        crate::rule::default_commit_rules()
+    } else {
+        default_rules()
+    };
     let Some(custom) = custom else {
-        return default_rules();
+        return base;
     };
 
-    let mut merged = default_rules();
+    let mut merged = base;
     for override_rule in custom {
         if let Some(existing) = merged.iter_mut().find(|rule| rule.id == override_rule.id) {
             *existing = override_rule;
@@ -91,7 +96,7 @@ fn is_subject_only(options: &LintOptions) -> bool {
 }
 
 fn should_scan_cargo(options: &LintOptions, subject_only: bool) -> bool {
-    if options.scan_cargo == Some(false) || subject_only {
+    if options.commit_only.unwrap_or(false) || options.scan_cargo == Some(false) || subject_only {
         return false;
     }
     options.scan_cargo.unwrap_or(true)
@@ -121,6 +126,8 @@ pub struct LintOptions {
     pub rules: Option<Vec<RuleConfig>>,
     /// Run cargo workspace hygiene rules (ported from `cargo cry`). Default: true unless `--subject` only.
     pub scan_cargo: Option<bool>,
+    /// Commit-only scan/audit: gitmoji + commit hygiene rules, no cargo workspace checks.
+    pub commit_only: Option<bool>,
 }
 
 /// Lint output summary.

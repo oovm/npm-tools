@@ -19,6 +19,8 @@ pub struct CommitRecord {
     pub author: String,
     /// Subject line.
     pub subject: String,
+    /// Full commit message (subject + body).
+    pub message: String,
     /// Subject without gitmoji.
     pub body: String,
     /// Leading gitmoji if any.
@@ -65,9 +67,8 @@ fn read_commit(repo: &Repository, oid: ObjectId) -> Result<Commit<'_>> {
 }
 
 fn to_record(oid: ObjectId, commit: &Commit<'_>) -> CommitRecord {
-    let subject = commit
-        .message_raw_sloppy()
-        .to_string()
+    let message = commit.message_raw_sloppy().to_string();
+    let subject = message
         .lines()
         .next()
         .unwrap_or("")
@@ -81,6 +82,7 @@ fn to_record(oid: ObjectId, commit: &Commit<'_>) -> CommitRecord {
         email,
         author,
         subject: subject.clone(),
+        message,
         body: parsed.body,
         gitmoji: parsed.gitmoji,
         section: section_name(parsed.section).to_string(),

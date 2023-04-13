@@ -1,4 +1,4 @@
-//! Node-API bindings for commit reword/retime and changelog helpers.
+//! Node-API bindings for commit history apply/retime and changelog helpers.
 
 use std::env;
 use std::path::{Path, PathBuf};
@@ -44,6 +44,47 @@ fn normalize_ref_name(repo: &gix::Repository, ref_name: &str) -> Result<String> 
         return Ok(ref_name.to_string());
     }
     Ok(format!("refs/heads/{ref_name}"))
+}
+
+#[napi(object)]
+pub struct CommitPlannedChange {
+    pub old_oid: String,
+    pub old_subject: String,
+    pub new_subject: String,
+    pub parents_relinked: bool,
+    pub message_changed: bool,
+}
+
+#[napi(object)]
+pub struct CommitApplyReport {
+    pub changes: Vec<CommitPlannedChange>,
+    pub old_tip: String,
+    pub new_tip: Option<String>,
+    pub ref_name: String,
+    pub dry_run: bool,
+}
+
+#[napi(object)]
+pub struct CommitExportReport {
+    pub count: u32,
+    pub path: String,
+}
+
+#[napi(object)]
+pub struct CommitExportOptions {
+    pub cwd: Option<String>,
+    pub base: String,
+    pub r#ref: Option<String>,
+    pub path: String,
+}
+
+#[napi(object)]
+pub struct CommitApplyOptions {
+    pub cwd: Option<String>,
+    pub base: String,
+    pub r#ref: Option<String>,
+    pub path: String,
+    pub dry_run: Option<bool>,
 }
 
 #[napi(object)]
@@ -155,8 +196,8 @@ pub struct ChangelogGithubAuthor {
     pub login: Option<String>,
 }
 
-fn to_planned_change(change: nifty_history::commit::PlannedChange) -> RewordPlannedChange {
-    RewordPlannedChange {
+fn to_planned_change(change: nifty_history::commit::PlannedChange) -> CommitPlannedChange {
+    CommitPlannedChange {
         old_oid: short(change.old_oid),
         old_subject: change.old_subject,
         new_subject: change.new_subject,
@@ -166,7 +207,7 @@ fn to_planned_change(change: nifty_history::commit::PlannedChange) -> RewordPlan
 }
 
 #[napi]
-pub fn git_tools_reword_export(options: RewordExportOptions) -> Result<RewordExportReport> {
+pub fn git_tools_commit_export(options: CommitExportOptions) -> Result<CommitExportReport> {
     let repo = open_repo_at(options.cwd)?;
     let ref_name = options.r#ref.as_deref().unwrap_or("HEAD");
     let exclusive_base = map_err(resolve_rev(&repo, &options.base))?;
@@ -174,14 +215,14 @@ pub fn git_tools_reword_export(options: RewordExportOptions) -> Result<RewordExp
     let count = map_err(reword_collect_commits(&repo, exclusive_base, tip))?.len();
     let path = PathBuf::from(&options.path);
     map_err(export_map(&repo, exclusive_base, tip, &path))?;
-    Ok(RewordExportReport {
+    Ok(CommitExportReport {
         count: count as u32,
         path: path.display().to_string(),
     })
 }
 
 #[napi]
-pub fn git_tools_reword_rewrite(options: RewordRewriteOptions) -> Result<RewordRewriteReport> {
+pub fn git_tools_commit_apply(options: CommitApplyOptions) -> Result<CommitApplyReport> {
     let repo = open_repo_at(options.cwd)?;
     let ref_name_input = options.r#ref.as_deref().unwrap_or("HEAD");
     let dry_run = options.dry_run.unwrap_or(false);
@@ -194,7 +235,7 @@ pub fn git_tools_reword_rewrite(options: RewordRewriteOptions) -> Result<RewordR
 
     if dry_run {
         let changes = map_err(dry_run_plan(&repo, exclusive_base, tip, &updates))?;
-        return Ok(RewordRewriteReport {
+        return Ok(CommitApplyReport {
             changes: changes.into_iter().map(to_planned_change).collect(),
             old_tip: short(tip),
             new_tip: None,
@@ -209,12 +250,54 @@ pub fn git_tools_reword_rewrite(options: RewordRewriteOptions) -> Result<RewordR
         return Err(Error::from_reason("no commit objects were rewritten"));
     }
     map_err(move_ref(&repo, &ref_name, new_tip, old_tip))?;
-    Ok(RewordRewriteReport {
+    Ok(CommitApplyReport {
         changes: changes.into_iter().map(to_planned_change).collect(),
         old_tip: short(old_tip),
         new_tip: Some(short(new_tip)),
         ref_name,
         dry_run: false,
+    })
+}
+
+#[napi]
+pub fn git_tools_reword_export(options: RewordExportOptions) -> Result<RewordExportReport> {
+    let report = git_tools_commit_export(CommitExportOptions {
+        cwd: options.cwd,
+        base: options.base,
+        r#ref: options.r#ref,
+        path: options.path,
+    })?;
+    Ok(RewordExportReport {
+        count: report.count,
+        path: report.path,
+    })
+}
+
+#[napi]
+pub fn git_tools_reword_rewrite(options: RewordRewriteOptions) -> Result<RewordRewriteReport> {
+    let report = git_tools_commit_apply(CommitApplyOptions {
+        cwd: options.cwd,
+        base: options.base,
+        r#ref: options.r#ref,
+        path: options.path,
+        dry_run: options.dry_run,
+    })?;
+    Ok(RewordRewriteReport {
+        changes: report
+            .changes
+            .into_iter()
+            .map(|change| RewordPlannedChange {
+                old_oid: change.old_oid,
+                old_subject: change.old_subject,
+                new_subject: change.new_subject,
+                parents_relinked: change.parents_relinked,
+                message_changed: change.message_changed,
+            })
+            .collect(),
+        old_tip: report.old_tip,
+        new_tip: report.new_tip,
+        ref_name: report.ref_name,
+        dry_run: report.dry_run,
     })
 }
 

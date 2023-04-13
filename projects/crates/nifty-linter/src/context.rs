@@ -5,6 +5,7 @@ use crate::rule::{LintDiagnostic, RuleConfig, RuleSeverity};
 pub struct CommitInput {
     pub hash: Option<String>,
     pub subject: String,
+    pub message: Option<String>,
 }
 
 /// Inputs and enabled rules for linting.
@@ -29,10 +30,16 @@ impl LintContext {
 
 impl CommitInput {
     pub fn subject_only(subject: impl Into<String>) -> Self {
+        let subject = subject.into();
         Self {
             hash: None,
-            subject: subject.into(),
+            subject: subject.clone(),
+            message: Some(subject),
         }
+    }
+
+    pub fn full_message(&self) -> &str {
+        self.message.as_deref().unwrap_or(&self.subject)
     }
 }
 

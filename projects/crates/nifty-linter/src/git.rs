@@ -13,6 +13,7 @@ pub fn load_commits(repo_root: &Path, from_ref: Option<&str>, to_ref: Option<&st
         .map(|record| CommitInput {
             hash: Some(record.hash),
             subject: record.subject,
+            message: Some(record.message),
         })
         .collect())
 }

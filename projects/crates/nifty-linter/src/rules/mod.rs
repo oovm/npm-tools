@@ -1,4 +1,5 @@
 mod cargo;
+mod commit;
 
 use nifty_formatter::format_subject;
 use nifty_types::{known_gitmojis, leading_gitmoji, parse_subject, strip_gitmoji, validate_subject};
@@ -9,6 +10,7 @@ use crate::rule::{
 };
 
 pub use cargo::lint_cargo_workspace;
+pub use commit::lint_commit_hygiene;
 pub fn lint_commit(ctx: &LintContext, commit: &CommitInput) -> Vec<LintDiagnostic> {
     let mut out = Vec::new();
     for rule in [
@@ -21,6 +23,7 @@ pub fn lint_commit(ctx: &LintContext, commit: &CommitInput) -> Vec<LintDiagnosti
             out.push(item);
         }
     }
+    out.extend(lint_commit_hygiene(ctx, commit));
     out
 }
 

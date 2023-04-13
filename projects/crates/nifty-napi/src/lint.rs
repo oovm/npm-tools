@@ -19,6 +19,7 @@ pub struct LintRunOptions {
     pub subjects: Option<Vec<String>>,
     pub rules: Option<Vec<LintRuleConfig>>,
     pub scan_cargo: Option<bool>,
+    pub commit_only: Option<bool>,
     pub check: Option<bool>,
 }
 
@@ -102,6 +103,7 @@ fn core_options(options: LintRunOptions) -> CoreLintOptions {
         subjects: options.subjects.unwrap_or_default(),
         rules: map_rules(options.rules),
         scan_cargo: options.scan_cargo,
+        commit_only: options.commit_only,
     }
 }
 

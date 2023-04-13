@@ -40,6 +40,11 @@ pub const RULE_GITMOJI_KNOWN: &str = "gitmoji/known";
 pub const RULE_GITMOJI_BODY: &str = "gitmoji/body";
 pub const RULE_GITMOJI_FORMAT: &str = "gitmoji/format";
 
+pub const RULE_COMMIT_SEMVER: &str = "commit/semver";
+pub const RULE_COMMIT_SEMICOLON: &str = "commit/semicolon";
+pub const RULE_COMMIT_BARE_PACKAGE: &str = "commit/bare-package";
+pub const RULE_COMMIT_BARE_SYMBOL: &str = "commit/bare-symbol";
+
 pub const RULE_CARGO_README_CASE: &str = "cargo/readme-case";
 pub const RULE_CARGO_PACKAGE_SECTION: &str = "cargo/package-section";
 pub const RULE_CARGO_README_MISSING: &str = "cargo/readme-missing";
@@ -128,6 +133,51 @@ pub fn default_rules() -> Vec<RuleConfig> {
         },
         RuleConfig {
             id: RULE_CARGO_LARGE_FILE.to_string(),
+            enabled: true,
+            severity: RuleSeverity::Warning,
+        },
+    ]
+}
+
+pub fn default_commit_rules() -> Vec<RuleConfig> {
+    vec![
+        RuleConfig {
+            id: RULE_GITMOJI_SUBJECT.to_string(),
+            enabled: true,
+            severity: RuleSeverity::Error,
+        },
+        RuleConfig {
+            id: RULE_GITMOJI_KNOWN.to_string(),
+            enabled: true,
+            severity: RuleSeverity::Error,
+        },
+        RuleConfig {
+            id: RULE_GITMOJI_BODY.to_string(),
+            enabled: true,
+            severity: RuleSeverity::Warning,
+        },
+        RuleConfig {
+            id: RULE_GITMOJI_FORMAT.to_string(),
+            enabled: true,
+            severity: RuleSeverity::Warning,
+        },
+        RuleConfig {
+            id: RULE_COMMIT_SEMVER.to_string(),
+            enabled: true,
+            severity: RuleSeverity::Error,
+        },
+        RuleConfig {
+            id: RULE_COMMIT_SEMICOLON.to_string(),
+            enabled: true,
+            severity: RuleSeverity::Error,
+        },
+        RuleConfig {
+            id: RULE_COMMIT_BARE_PACKAGE.to_string(),
+            enabled: true,
+            severity: RuleSeverity::Error,
+        },
+        RuleConfig {
+            id: RULE_COMMIT_BARE_SYMBOL.to_string(),
             enabled: true,
             severity: RuleSeverity::Warning,
         },
