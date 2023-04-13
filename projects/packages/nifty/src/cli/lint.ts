@@ -7,6 +7,7 @@ export type LintOptions = {
     to?: string;
     cwd?: string;
     scanCargo?: boolean;
+    commitOnly?: boolean;
 };
 
 type LintDiagnostic = {
@@ -33,7 +34,11 @@ export async function runLint(argv: string[], check: boolean): Promise<void> {
     }
 }
 
-export async function lintCommits(options: LintOptions, check: boolean): Promise<number> {
+export async function lintCommits(
+    options: LintOptions,
+    check: boolean,
+    commitOnly = options.commitOnly ?? false,
+): Promise<number> {
     const native = loadNiftyNative();
     const cwd = options.cwd ?? process.cwd();
     const { config } = await loadConfig({ cwd, createIfMissing: false });
@@ -51,6 +56,7 @@ export async function lintCommits(options: LintOptions, check: boolean): Promise
         subjects: options.subjects.length > 0 ? options.subjects : undefined,
         rules,
         scanCargo: options.scanCargo,
+        commitOnly: commitOnly || options.commitOnly,
     });
 
     for (const item of report.diagnostics) {

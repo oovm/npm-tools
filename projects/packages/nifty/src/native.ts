@@ -85,12 +85,27 @@ export type RewordRewriteReport = {
 };
 
 export type HistoryExports = {
+    "commit-export": (options: {
+        cwd?: string;
+        base: string;
+        ref?: string;
+        path: string;
+    }) => { count: number; path: string };
+    "commit-apply": (options: {
+        cwd?: string;
+        base: string;
+        ref?: string;
+        path: string;
+        dryRun?: boolean;
+    }) => RewordRewriteReport;
+    /** @deprecated use `commit-export` */
     "reword-export": (options: {
         cwd?: string;
         base: string;
         ref?: string;
         path: string;
     }) => { count: number; path: string };
+    /** @deprecated use `commit-apply` */
     "reword-rewrite": (options: {
         cwd?: string;
         base: string;
@@ -160,6 +175,7 @@ export type LintRunOptions = {
     subjects?: string[];
     rules?: Array<{ id: string; enabled?: boolean; severity?: "error" | "warning" | "info" }>;
     scanCargo?: boolean;
+    commitOnly?: boolean;
 };
 
 export type LintReportRecord = {
@@ -183,8 +199,18 @@ export type FormatReportRecord = {
     errors: string[];
 };
 
+export type FormatterRunOptions = {
+    cwd?: string;
+    check?: boolean;
+    includes?: string[];
+    excludes?: string[];
+    rust?: boolean;
+    javascript?: boolean;
+    styleConfig?: string;
+};
+
 export type FormatterExports = {
-    run: (options: { cwd?: string; check?: boolean }) => FormatReportRecord;
+    run: (options: FormatterRunOptions) => FormatReportRecord;
 };
 
 export type PublisherExports = {
@@ -280,6 +306,31 @@ type NativeBinding = {
         totpSecret?: string | null;
         token?: string | null;
     }) => TrustReport;
+    gitToolsCommitExport: (options: {
+        cwd?: string | null;
+        base: string;
+        ref?: string | null;
+        path: string;
+    }) => { count: number; path: string };
+    gitToolsCommitApply: (options: {
+        cwd?: string | null;
+        base: string;
+        ref?: string | null;
+        path: string;
+        dryRun?: boolean | null;
+    }) => {
+        changes: Array<{
+            oldOid: string;
+            oldSubject: string;
+            newSubject: string;
+            parentsRelinked: boolean;
+            messageChanged: boolean;
+        }>;
+        oldTip: string;
+        newTip?: string | null;
+        refName: string;
+        dryRun: boolean;
+    };
     gitToolsRewordExport: (options: {
         cwd?: string | null;
         base: string;
@@ -355,6 +406,7 @@ type NativeBinding = {
         subjects?: string[] | null;
         rules?: Array<{ id: string; enabled?: boolean | null; severity?: string | null }> | null;
         scanCargo?: boolean | null;
+        commitOnly?: boolean | null;
         check?: boolean | null;
     }) => {
         diagnostics: Array<{
@@ -376,6 +428,7 @@ type NativeBinding = {
         subjects?: string[] | null;
         rules?: Array<{ id: string; enabled?: boolean | null; severity?: string | null }> | null;
         scanCargo?: boolean | null;
+        commitOnly?: boolean | null;
         check?: boolean | null;
     }) => {
         diagnostics: Array<{
@@ -391,7 +444,15 @@ type NativeBinding = {
         warningCount: number;
     };
     updaterRun: (options: { cwd?: string | null; interactive?: boolean | null }) => void;
-    formatterRun: (options: { cwd?: string | null; check?: boolean | null }) => {
+    formatterRun: (options: {
+        cwd?: string | null;
+        check?: boolean | null;
+        includes?: string[] | null;
+        excludes?: string[] | null;
+        rust?: boolean | null;
+        javascript?: boolean | null;
+        styleConfig?: string | null;
+    }) => {
         formatted: number;
         unchanged: number;
         errors: string[];
@@ -424,6 +485,7 @@ function mapLintOptions(options: LintRunOptions) {
         ...(options.subjects !== undefined ? { subjects: options.subjects } : {}),
         ...(options.rules !== undefined ? { rules: options.rules } : {}),
         ...(options.scanCargo !== undefined ? { scanCargo: options.scanCargo } : {}),
+        ...(options.commitOnly !== undefined ? { commitOnly: options.commitOnly } : {}),
     };
 }
 
@@ -498,6 +560,29 @@ function wrapBinding(binding: NativeBinding): NiftyNative {
             "parse-github-remote": (url) => binding.gitParseGithubRemote(url) ?? undefined,
         },
         history: {
+            "commit-export": (options) =>
+                binding.gitToolsCommitExport({
+                    ...(options.cwd !== undefined ? { cwd: options.cwd } : {}),
+                    base: options.base,
+                    ...(options.ref !== undefined ? { ref: options.ref } : {}),
+                    path: options.path,
+                }),
+            "commit-apply": (options) => {
+                const report = binding.gitToolsCommitApply({
+                    ...(options.cwd !== undefined ? { cwd: options.cwd } : {}),
+                    base: options.base,
+                    ...(options.ref !== undefined ? { ref: options.ref } : {}),
+                    path: options.path,
+                    ...(options.dryRun !== undefined ? { dryRun: options.dryRun } : {}),
+                });
+                return {
+                    changes: report.changes,
+                    oldTip: report.oldTip,
+                    newTip: report.newTip ?? undefined,
+                    refName: report.refName,
+                    dryRun: report.dryRun,
+                };
+            },
             "reword-export": (options) =>
                 binding.gitToolsRewordExport({
                     ...(options.cwd !== undefined ? { cwd: options.cwd } : {}),
@@ -586,10 +671,16 @@ function wrapBinding(binding: NativeBinding): NiftyNative {
             },
         },
         formatter: {
-            run: (options) => binding.formatterRun({
-                ...(options.cwd !== undefined ? { cwd: options.cwd } : {}),
-                ...(options.check !== undefined ? { check: options.check } : {}),
-            }),
+            run: (options) =>
+                binding.formatterRun({
+                    ...(options.cwd !== undefined ? { cwd: options.cwd } : {}),
+                    ...(options.check !== undefined ? { check: options.check } : {}),
+                    ...(options.includes !== undefined ? { includes: options.includes } : {}),
+                    ...(options.excludes !== undefined ? { excludes: options.excludes } : {}),
+                    ...(options.rust !== undefined ? { rust: options.rust } : {}),
+                    ...(options.javascript !== undefined ? { javascript: options.javascript } : {}),
+                    ...(options.styleConfig !== undefined ? { styleConfig: options.styleConfig } : {}),
+                }),
         },
         publisher: {
             "publish-workspace": (options) =>
