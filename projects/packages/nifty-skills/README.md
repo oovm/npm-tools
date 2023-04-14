@@ -1,8 +1,10 @@
 # `@doki-land/nifty-skills`
 
-[Agent Skills](https://agentskills.io/specification) for [**Nifty**](https://www.npmjs.com/package/@doki-land/nifty) — gitmoji commit conventions, hybrid Cargo + npm release workflows, and gix-backed git history tools.
+[Agent Skills](https://agentskills.io/specification) for [**Nifty**](https://www.npmjs.com/package/@doki-land/nifty) —
+gitmoji commit conventions, hybrid Cargo + npm release workflows, and gix-backed git history tools.
 
-This package is **docs-only**. It teaches agents how to invoke the published `nifty` CLI. It does not replace `@doki-land/nifty` or its native bindings.
+This package is **docs-only**. It teaches agents how to invoke the published `nifty` CLI. It does not replace
+`@doki-land/nifty` or its native bindings.
 
 ## Install
 
@@ -21,12 +23,12 @@ npx skills add @doki-land/nifty-skills --skill nifty-release -y -g
 
 ## Skills
 
-| Skill | Load when |
-| --- | --- |
-| `nifty` | User mentions Nifty tooling, hybrid monorepos, or you need the command map |
-| `nifty-commit` | Gitmoji commit lint, subject format, `nifty lint` / `nifty check` |
-| `nifty-release` | `nifty bump`, `publish`, `trust`, `upload`, `change-logs`, CI release |
-| `nifty-git-history` | `nifty reword`, `nifty retime`, object-layer history rewrite |
+| Skill               | Load when                                                                  |
+|---------------------|----------------------------------------------------------------------------|
+| `nifty`             | User mentions Nifty tooling, hybrid monorepos, or you need the command map |
+| `nifty-commit`      | Gitmoji commit lint, subject format, `nifty lint` / `nifty check`          |
+| `nifty-release`     | `nifty bump`, `publish`, `trust`, `upload`, `change-logs`, CI release      |
+| `nifty-git-history` | `nifty commit`, `nifty retime`, object-layer history apply                 |
 
 ## Prerequisites
 

@@ -41,7 +41,9 @@ Aligns all `projects/crates/*/Cargo.toml` and `projects/packages/*/package.json`
 
 ## npm publish and trust
 
-**Default: publish the whole workspace.** Nifty walks packages in dependency order and **skips versions already on the registry** (cache + `npm view`). After a release you can run plain `nifty publish` again — only new or bumped packages are uploaded.
+**Default: publish the whole workspace.** Nifty walks packages in dependency order and **skips versions already on the
+registry** (cache + `npm view`). After a release you can run plain `nifty publish` again — only new or bumped packages
+are uploaded.
 
 ```bash
 nifty publish --dry-run
@@ -57,11 +59,16 @@ nifty publish --package @doki-land/nifty-skills
 nifty trust --only @doki-land/nifty-skills
 ```
 
-**First publish of a new package name** (e.g. `@doki-land/nifty-skills`): run **`nifty trust`** after `nifty publish` so GitHub Actions OIDC can publish on the next tag. `nifty trust` uses `publish.packages` from `nifty.config.ts` when set, otherwise all non-private workspace packages.
+**First publish of a new package name** (e.g. `@doki-land/nifty-skills`): run **`nifty trust`** after `nifty publish` so
+GitHub Actions OIDC can publish on the next tag. `nifty trust` uses `publish.packages` from `nifty.config.ts` when set,
+otherwise all non-private workspace packages.
 
-Local auth: `NPM_TOKEN`, `--npm-token`, `--otp`, or `--totp-secret` (see `nifty publish --help`). Trust live configuration requires OTP/TOTP.
+Local auth: `NPM_TOKEN`, `--npm-token`, `--otp`, or `--totp-secret` (see `nifty publish --help`). Trust live
+configuration requires OTP/TOTP.
 
-**npm-tools CI**: tag `vX.Y.Z` triggers `.github/workflows/publish-npm.yml` → `scripts/ci/publish-npm.mjs` (OIDC, no long-lived token in YAML). Native `.node` files ship as `@doki-land/nifty-*` optional packages, not GitHub Release assets.
+**npm-tools CI**: tag `vX.Y.Z` triggers `.github/workflows/publish-npm.yml` → `scripts/ci/publish-npm.mjs` (OIDC, no
+long-lived token in YAML). Native `.node` files ship as `@doki-land/nifty-*` optional packages, not GitHub Release
+assets.
 
 ## Reference changelogs
 
