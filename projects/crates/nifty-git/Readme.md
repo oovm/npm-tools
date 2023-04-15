@@ -1,8 +1,10 @@
 # nifty-git
 
-Read-only git helpers for [Nifty](https://www.npmjs.com/package/@doki-land/nifty): discover repos, list semver tags, walk commit history, resolve release ranges.
+Read-only git helpers for [Nifty](https://www.npmjs.com/package/@doki-land/nifty): discover repos, list semver tags,
+walk commit history, resolve release ranges.
 
-Built on **[gix](https://github.com/GitoxideLabs/gitoxide)** — no `git` subprocess. Each commit record includes Nifty **gitmoji** parsing (`body`, `section`, etc.).
+Built on **[gix](https://github.com/GitoxideLabs/gitoxide)** — no `git` subprocess. Each commit record includes Nifty
+**gitmoji** parsing (`body`, `section`, etc.).
 
 ## API (Rust)
 

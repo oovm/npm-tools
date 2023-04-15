@@ -2,7 +2,8 @@
 
 Upload generic release assets to GitHub Release and deploy GitHub Pages.
 
-Platform Node-API binaries (`@doki-land/nifty-*`) are **not** uploaded here. CI builds them in a matrix, runs `nifty install-native`, and publishes via `nifty publish` (npm Trusted Publisher OIDC).
+Platform Node-API binaries (`@doki-land/nifty-*`) are **not** uploaded here. CI builds them in a matrix, runs
+`nifty install-native`, and publishes via `nifty publish` (npm Trusted Publisher OIDC).
 
 ## CLI
 
@@ -20,7 +21,8 @@ nifty upload --both --dir dist
 - run: npx @doki-land/nifty upload --release --dir dist --github-action
 ```
 
-In the [npm-tools](https://github.com/oovm/npm-tools) repo, CI uses [`scripts/ci/nifty.mjs`](https://github.com/oovm/npm-tools/blob/dev/scripts/ci/nifty.mjs) to pin or bootstrap the CLI.
+In the [npm-tools](https://github.com/oovm/npm-tools) repo, CI uses [
+`scripts/ci/nifty.mjs`](https://github.com/oovm/npm-tools/blob/dev/scripts/ci/nifty.mjs) to pin or bootstrap the CLI.
 
 Release notes are auto-generated from git history when `--generate-notes` is enabled (default).
 

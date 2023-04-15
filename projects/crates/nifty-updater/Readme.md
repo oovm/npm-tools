@@ -4,11 +4,11 @@ Update **Cargo** and **npm/pnpm** dependencies for Nifty hybrid projects.
 
 ## Behavior
 
-| Layout | Cargo | JavaScript |
-| --- | --- | --- |
-| `cargo` | `cargo upgrade --workspace` | — |
-| `npm` | — | `npm outdated` / `npm update` (or per-package in workspaces) |
-| `hybrid` | both | `pnpm update -r` when `pnpm-workspace.yaml` is present, else npm |
+| Layout   | Cargo                       | JavaScript                                                       |
+|----------|-----------------------------|------------------------------------------------------------------|
+| `cargo`  | `cargo upgrade --workspace` | —                                                                |
+| `npm`    | —                           | `npm outdated` / `npm update` (or per-package in workspaces)     |
+| `hybrid` | both                        | `pnpm update -r` when `pnpm-workspace.yaml` is present, else npm |
 
 Interactive mode (`-i`) uses `dialoguer` multi-select for cargo and JS upgrades.
 

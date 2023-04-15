@@ -4,29 +4,30 @@ Rule-based lint/check for Nifty gitmoji commit conventions and cargo workspace h
 
 ## Gitmoji rules
 
-| Rule | Default | Description |
-| --- | --- | --- |
-| `gitmoji/subject` | error | Subject must start with a known gitmoji + space |
-| `gitmoji/known` | error | Gitmoji must be in the Nifty known list |
-| `gitmoji/body` | warning | Body after gitmoji must not be empty |
-| `gitmoji/format` | warning | Subject should match `format_subject(gitmoji, body)` |
+| Rule              | Default | Description                                          |
+|-------------------|---------|------------------------------------------------------|
+| `gitmoji/subject` | error   | Subject must start with a known gitmoji + space      |
+| `gitmoji/known`   | error   | Gitmoji must be in the Nifty known list              |
+| `gitmoji/body`    | warning | Body after gitmoji must not be empty                 |
+| `gitmoji/format`  | warning | Subject should match `format_subject(gitmoji, body)` |
 
 ## Cargo workspace rules (`cargo cry`)
 
-| Rule | Default | Description |
-| --- | --- | --- |
-| `cargo/readme-case` | error | `README.md` must be lowercase `readme.md` |
-| `cargo/package-section` | error | `Cargo.toml` must declare `[package]` |
-| `cargo/readme-missing` | error | Crate root must contain `readme.md` |
-| `cargo/missing-docs` | error | `missing_docs` lint at least `warn` |
-| `cargo/workspace-inherit` | error | Member `package.*` fields should use `workspace = true` |
-| `cargo/workspace-dep` | error | Shared deps should use `workspace = true` |
-| `cargo/doc-include-str` | error | Long `src/readme.md` must use `#![doc = include_str!(...)]` |
-| `cargo/misplaced-test` | error | No `#[test]` / `mod tests` under `src/` |
-| `cargo/misplaced-root-rs` | error | No loose `.rs` files beside `Cargo.toml` |
-| `cargo/large-file` | warning | Rust sources over 1000 lines |
+| Rule                      | Default | Description                                                 |
+|---------------------------|---------|-------------------------------------------------------------|
+| `cargo/readme-case`       | error   | `README.md` must be lowercase `readme.md`                   |
+| `cargo/package-section`   | error   | `Cargo.toml` must declare `[package]`                       |
+| `cargo/readme-missing`    | error   | Crate root must contain `readme.md`                         |
+| `cargo/missing-docs`      | error   | `missing_docs` lint at least `warn`                         |
+| `cargo/workspace-inherit` | error   | Member `package.*` fields should use `workspace = true`     |
+| `cargo/workspace-dep`     | error   | Shared deps should use `workspace = true`                   |
+| `cargo/doc-include-str`   | error   | Long `src/readme.md` must use `#![doc = include_str!(...)]` |
+| `cargo/misplaced-test`    | error   | No `#[test]` / `mod tests` under `src/`                     |
+| `cargo/misplaced-root-rs` | error   | No loose `.rs` files beside `Cargo.toml`                    |
+| `cargo/large-file`        | warning | Rust sources over 1000 lines                                |
 
-Cargo rules run automatically on hybrid/cargo repos when linting commits. Pass `--no-cargo` to skip them. Use `--subject` alone to lint only gitmoji rules.
+Cargo rules run automatically on hybrid/cargo repos when linting commits. Pass `--no-cargo` to skip them. Use
+`--subject` alone to lint only gitmoji rules.
 
 ## CLI
 

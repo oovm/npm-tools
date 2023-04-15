@@ -2,10 +2,10 @@
 
 GitHub REST API helpers for [Nifty](https://www.npmjs.com/package/@doki-land/nifty).
 
-| API | Token | Notes |
-| --- | --- | --- |
-| `user_by_login` | optional | `GET /users/{login}` |
-| `search_user_by_email` | required | `GET /search/users?q=… in:email` |
+| API                    | Token    | Notes                                   |
+|------------------------|----------|-----------------------------------------|
+| `user_by_login`        | optional | `GET /users/{login}`                    |
+| `search_user_by_email` | required | `GET /search/users?q=… in:email`        |
 | `lookup_user_by_email` | optional | noreply → map → search → optional fetch |
 
 Pairs with [`nifty-types`](https://docs.rs/nifty-types) for noreply emails and `author-github.json` maps.
