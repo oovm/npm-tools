@@ -2,6 +2,8 @@ import { join } from "node:path";
 
 import type { Cli, ParsedOptions } from "@vmz/commander";
 
+import { resolveAuthorMapPath } from "../config/authorMap.js";
+import { detectProjectLayout } from "../config/detectProject.js";
 import { loadConfig } from "../config/loadConfig.js";
 import { loadNiftyNative } from "../native.js";
 import { bootstrapFromOptions } from "./context.js";
@@ -34,6 +36,8 @@ export async function cmdChangeLogsRender(options: ParsedOptions): Promise<numbe
     await bootstrapFromOptions(options);
     const cwd = cwdFrom(options) ?? process.cwd();
     const { config } = await loadConfig({ cwd, createIfMissing: false });
+    const layout = detectProjectLayout(cwd);
+    const repoRoot = config.repoRoot ?? layout.root;
     const native = loadNiftyNative();
     const report = native.history["changelog-render"]({
         cwd,
@@ -43,7 +47,7 @@ export async function cmdChangeLogsRender(options: ParsedOptions): Promise<numbe
         write: flag(options, "write"),
         tags: flag(options, "tags"),
         repo: str(options, "repo") ?? config.changelog?.repo,
-        authorMap: str(options, "author-map") ?? config.changelog?.authorMap,
+        authorMap: str(options, "author-map") ?? resolveAuthorMapPath(config, repoRoot),
         releasesDir: str(options, "releases-dir") ?? config.changelog?.releasesDir,
     });
 
@@ -66,6 +70,8 @@ export async function cmdChangeLogsLookup(options: ParsedOptions): Promise<numbe
     await bootstrapFromOptions(options);
     const cwd = cwdFrom(options) ?? process.cwd();
     const { config } = await loadConfig({ cwd, createIfMissing: false });
+    const layout = detectProjectLayout(cwd);
+    const repoRoot = config.repoRoot ?? layout.root;
     const email = str(options, "email");
     const login = str(options, "login");
     if (!email && !login) {
@@ -76,7 +82,7 @@ export async function cmdChangeLogsLookup(options: ParsedOptions): Promise<numbe
         cwd,
         email,
         login,
-        map: str(options, "map") ?? config.changelog?.authorMap,
+        map: str(options, "map") ?? resolveAuthorMapPath(config, repoRoot),
         githubToken: str(options, "github-token") ?? config.githubToken ?? process.env.GITHUB_TOKEN,
         fetch: flag(options, "fetch"),
     });

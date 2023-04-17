@@ -1,6 +1,6 @@
 import {
-    authorMapToJson,
     detectProjectLayout,
+    loadAuthorMapJson,
     loadConfig,
     type LoadConfigOptions,
     type NiftyConfig,
@@ -79,8 +79,9 @@ export class Nifty {
         );
 
         const native = loadNiftyNative();
+        const resolvedRepoRoot = merged.repoRoot ?? layout.root;
         return new Nifty(
-            new Gitmoji(native.gitmoji, authorMapToJson(merged.authorMap)),
+            new Gitmoji(native.gitmoji, loadAuthorMapJson(resolvedRepoRoot, merged.authorMap)),
             new Git(native.git),
             Github.open(merged.githubToken),
             merged,

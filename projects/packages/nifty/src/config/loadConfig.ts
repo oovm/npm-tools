@@ -28,7 +28,7 @@ export type LoadedNiftyConfig = {
 };
 
 const DEFAULT_CONFIG_TEMPLATE = `// Nifty project configuration.
-// See @doki-land/nifty for defineConfig, format presets, authorMap, and lint rules.
+// See @doki-land/nifty for defineConfig, format presets, authorMap path, and lint rules.
 export default {};
 `;
 
@@ -120,10 +120,3 @@ export async function loadConfig(options: LoadConfigOptions = {}): Promise<Loade
     return { config, configFile, created };
 }
 
-/** Serialize `authorMap` for native helpers expecting JSON text. */
-export function authorMapToJson(authorMap: NiftyConfig["authorMap"]): string {
-    if (!authorMap || Object.keys(authorMap).length === 0) {
-        return "{}";
-    }
-    return JSON.stringify(authorMap);
-}

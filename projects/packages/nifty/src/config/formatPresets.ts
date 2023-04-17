@@ -19,25 +19,9 @@ const NPM_TOOLS_INCLUDES = [
     "nifty.config.ts",
 ] as const;
 
-/** VMZ hybrid monorepo — JS/TS surfaces only, never whole-repo walk. */
-const VMZ_INCLUDES = [
-    "scripts/**",
-    "packages/runtimes/**",
-    "packages/examples/**",
-    "packages/editors/**",
-    "packages/ui/**",
-    "packages/plugins/**",
-    "packages/content/**",
-    "packages/homepage/**",
-    "package.json",
-    "biome.json",
-    "nifty.config.ts",
-] as const;
-
 const PRESET_INCLUDES: Record<NiftyFormatPreset, readonly string[] | undefined> = {
     default: undefined,
     "npm-tools": NPM_TOOLS_INCLUDES,
-    vmz: VMZ_INCLUDES,
 };
 
 /** Merge `nifty.config` `format` with built-in preset defaults. */

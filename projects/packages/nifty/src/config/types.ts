@@ -1,15 +1,15 @@
-/** GitHub author entry in `authorMap` (same shape as `author-github.json`). */
+/** One email → GitHub author row in `author-github.json`. */
 export type NiftyAuthorEntry = {
     id?: number;
     login?: string;
 };
 
 /** Built-in workspace format presets (`nifty.config` `format.preset`). */
-export type NiftyFormatPreset = "default" | "npm-tools" | "vmz";
+export type NiftyFormatPreset = "default" | "npm-tools";
 
 /** Workspace format options (`nifty format` reads `nifty.config` `format`). */
 export type NiftyFormatConfig = {
-    /** Select built-in include roots. Use `vmz` for the VMZ hybrid monorepo. */
+    /** Select built-in include roots for npm-tools hybrid monorepos. */
     preset?: NiftyFormatPreset;
     /** Extra include globs (override preset list when set alone). */
     includes?: string[];
@@ -27,8 +27,8 @@ export type NiftyFormatConfig = {
 export type NiftyConfig = {
     /** GitHub personal access token for email search / profile fetch. */
     githubToken?: string;
-    /** Email → GitHub author mapping. */
-    authorMap?: Record<string, NiftyAuthorEntry>;
+    /** Path to `author-github.json` (default: `documentation/maintenance/author-github.json`). */
+    authorMap?: string;
     /** Repository root override when discovering git metadata. */
     repoRoot?: string;
     /** Cargo workspace / crate root override. */
@@ -44,8 +44,6 @@ export type NiftyConfig = {
     changelog?: {
         /** GitHub `owner/repo` for contrib.rocks (default: parse `origin`). */
         repo?: string;
-        /** Email → GitHub map path (default: `documentation/maintenance/author-github.json`). */
-        authorMap?: string;
         /** `--write` output directory (default: `documentation/maintenance/releases`). */
         releasesDir?: string;
     };

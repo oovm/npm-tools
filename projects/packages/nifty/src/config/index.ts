@@ -8,7 +8,11 @@ export {
     type ProjectLayout,
 } from "./detectProject.js";
 export {
-    authorMapToJson,
+    DEFAULT_AUTHOR_MAP_PATH,
+    loadAuthorMapJson,
+    resolveAuthorMapPath,
+} from "./authorMap.js";
+export {
     defaultConfigPath,
     ensureConfigFile,
     findConfigFile,

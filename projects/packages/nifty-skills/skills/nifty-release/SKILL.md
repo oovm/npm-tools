@@ -14,9 +14,8 @@ Create or extend `nifty.config.ts`:
 ```ts
 export default {
     githubToken: process.env.GITHUB_TOKEN,
-    authorMap: { "you@example.com": { login: "handle", id: 12345 } },
+    authorMap: "documentation/maintenance/author-github.json",
     changelog: {
-        authorMap: "documentation/maintenance/author-github.json",
         releasesDir: "documentation/maintenance/releases",
         repo: "owner/name",
     },
