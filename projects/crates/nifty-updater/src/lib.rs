@@ -2,6 +2,8 @@
 
 mod cargo;
 mod npm;
+mod registry;
+mod version;
 
 use std::path::{Path, PathBuf};
 
@@ -81,30 +83,37 @@ fn update_npm(layout: &ProjectLayout, interactive: bool) -> Result<()> {
         return Ok(());
     }
 
+    let mut pending_install_root: Option<PathBuf> = None;
     for package_dir in packages {
-        update_npm_dir(&package_dir, interactive)?;
+        if let Some(root) = update_npm_dir(&package_dir, interactive)? {
+            pending_install_root = Some(root);
+        }
+    }
+
+    if let Some(root) = pending_install_root {
+        npm::sync_lockfile_at(&root)?;
     }
 
     Ok(())
 }
 
-fn update_npm_dir(package_dir: &Path, interactive: bool) -> Result<()> {
+fn update_npm_dir(package_dir: &Path, interactive: bool) -> Result<Option<PathBuf>> {
     let outdated = npm::list_outdated(package_dir)?;
     if outdated.is_empty() {
         println!("js ({}): dependencies already up to date", package_dir.display());
-        return Ok(());
+        return Ok(None);
     }
 
     if interactive {
         let selected = npm::select_outdated(&outdated, package_dir)?;
         if selected.is_empty() {
             println!("js ({}): no upgrades selected", package_dir.display());
-            return Ok(());
+            return Ok(None);
         }
-        npm::apply_npm_upgrades(package_dir, &selected)?;
+        npm::apply_npm_upgrades(package_dir, &selected, false)?;
     } else {
-        npm::apply_npm_update_all(package_dir)?;
+        npm::apply_npm_upgrades(package_dir, &outdated, false)?;
     }
 
-    Ok(())
+    Ok(Some(npm::package_manager_root(package_dir)))
 }

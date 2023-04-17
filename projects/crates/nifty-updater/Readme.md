@@ -2,15 +2,17 @@
 
 Update **Cargo** and **npm/pnpm** dependencies for Nifty hybrid projects.
 
+Registry versions are queried directly (`crates.io` + `registry.npmjs.org`). Nifty patches manifests and refreshes lockfiles with built-in `cargo update` / `pnpm|npm install` only.
+
 ## Behavior
 
-| Layout   | Cargo                       | JavaScript                                                       |
-|----------|-----------------------------|------------------------------------------------------------------|
-| `cargo`  | `cargo upgrade --workspace` | —                                                                |
-| `npm`    | —                           | `npm outdated` / `npm update` (or per-package in workspaces)     |
-| `hybrid` | both                        | `pnpm update -r` when `pnpm-workspace.yaml` is present, else npm |
+| Layout   | Cargo                                              | JavaScript                                                       |
+|----------|----------------------------------------------------|------------------------------------------------------------------|
+| `cargo`  | `cargo metadata` + crates.io → patch `Cargo.toml` + `cargo update -p` | —                                                                |
+| `npm`    | —                                                  | read `package.json` + npm registry → patch + `npm install`       |
+| `hybrid` | both                                               | pnpm workspace discovery → patch + `pnpm install` at workspace root |
 
-Interactive mode (`-i`) uses `dialoguer` multi-select for cargo and JS upgrades.
+Interactive mode (`-i`) uses `dialoguer` multi-select.
 
 ## CLI
 

@@ -15,7 +15,11 @@ path = "src/lib.rs"
 [dependencies]
 dialoguer = "0.11"
 nifty-config = { path = "../nifty-config" }
+semver = "1"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
+toml = "0.8"
+ureq = { version = "2.12", default-features = false, features = ["json"] }
+urlencoding = "2"
 
 [dev-dependencies]
