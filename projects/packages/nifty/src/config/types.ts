@@ -7,6 +7,18 @@ export type NiftyAuthorEntry = {
 /** Built-in workspace format presets (`nifty.config` `format.preset`). */
 export type NiftyFormatPreset = "default" | "npm-tools";
 
+/** `oxc_formatter` style knobs (`nifty.config` `format.style`). */
+export type NiftyFormatStyleConfig = {
+    /** Indent with spaces or tabs (default: `space`). */
+    indentStyle?: "space" | "tab";
+    /** Spaces or tabs per indent level (default: `4`). */
+    indentWidth?: number;
+    /** Soft line width (default: `144`). */
+    lineWidth?: number;
+    /** String quote preference (default: `single`). */
+    quoteStyle?: "single" | "double";
+};
+
 /** Workspace format options (`nifty format` reads `nifty.config` `format`). */
 export type NiftyFormatConfig = {
     /** Select built-in include roots for npm-tools hybrid monorepos. */
@@ -19,8 +31,8 @@ export type NiftyFormatConfig = {
     rust?: boolean;
     /** Run `oxc_formatter` on JS/TS targets (default: true). */
     javascript?: boolean;
-    /** Biome-style formatter config for oxc (default: `biome.json` at project root). */
-    style?: string;
+    /** Inline oxc formatter style (not an external config file path). */
+    style?: NiftyFormatStyleConfig;
 };
 
 /** Nifty project configuration (`nifty.config.ts` / `nifty.config.js`). */

@@ -1,15 +1,15 @@
 mod cargo;
 mod oxc;
+mod style;
 mod walk;
 
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use oxc_formatter::JsFormatOptions;
-
 use nifty_config::{detect_project_layout, ProjectKind};
 
 pub use oxc::format_source;
+pub use style::{FormatStyleOptions, default_format_options, resolve_format_options};
 
 /// One formatted file outcome.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -35,7 +35,7 @@ pub struct RunFormatOptions {
     pub excludes: Option<Vec<String>>,
     pub rust: Option<bool>,
     pub javascript: Option<bool>,
-    pub style_config: Option<PathBuf>,
+    pub style: Option<FormatStyleOptions>,
 }
 
 pub type Result<T> = std::result::Result<T, String>;
@@ -68,7 +68,7 @@ pub fn run_format(options: RunFormatOptions) -> Result<FormatReport> {
             includes: options.includes.clone(),
             excludes: options.excludes.clone(),
         };
-        let format_options = oxc::load_format_options(&layout.root, options.style_config.as_deref());
+        let format_options = resolve_format_options(options.style.as_ref());
         for path in walk::discover_format_targets(&layout.root, &discover)? {
             format_path(&path, options.check, &mut report, &format_options)?;
         }
@@ -77,7 +77,12 @@ pub fn run_format(options: RunFormatOptions) -> Result<FormatReport> {
     Ok(report)
 }
 
-fn format_path(path: &Path, check: bool, report: &mut FormatReport, options: &JsFormatOptions) -> Result<()> {
+fn format_path(
+    path: &Path,
+    check: bool,
+    report: &mut FormatReport,
+    options: &oxc_formatter::JsFormatOptions,
+) -> Result<()> {
     let source = fs::read_to_string(path).map_err(|err| format!("{}: {err}", path.display()))?;
     let result = oxc::format_source_with_options(path, &source, options.clone())?;
 

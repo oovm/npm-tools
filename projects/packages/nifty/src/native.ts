@@ -199,6 +199,13 @@ export type FormatReportRecord = {
     errors: string[];
 };
 
+export type FormatterStyleOptions = {
+    indentStyle?: string;
+    indentWidth?: number;
+    lineWidth?: number;
+    quoteStyle?: string;
+};
+
 export type FormatterRunOptions = {
     cwd?: string;
     check?: boolean;
@@ -206,7 +213,7 @@ export type FormatterRunOptions = {
     excludes?: string[];
     rust?: boolean;
     javascript?: boolean;
-    styleConfig?: string;
+    style?: FormatterStyleOptions;
 };
 
 export type FormatterExports = {
@@ -451,7 +458,7 @@ type NativeBinding = {
         excludes?: string[] | null;
         rust?: boolean | null;
         javascript?: boolean | null;
-        styleConfig?: string | null;
+        style?: FormatterStyleOptions | null;
     }) => {
         formatted: number;
         unchanged: number;
@@ -679,7 +686,7 @@ function wrapBinding(binding: NativeBinding): NiftyNative {
                     ...(options.excludes !== undefined ? { excludes: options.excludes } : {}),
                     ...(options.rust !== undefined ? { rust: options.rust } : {}),
                     ...(options.javascript !== undefined ? { javascript: options.javascript } : {}),
-                    ...(options.styleConfig !== undefined ? { styleConfig: options.styleConfig } : {}),
+                    ...(options.style !== undefined ? { style: options.style } : {}),
                 }),
         },
         publisher: {

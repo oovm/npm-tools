@@ -13,10 +13,6 @@ pub struct DiscoverOptions {
 pub fn discover_format_targets(root: &Path, options: &DiscoverOptions) -> Result<Vec<PathBuf>, String> {
     let mut paths = if let Some(includes) = options.includes.as_ref().filter(|items| !items.is_empty()) {
         expand_includes(root, includes)?
-    } else if let Some(includes) = read_biome_includes(root)? {
-        expand_includes(root, &includes)?
-    } else if root.join("biome.json").is_file() {
-        discover_default_targets(root)?
     } else {
         discover_default_targets(root)?
     };
@@ -28,28 +24,6 @@ pub fn discover_format_targets(root: &Path, options: &DiscoverOptions) -> Result
     paths.sort();
     paths.dedup();
     Ok(paths)
-}
-
-fn read_biome_includes(root: &Path) -> Result<Option<Vec<String>>, String> {
-    let biome_path = root.join("biome.json");
-    if !biome_path.is_file() {
-        return Ok(None);
-    }
-    let raw = std::fs::read_to_string(&biome_path)
-        .map_err(|err| format!("{}: {err}", biome_path.display()))?;
-    let value: serde_json::Value =
-        serde_json::from_str(&raw).map_err(|err| format!("{}: {err}", biome_path.display()))?;
-    let includes = value
-        .pointer("/files/includes")
-        .and_then(|v| v.as_array())
-        .map(|items| {
-            items
-                .iter()
-                .filter_map(|item| item.as_str().map(str::to_string))
-                .collect::<Vec<_>>()
-        })
-        .filter(|items| !items.is_empty());
-    Ok(includes)
 }
 
 fn expand_includes(root: &Path, includes: &[String]) -> Result<Vec<PathBuf>, String> {
@@ -90,7 +64,7 @@ fn discover_default_targets(root: &Path) -> Result<Vec<PathBuf>, String> {
 
     collect_root_sources(root, &mut paths);
 
-    for name in ["package.json", "biome.json", "oxfmtrc.json"] {
+    for name in ["package.json", "nifty.config.ts"] {
         let candidate = root.join(name);
         if candidate.is_file() && is_format_target(&candidate) {
             paths.push(candidate);
