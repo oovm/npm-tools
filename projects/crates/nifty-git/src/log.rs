@@ -2,6 +2,7 @@
 
 use std::path::Path;
 
+use gix::bstr::ByteSlice;
 use gix::{Commit, ObjectId, Repository};
 
 use nifty_types::{parse_subject, section_name};
@@ -67,7 +68,7 @@ fn read_commit(repo: &Repository, oid: ObjectId) -> Result<Commit<'_>> {
 }
 
 fn to_record(oid: ObjectId, commit: &Commit<'_>) -> CommitRecord {
-    let message = commit.message_raw_sloppy().to_string();
+    let message = normalize_commit_message(commit.message_raw_sloppy());
     let subject = message
         .lines()
         .next()
@@ -87,4 +88,12 @@ fn to_record(oid: ObjectId, commit: &Commit<'_>) -> CommitRecord {
         gitmoji: parsed.gitmoji,
         section: section_name(parsed.section).to_string(),
     }
+}
+
+/// Strip UTF-8 BOM that breaks gitmoji-leading-subject detection.
+fn normalize_commit_message(raw: &gix::bstr::BStr) -> String {
+    raw.to_str()
+        .unwrap_or("")
+        .trim_start_matches('\u{feff}')
+        .to_string()
 }

@@ -2,7 +2,7 @@
 
 use napi::bindgen_prelude::*;
 use napi_derive::napi;
-use nifty_linter::{run_check, run_lint, LintOptions as CoreLintOptions, LintReport as CoreLintReport, RuleConfig, RuleSeverity};
+use nifty_linter::{run_lint, LintOptions as CoreLintOptions, LintReport as CoreLintReport, RuleConfig, RuleSeverity};
 
 #[napi(object)]
 pub struct LintRuleConfig {
@@ -116,5 +116,5 @@ pub fn lint_run(options: LintRunOptions) -> Result<LintReportNapi> {
 #[napi]
 pub fn lint_check(options: LintRunOptions) -> Result<LintReportNapi> {
     let core = core_options(options);
-    map_err(run_check(core).map(to_napi_report))
+    map_err(run_lint(core).map(to_napi_report))
 }

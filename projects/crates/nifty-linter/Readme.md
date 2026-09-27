@@ -11,6 +11,17 @@ Rule-based lint/check for Nifty gitmoji commit conventions and cargo workspace h
 | `gitmoji/body`    | warning | Body after gitmoji must not be empty                 |
 | `gitmoji/format`  | warning | Subject should match `format_subject(gitmoji, body)` |
 
+## Commit hygiene rules
+
+| Rule                  | Default | Description                                        |
+|-----------------------|---------|----------------------------------------------------|
+| `commit/semver`       | error   | Semver must not appear in subject or body          |
+| `commit/semicolon`    | error   | Message must not contain `;` or `；`               |
+| `commit/bare-package` | error   | Scoped npm names (`@scope/pkg`) must use backticks |
+| `commit/bare-symbol`  | warning | Common identifiers should use backticks              |
+
+`commit/bare-package` treats backtick-wrapped scoped names as satisfied even when the subject also contains other backtick-wrapped identifiers.
+
 ## Cargo workspace rules (`cargo cry`)
 
 | Rule                      | Default | Description                                                 |

@@ -1,5 +1,6 @@
 import { loadConfig } from "../config/loadConfig.js";
 import { loadNiftyNative } from "../native.js";
+import { printCommitLintReport, type CommitLintDiagnostic } from "./commit-lint-report.js";
 
 export type LintOptions = {
     subjects: string[];
@@ -8,17 +9,12 @@ export type LintOptions = {
     cwd?: string;
     scanCargo?: boolean;
     commitOnly?: boolean;
+    json?: boolean;
+    errorsOnly?: boolean;
+    reportTitle?: string;
 };
 
-type LintDiagnostic = {
-    rule: string;
-    severity: "error" | "warning" | "info";
-    message: string;
-    subject?: string;
-    hash?: string;
-    path?: string;
-    line?: number;
-};
+type LintDiagnostic = CommitLintDiagnostic;
 
 type LintRuleConfig = {
     id: string;
@@ -59,23 +55,32 @@ export async function lintCommits(
         commitOnly: commitOnly || options.commitOnly,
     });
 
-    for (const item of report.diagnostics) {
-        printDiagnostic(item);
-    }
-
-    if (report.diagnostics.length > 0) {
-        console.log(`lint: ${report.errorCount} error(s), ${report.warningCount} warning(s)`);
+    if (commitOnly || options.commitOnly) {
+        printCommitLintReport(report.diagnostics, report.errorCount, report.warningCount, {
+            json: options.json,
+            errorsOnly: options.errorsOnly,
+            title: options.reportTitle ?? "commit lint",
+        });
     } else {
-        console.log("lint: no issues found");
+        for (const item of report.diagnostics) {
+            printWorkspaceDiagnostic(item);
+        }
+
+        if (report.diagnostics.length > 0) {
+            console.log(`lint: ${report.errorCount} error(s), ${report.warningCount} warning(s)`);
+        } else {
+            console.log("lint: no issues found");
+        }
     }
 
     return report.errorCount;
 }
 
-function printDiagnostic(item: LintDiagnostic): void {
+function printWorkspaceDiagnostic(item: LintDiagnostic): void {
     const prefix = item.severity === "error" ? "error" : item.severity === "warning" ? "warning" : "info";
     if (item.subject) {
-        console.log(`${prefix} [${item.rule}] ${item.message} (${item.subject})`);
+        const hash = item.hash ? `${item.hash.slice(0, 8)} ` : "";
+        console.log(`${prefix} [${item.rule}] ${hash}${item.message} (${item.subject})`);
         return;
     }
     const location =

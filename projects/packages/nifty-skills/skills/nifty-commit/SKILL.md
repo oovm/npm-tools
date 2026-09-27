@@ -31,6 +31,11 @@ nifty check --from origin/dev..HEAD
 # Commit-only scan/audit (gitmoji + semver/semicolon/backtick hygiene)
 nifty commit scan --from d25daeba^ --to HEAD
 nifty commit audit --from d25daeba^ --to HEAD
+nifty commit audit --from d25daeba^ --to HEAD --errors-only
+nifty commit audit --from d25daeba^ --to HEAD --json
+
+# Export a reword map and annotate violations in-place
+nifty commit export --base d25daeba --ref dev --path commit.pending.json --with-lint
 
 # Lint explicit strings
 nifty lint --subject "✨ Add feature"
@@ -62,9 +67,13 @@ Align with Nifty/npm-tools git policy when the user asks you to commit:
 
 ## Workflow
 
-1. Run `nifty commit scan` on the range about to merge or release.
-2. Fix subjects locally or plan a **`nifty commit export` / `nifty commit apply`** pass (see `nifty-git-history`) for
-   history already pushed.
-3. Re-run `nifty commit audit` until exit code is 0.
+1. Run `nifty commit audit` on the range about to merge or release.
+2. For history rewrites, export with lint annotations:
+   `nifty commit export --base <exclusive-base> --ref dev --path commit.pending.json --with-lint`
+3. Edit only entries with `violations` (or all subjects that need changes), then apply with `nifty commit apply`.
+4. Re-run `nifty commit audit` until exit code is 0.
 
-Do not bypass lint with custom regex when `nifty commit scan` is available.
+`scan` and `audit` group findings by commit hash, print a per-rule summary, and support `--json` for automation.
+`export --with-lint` writes the same `violations` array onto each JSON entry. `commit apply` ignores that field.
+
+Do not bypass lint with custom regex or one-off scripts when `nifty commit audit` is available.
