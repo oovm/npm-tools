@@ -34,3 +34,6 @@ native-artifacts/
 .env.placeholder.local
 .cache/*
 !.cache/npm-placeholder.json.example
+
+# Nifty change-logs draft index (local only — regenerate with `nifty change-logs --version X.Y.Z --write`)
+documentation/maintenance/releases/*.reference.md
