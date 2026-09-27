@@ -2,7 +2,17 @@
 
 use napi::bindgen_prelude::*;
 use napi_derive::napi;
-use nifty_formatter::{run_format, FormatReport as CoreFormatReport, RunFormatOptions};
+use nifty_formatter::{
+    run_format, FormatReport as CoreFormatReport, FormatStyleOptions, RunFormatOptions,
+};
+
+#[napi(object)]
+pub struct FormatStyleOptionsNapi {
+    pub indent_style: Option<String>,
+    pub indent_width: Option<u32>,
+    pub line_width: Option<u32>,
+    pub quote_style: Option<String>,
+}
 
 #[napi(object)]
 pub struct FormatRunOptions {
@@ -12,7 +22,7 @@ pub struct FormatRunOptions {
     pub excludes: Option<Vec<String>>,
     pub rust: Option<bool>,
     pub javascript: Option<bool>,
-    pub style_config: Option<String>,
+    pub style: Option<FormatStyleOptionsNapi>,
 }
 
 #[napi(object)]
@@ -26,6 +36,15 @@ fn map_err<T>(result: std::result::Result<T, String>) -> Result<T> {
     result.map_err(|message| Error::from_reason(message))
 }
 
+fn map_style(style: Option<FormatStyleOptionsNapi>) -> Option<FormatStyleOptions> {
+    style.map(|style| FormatStyleOptions {
+        indent_style: style.indent_style,
+        indent_width: style.indent_width.and_then(|width| u8::try_from(width).ok()),
+        line_width: style.line_width.and_then(|width| u16::try_from(width).ok()),
+        quote_style: style.quote_style,
+    })
+}
+
 #[napi]
 pub fn formatter_run(options: FormatRunOptions) -> Result<FormatReportNapi> {
     let report = map_err(run_format(RunFormatOptions {
@@ -35,7 +54,7 @@ pub fn formatter_run(options: FormatRunOptions) -> Result<FormatReportNapi> {
         excludes: options.excludes,
         rust: options.rust,
         javascript: options.javascript,
-        style_config: options.style_config.map(std::path::PathBuf::from),
+        style: map_style(options.style),
     }))?;
     Ok(to_napi_report(report))
 }

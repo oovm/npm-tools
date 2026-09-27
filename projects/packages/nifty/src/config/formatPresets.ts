@@ -1,4 +1,4 @@
-import type { NiftyFormatConfig, NiftyFormatPreset } from "./types.js";
+import type { NiftyFormatConfig, NiftyFormatPreset, NiftyFormatStyleConfig } from "./types.js";
 
 export type ResolvedFormatOptions = {
     preset: NiftyFormatPreset;
@@ -6,7 +6,14 @@ export type ResolvedFormatOptions = {
     excludes?: string[];
     rust?: boolean;
     javascript?: boolean;
-    style?: string;
+    style: NiftyFormatStyleConfig;
+};
+
+const DEFAULT_FORMAT_STYLE: NiftyFormatStyleConfig = {
+    indentStyle: "space",
+    indentWidth: 4,
+    lineWidth: 144,
+    quoteStyle: "single",
 };
 
 const NPM_TOOLS_INCLUDES = [
@@ -15,7 +22,6 @@ const NPM_TOOLS_INCLUDES = [
     "projects/conformance/**",
     "projects/dashboard/**",
     "package.json",
-    "biome.json",
     "nifty.config.ts",
 ] as const;
 
@@ -34,6 +40,9 @@ export function resolveFormatConfig(format: NiftyFormatConfig | undefined): Reso
         excludes: format?.excludes,
         rust: format?.rust,
         javascript: format?.javascript,
-        style: format?.style,
+        style: {
+            ...DEFAULT_FORMAT_STYLE,
+            ...format?.style,
+        },
     };
 }

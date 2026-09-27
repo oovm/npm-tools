@@ -29,4 +29,5 @@ export {
     type NiftyConfigExport,
     type NiftyFormatConfig,
     type NiftyFormatPreset,
+    type NiftyFormatStyleConfig,
 } from "./types.js";

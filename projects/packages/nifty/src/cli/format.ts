@@ -18,7 +18,7 @@ export async function formatWorkspace(options: FormatOptions): Promise<number> {
         excludes: resolved.excludes,
         rust: resolved.rust,
         javascript: resolved.javascript,
-        styleConfig: resolved.style,
+        style: resolved.style,
     });
 
     if (report.errors.length > 0) {

@@ -4,7 +4,12 @@ import { defineConfig } from "@doki-land/nifty";
 export default defineConfig({
     format: {
         preset: "npm-tools",
-        style: "biome.json",
+        style: {
+            indentStyle: "space",
+            indentWidth: 4,
+            lineWidth: 144,
+            quoteStyle: "single",
+        },
     },
     changelog: {
         repo: "oovm/npm-tools",
