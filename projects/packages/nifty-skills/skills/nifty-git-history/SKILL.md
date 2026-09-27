@@ -17,16 +17,16 @@ Warn the user before rewriting shared branches. Prefer `--dry-run` first.
 Export JSON map, preview, apply:
 
 ```bash
-nifty commit export --base 34e1e665^ --ref dev --path commit.pending.json
-nifty commit apply --base 34e1e665^ --ref dev --path commit.pending.json --dry-run
-nifty commit apply --base 34e1e665^ --ref dev --path commit.pending.json
+nifty commit export --base 34e1e665 --ref dev --path commit.pending.json --with-lint
+nifty commit apply --base 34e1e665 --ref dev --path commit.pending.json --dry-run
+nifty commit apply --base 34e1e665 --ref dev --path commit.pending.json
 ```
 
-Scan or audit the same commit range before editing:
+Audit the same commit range before or after editing:
 
 ```bash
-nifty commit scan --from 34e1e665^ --to dev
-nifty commit audit --from 34e1e665^ --to dev
+nifty commit audit --from 34e1e665 --to dev
+nifty commit audit --from 34e1e665 --to dev --errors-only
 ```
 
 ### Map format

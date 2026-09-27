@@ -1,3 +1,5 @@
+import { readFile, writeFile } from "node:fs/promises";
+
 import type { Cli, ParsedOptions } from "@vmz/commander";
 
 import { loadNiftyNative } from "../native.js";
@@ -13,6 +15,8 @@ export function registerCommitCommand(cli: Cli): void {
         .option("--base <ref>", "cli.opt.base")
         .option("--ref <ref>", "cli.opt.ref")
         .option("--path <file>", "cli.opt.path")
+        .option("--with-lint", "cli.opt.with-lint")
+        .option("--errors-only", "cli.opt.errors-only")
         .action(async (options) => cmdCommitExport(options));
 
     commit
@@ -28,6 +32,8 @@ export function registerCommitCommand(cli: Cli): void {
         .option("--from <ref>", "cli.opt.from")
         .option("--to <ref>", "cli.opt.to")
         .option("-s, --subject <text>...", "cli.opt.subject")
+        .option("--json", "cli.opt.json")
+        .option("--errors-only", "cli.opt.errors-only")
         .action(async (options) => cmdCommitScan(options));
 
     commit
@@ -35,6 +41,8 @@ export function registerCommitCommand(cli: Cli): void {
         .option("--from <ref>", "cli.opt.from")
         .option("--to <ref>", "cli.opt.to")
         .option("-s, --subject <text>...", "cli.opt.subject")
+        .option("--json", "cli.opt.json")
+        .option("--errors-only", "cli.opt.errors-only")
         .action(async (options) => cmdCommitAudit(options));
 }
 
@@ -50,6 +58,22 @@ export async function cmdCommitExport(options: ParsedOptions): Promise<number> {
         path,
     });
     console.log(`export: wrote ${report.count} commit entry(ies) to ${report.path}`);
+
+    if (flag(options, "with-lint")) {
+        const errorCount = await lintAndAnnotateExport({
+            path,
+            from: base,
+            to: str(options, "ref") ?? "HEAD",
+            cwd: cwdFrom(options),
+            json: flag(options, "json"),
+            errorsOnly: flag(options, "errors-only"),
+            reportTitle: "commit export lint",
+        });
+        if (errorCount > 0) {
+            return 1;
+        }
+    }
+
     return 0;
 }
 
@@ -95,17 +119,14 @@ export async function cmdCommitApply(options: ParsedOptions): Promise<number> {
 
 export async function cmdCommitScan(options: ParsedOptions): Promise<number> {
     await bootstrapFromOptions(options);
-    await lintCommits(commitLintOptions(options), false, true);
+    await lintCommits({ ...commitLintOptions(options), reportTitle: "commit scan" }, false, true);
     return 0;
 }
 
 export async function cmdCommitAudit(options: ParsedOptions): Promise<number> {
     await bootstrapFromOptions(options);
-    const errorCount = await lintCommits(commitLintOptions(options), true, true);
-    if (errorCount > 0) {
-        throw new Error(`found ${errorCount} commit audit error(s)`);
-    }
-    return 0;
+    const errorCount = await lintCommits(commitLintOptions(options), false, true);
+    return errorCount > 0 ? 1 : 0;
 }
 
 function commitLintOptions(options: ParsedOptions): LintOptions {
@@ -116,7 +137,84 @@ function commitLintOptions(options: ParsedOptions): LintOptions {
         cwd: cwdFrom(options),
         scanCargo: false,
         commitOnly: true,
+        json: flag(options, "json"),
+        errorsOnly: flag(options, "errors-only"),
+        reportTitle: "commit audit",
     };
+}
+
+type ExportDocument = {
+    version: number;
+    entries: Array<{
+        hash: string;
+        message: string;
+        violations?: Array<{
+            rule: string;
+            severity: "error" | "warning" | "info";
+            message: string;
+        }>;
+    }>;
+};
+
+async function lintAndAnnotateExport(options: {
+    path: string;
+    from: string;
+    to: string;
+    cwd: string;
+    json: boolean;
+    errorsOnly: boolean;
+    reportTitle: string;
+}): Promise<number> {
+    const native = loadNiftyNative();
+    const report = native.lint.run({
+        cwd: options.cwd,
+        fromRef: options.from,
+        toRef: options.to,
+        commitOnly: true,
+        scanCargo: false,
+    });
+    const diagnostics = options.errorsOnly
+        ? report.diagnostics.filter((item) => item.severity === "error")
+        : report.diagnostics;
+
+    if (options.json) {
+        const { printCommitLintReport } = await import("./commit-lint-report.js");
+        printCommitLintReport(diagnostics, report.errorCount, report.warningCount, {
+            json: true,
+            errorsOnly: options.errorsOnly,
+            title: options.reportTitle,
+        });
+    } else {
+        const { printCommitLintReport } = await import("./commit-lint-report.js");
+        printCommitLintReport(diagnostics, report.errorCount, report.warningCount, {
+            errorsOnly: options.errorsOnly,
+            title: options.reportTitle,
+        });
+    }
+
+    const byHash = new Map<string, Array<{ rule: string; severity: "error" | "warning" | "info"; message: string }>>();
+    for (const item of diagnostics) {
+        if (!item.hash) {
+            continue;
+        }
+        const bucket = byHash.get(item.hash) ?? [];
+        bucket.push({ rule: item.rule, severity: item.severity, message: item.message });
+        byHash.set(item.hash, bucket);
+    }
+
+    const text = await readFile(options.path, "utf8");
+    const document = JSON.parse(text) as ExportDocument;
+    document.entries = document.entries.map((entry) => {
+        const violations = byHash.get(entry.hash);
+        if (!violations || violations.length === 0) {
+            return entry;
+        }
+        return { ...entry, violations };
+    });
+    await writeFile(options.path, `${JSON.stringify(document, null, 2)}\n`, "utf8");
+    const violationCount = document.entries.filter((entry) => entry.violations && entry.violations.length > 0).length;
+    console.log(`export: annotated ${violationCount} commit entry(ies) with lint violations in ${options.path}`);
+    return report.errorCount;
 }
 
 function requireStr(options: ParsedOptions, key: string): string {

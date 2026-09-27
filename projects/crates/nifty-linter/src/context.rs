@@ -30,7 +30,7 @@ impl LintContext {
 
 impl CommitInput {
     pub fn subject_only(subject: impl Into<String>) -> Self {
-        let subject = subject.into();
+        let subject = normalize_commit_text(subject.into());
         Self {
             hash: None,
             subject: subject.clone(),
@@ -41,6 +41,10 @@ impl CommitInput {
     pub fn full_message(&self) -> &str {
         self.message.as_deref().unwrap_or(&self.subject)
     }
+}
+
+fn normalize_commit_text(text: String) -> String {
+    text.trim_start_matches('\u{feff}').to_string()
 }
 
 pub fn diagnostic(

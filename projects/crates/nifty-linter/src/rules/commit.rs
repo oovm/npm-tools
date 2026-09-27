@@ -70,7 +70,8 @@ fn check_bare_package(ctx: &LintContext, commit: &CommitInput, message: &str) ->
             .map(|(offset, _)| offset)
             .unwrap_or(rest.len());
         let token = &rest[..end];
-        if token.contains('/') && !is_backtick_wrapped(message, start, end) {
+        let token_end = start + end;
+        if token.contains('/') && !is_backtick_wrapped(message, start, token_end) {
             return diagnostic(
                 ctx,
                 RULE_COMMIT_BARE_PACKAGE,
@@ -161,8 +162,31 @@ fn is_ident_char(ch: char) -> bool {
 }
 
 fn is_backtick_wrapped(text: &str, start: usize, end: usize) -> bool {
-    text.get(..start).is_some_and(|prefix| prefix.ends_with('`'))
-        && text.get(end..).is_some_and(|suffix| suffix.starts_with('`'))
+    if start >= end {
+        return false;
+    }
+    let bytes = text.as_bytes();
+    let mut index = 0;
+    while index < text.len() {
+        if bytes[index] != b'`' {
+            index += 1;
+            continue;
+        }
+        let open = index;
+        index += 1;
+        while index < text.len() && bytes[index] != b'`' {
+            index += 1;
+        }
+        if index >= text.len() {
+            return false;
+        }
+        let close = index;
+        if open < start && end <= close {
+            return true;
+        }
+        index += 1;
+    }
+    false
 }
 
 fn find_bare_token(text: &str, token: &str) -> Option<usize> {
@@ -189,7 +213,7 @@ fn find_bare_token(text: &str, token: &str) -> Option<usize> {
 mod tests {
     use super::{find_bare_token, find_semver, is_backtick_wrapped, lint_commit_hygiene};
     use crate::context::{CommitInput, LintContext};
-    use crate::rule::default_commit_rules;
+    use crate::rule::{default_commit_rules, RULE_COMMIT_BARE_PACKAGE};
 
     #[test]
     fn flags_bare_octokit() {
@@ -212,5 +236,88 @@ mod tests {
     #[test]
     fn flags_semver_in_subject() {
         assert_eq!(find_semver("Close v0.1.18 gate"), Some("v0.1.18"));
+    }
+
+    #[test]
+    fn accepts_backtick_wrapped_scoped_package() {
+        let ctx = LintContext::new(vec![], default_commit_rules());
+        let commit = CommitInput {
+            hash: Some("abc".to_string()),
+            subject: "✨ Expand `@doki-land/nifty` meta package under `projects/packages`".to_string(),
+            message: Some(
+                "✨ Expand `@doki-land/nifty` meta package under `projects/packages`".to_string(),
+            ),
+        };
+        let diagnostics = lint_commit_hygiene(&ctx, &commit);
+        assert!(
+            !diagnostics
+                .iter()
+                .any(|item| item.rule == RULE_COMMIT_BARE_PACKAGE),
+            "expected wrapped scoped package to pass: {diagnostics:?}"
+        );
+    }
+
+    #[test]
+    fn flags_bare_scoped_package() {
+        let ctx = LintContext::new(vec![], default_commit_rules());
+        let commit = CommitInput {
+            hash: Some("abc".to_string()),
+            subject: "✨ Adopt @vmz/commander for nifty CLI".to_string(),
+            message: Some("✨ Adopt @vmz/commander for nifty CLI".to_string()),
+        };
+        let diagnostics = lint_commit_hygiene(&ctx, &commit);
+        assert!(diagnostics.iter().any(|item| item.rule == RULE_COMMIT_BARE_PACKAGE));
+    }
+
+    #[test]
+    fn accepts_backtick_wrapped_scoped_package_in_body() {
+        let ctx = LintContext::new(vec![], default_commit_rules());
+        let commit = CommitInput {
+            hash: Some("abc".to_string()),
+            subject: "🔧 Point root scripts at `nifty publish` and `nifty trust`".to_string(),
+            message: Some(
+                "🔧 Point root scripts at `nifty publish` and `nifty trust`\n\nAdd root devDependency on `@doki-land/nifty`.".to_string(),
+            ),
+        };
+        let diagnostics = lint_commit_hygiene(&ctx, &commit);
+        assert!(
+            !diagnostics
+                .iter()
+                .any(|item| item.rule == RULE_COMMIT_BARE_PACKAGE),
+            "expected wrapped scoped package in body to pass: {diagnostics:?}"
+        );
+    }
+
+    #[test]
+    fn backtick_wrap_uses_absolute_byte_end() {
+        let message = "publish `@doki-land/nifty-config` next";
+        let start = message.find('@').expect("@");
+        let rest = &message[start..];
+        let end = rest
+            .char_indices()
+            .skip(1)
+            .find(|(_, ch)| !ch.is_ascii_alphanumeric() && !matches!(ch, '-' | '/' | '@' | '.'))
+            .map(|(offset, _)| offset)
+            .unwrap_or(rest.len());
+        assert!(is_backtick_wrapped(message, start, start + end));
+    }
+
+    #[test]
+    fn accepts_backtick_wrapped_scoped_package_with_other_backticks() {
+        let message =
+            "✨ Add `nifty-config` layout detection and publish `@doki-land/nifty-config`";
+        let start = message.rfind('@').expect("@");
+        let rest = &message[start..];
+        let end = rest
+            .char_indices()
+            .skip(1)
+            .find(|(_, ch)| !is_package_char(*ch))
+            .map(|(offset, _)| offset)
+            .unwrap_or(rest.len());
+        assert!(is_backtick_wrapped(message, start, start + end));
+    }
+
+    fn is_package_char(ch: char) -> bool {
+        ch.is_ascii_alphanumeric() || matches!(ch, '-' | '/' | '@' | '.')
     }
 }
