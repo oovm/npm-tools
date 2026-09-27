@@ -6,6 +6,10 @@ export default defineConfig({
         preset: "npm-tools",
         style: "biome.json",
     },
+    changelog: {
+        repo: "oovm/npm-tools",
+        releasesDir: "documentation/maintenance/releases",
+    },
     publish: {
         packages: [
             "@doki-land/nifty",
