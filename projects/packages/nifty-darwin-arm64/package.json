@@ -1,6 +1,6 @@
 {
     "name": "@doki-land/nifty-darwin-arm64",
-    "version": "0.0.6",
+    "version": "0.0.7",
     "description": "Nifty Node-API binary for macOS arm64",
     "type": "module",
     "license": "MPL-2.0",
