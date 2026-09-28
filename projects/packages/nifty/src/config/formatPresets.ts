@@ -16,7 +16,7 @@ const DEFAULT_FORMAT_STYLE: NiftyFormatStyleConfig = {
     quoteStyle: "single",
 };
 
-const NPM_TOOLS_INCLUDES = [
+const NIFTY_PRESET_INCLUDES = [
     "scripts/**",
     "projects/packages/**",
     "projects/conformance/**",
@@ -25,9 +25,25 @@ const NPM_TOOLS_INCLUDES = [
     "nifty.config.ts",
 ] as const;
 
+/** VMZ hybrid monorepo — JS/TS surfaces only, never whole-repo walk. */
+const VMZ_INCLUDES = [
+    "scripts/**",
+    "packages/runtimes/**",
+    "packages/examples/**",
+    "packages/editors/**",
+    "packages/ui/**",
+    "packages/plugins/**",
+    "packages/content/**",
+    "packages/homepage/**",
+    "package.json",
+    "nifty.config.ts",
+] as const;
+
 const PRESET_INCLUDES: Record<NiftyFormatPreset, readonly string[] | undefined> = {
     default: undefined,
-    "npm-tools": NPM_TOOLS_INCLUDES,
+    nifty: NIFTY_PRESET_INCLUDES,
+    "npm-tools": NIFTY_PRESET_INCLUDES,
+    vmz: VMZ_INCLUDES,
 };
 
 /** Merge `nifty.config` `format` with built-in preset defaults. */

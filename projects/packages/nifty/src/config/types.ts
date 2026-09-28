@@ -5,7 +5,7 @@ export type NiftyAuthorEntry = {
 };
 
 /** Built-in workspace format presets (`nifty.config` `format.preset`). */
-export type NiftyFormatPreset = "default" | "npm-tools";
+export type NiftyFormatPreset = "default" | "nifty" | "npm-tools" | "vmz";
 
 /** `oxc_formatter` style knobs (`nifty.config` `format.style`). */
 export type NiftyFormatStyleConfig = {
@@ -21,7 +21,7 @@ export type NiftyFormatStyleConfig = {
 
 /** Workspace format options (`nifty format` reads `nifty.config` `format`). */
 export type NiftyFormatConfig = {
-    /** Select built-in include roots for npm-tools hybrid monorepos. */
+    /** Select built-in include roots for Nifty hybrid monorepos. */
     preset?: NiftyFormatPreset;
     /** Extra include globs (override preset list when set alone). */
     includes?: string[];

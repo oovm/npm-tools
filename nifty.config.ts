@@ -3,7 +3,7 @@ import { defineConfig } from "@doki-land/nifty";
 
 export default defineConfig({
     format: {
-        preset: "npm-tools",
+        preset: "nifty",
         style: {
             indentStyle: "space",
             indentWidth: 4,
