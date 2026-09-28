@@ -6,6 +6,7 @@ mod engine;
 mod git;
 mod rule;
 mod rules;
+mod workspace;
 
 pub use context::{CommitInput, LintContext};
 pub use engine::{run_check, run_lint, LintOptions, LintReport, LintResult};

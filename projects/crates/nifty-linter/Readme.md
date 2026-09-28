@@ -37,7 +37,13 @@ Rule-based lint/check for Nifty gitmoji commit conventions and cargo workspace h
 | `cargo/misplaced-root-rs` | error   | No loose `.rs` files beside `Cargo.toml`                    |
 | `cargo/large-file`        | warning | Rust sources over 1000 lines                                |
 
-Cargo rules run automatically on hybrid/cargo repos when linting commits. Pass `--no-cargo` to skip them. Use
+## Workspace rules
+
+| Rule                      | Default | Description                                                 |
+|---------------------------|---------|-------------------------------------------------------------|
+| `typescript/large-file`   | warning | TypeScript sources (`.ts`/`.tsx`/`.mts`/`.cts`) over 1000 lines |
+
+Cargo and workspace rules run automatically on hybrid/cargo/npm repos when linting commits. Pass `--no-cargo` to skip them. Use
 `--subject` alone to lint only gitmoji rules.
 
 ## CLI
@@ -57,7 +63,10 @@ Configure rule severity in `nifty.config.ts`:
 ```ts
 export default {
   lint: {
-    rules: [{ id: "cargo/large-file", severity: "warning", enabled: true }],
+    rules: [
+      { id: "cargo/large-file", severity: "warning", enabled: true },
+      { id: "typescript/large-file", severity: "warning", enabled: true },
+    ],
   },
 };
 ```
