@@ -1,6 +1,6 @@
 [package]
 name = "nifty-linter"
-version = "0.0.7"
+version = "0.0.8"
 authors = ["Aster <192607617@qq.com>"]
 description = "Rule-based lint/check for Nifty gitmoji commit conventions and cargo workspace hygiene"
 repository = "https://github.com/oovm/npm-tools"
