@@ -13,6 +13,15 @@ use walkdir::WalkDir;
 const MAX_RUST_LINES: usize = 1000;
 /// 超过此行数的 `readme.md` 视为正式文档，须用 `include_str` 导入。
 const MIN_README_LINES_FOR_INCLUDE_STR: usize = 10;
+const SKIP_WALK_DIRS: &[&str] = &["node_modules", "target", ".git", "dist", ".cache"];
+
+fn should_walk_entry(entry: &walkdir::DirEntry) -> bool {
+    if !entry.file_type().is_dir() {
+        return true;
+    }
+    let name = entry.file_name().to_string_lossy();
+    !name.starts_with(".cry-") && !SKIP_WALK_DIRS.contains(&name.as_ref())
+}
 
 /// Kind of cargo workspace finding (maps to Nifty lint rule ids).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -43,10 +52,7 @@ pub fn discover_packages(root: &Path) -> Vec<PathBuf> {
     let mut packages = Vec::new();
     for entry in WalkDir::new(root)
         .into_iter()
-        .filter_entry(|e| {
-            let name = e.file_name().to_string_lossy();
-            name != "target" && !name.starts_with(".cry-")
-        })
+        .filter_entry(should_walk_entry)
         .filter_map(Result::ok)
     {
         if entry.file_type().is_file() && entry.file_name() == "Cargo.toml" {
@@ -135,10 +141,7 @@ pub fn scan_large_files(root: &Path) -> Vec<CargoFinding> {
     let mut findings = Vec::new();
     for entry in WalkDir::new(root)
         .into_iter()
-        .filter_entry(|e| {
-            let name = e.file_name().to_string_lossy();
-            name != "target" && !name.starts_with(".cry-")
-        })
+        .filter_entry(should_walk_entry)
         .filter_map(Result::ok)
     {
         if !entry.file_type().is_file() {
@@ -165,10 +168,7 @@ fn scan_readme_case(root: &Path) -> Vec<CargoFinding> {
     let mut findings = Vec::new();
     for entry in WalkDir::new(root)
         .into_iter()
-        .filter_entry(|e| {
-            let name = e.file_name().to_string_lossy();
-            name != "target" && !name.starts_with(".cry-")
-        })
+        .filter_entry(should_walk_entry)
         .filter_map(Result::ok)
     {
         if !entry.file_type().is_file() {

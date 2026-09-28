@@ -9,3 +9,12 @@ fn parse_and_validate_gitmoji_subject() {
     assert_eq!(parsed.body, "Add `git-change-logs` binary");
     assert_eq!(parsed.section, Section::Features);
 }
+
+#[test]
+fn accepts_init_gitmoji_subject() {
+    let subject = "🎂 Project initialized!";
+    assert!(validate_subject(subject));
+    let parsed = parse_subject(subject);
+    assert_eq!(parsed.gitmoji.as_deref(), Some("🎂"));
+    assert_eq!(parsed.section, Section::Other);
+}
