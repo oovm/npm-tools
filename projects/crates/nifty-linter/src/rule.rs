@@ -55,6 +55,7 @@ pub const RULE_CARGO_DOC_INCLUDE_STR: &str = "cargo/doc-include-str";
 pub const RULE_CARGO_MISPLACED_TEST: &str = "cargo/misplaced-test";
 pub const RULE_CARGO_MISPLACED_ROOT_RS: &str = "cargo/misplaced-root-rs";
 pub const RULE_CARGO_LARGE_FILE: &str = "cargo/large-file";
+pub const RULE_TYPESCRIPT_LARGE_FILE: &str = "typescript/large-file";
 
 fn default_enabled() -> bool {
     true
@@ -133,6 +134,11 @@ pub fn default_rules() -> Vec<RuleConfig> {
         },
         RuleConfig {
             id: RULE_CARGO_LARGE_FILE.to_string(),
+            enabled: true,
+            severity: RuleSeverity::Warning,
+        },
+        RuleConfig {
+            id: RULE_TYPESCRIPT_LARGE_FILE.to_string(),
             enabled: true,
             severity: RuleSeverity::Warning,
         },

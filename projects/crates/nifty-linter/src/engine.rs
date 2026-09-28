@@ -1,6 +1,6 @@
 use crate::context::{CommitInput, LintContext};
 use crate::rule::{default_rules, LintDiagnostic, RuleConfig, RuleSeverity};
-use crate::rules::{lint_cargo_workspace, lint_commit};
+use crate::rules::{lint_cargo_workspace, lint_commit, lint_typescript_workspace};
 use nifty_config::{detect_project_layout, ProjectKind};
 
 pub type Result<T> = std::result::Result<T, String>;
@@ -16,6 +16,12 @@ pub fn run_lint(options: LintOptions) -> Result<LintReport> {
         .iter()
         .flat_map(|commit| lint_commit(&ctx, commit))
         .collect::<Vec<_>>();
+
+    if should_scan_workspace(&options, subject_only) {
+        if let Some(root) = resolve_workspace_scan_root(&options) {
+            diagnostics.extend(lint_typescript_workspace(&ctx, &root));
+        }
+    }
 
     if should_scan_cargo(&options, subject_only) {
         if let Some(root) = resolve_cargo_scan_root(&options) {
@@ -95,11 +101,28 @@ fn is_subject_only(options: &LintOptions) -> bool {
         && options.repo_root.is_none()
 }
 
-fn should_scan_cargo(options: &LintOptions, subject_only: bool) -> bool {
+fn should_scan_workspace(options: &LintOptions, subject_only: bool) -> bool {
     if options.commit_only.unwrap_or(false) || options.scan_cargo == Some(false) || subject_only {
         return false;
     }
     options.scan_cargo.unwrap_or(true)
+}
+
+fn should_scan_cargo(options: &LintOptions, subject_only: bool) -> bool {
+    should_scan_workspace(options, subject_only)
+}
+
+fn resolve_workspace_scan_root(options: &LintOptions) -> Option<std::path::PathBuf> {
+    let start = options
+        .repo_root
+        .clone()
+        .or_else(|| options.cwd.clone())
+        .or_else(|| std::env::current_dir().ok())?;
+    let layout = detect_project_layout(&start);
+    match layout.kind {
+        ProjectKind::Cargo | ProjectKind::Hybrid | ProjectKind::Npm => Some(layout.root),
+        ProjectKind::Unknown => None,
+    }
 }
 
 fn resolve_cargo_scan_root(options: &LintOptions) -> Option<std::path::PathBuf> {
