@@ -1,6 +1,6 @@
 [package]
 name = "nifty-config"
-version = "0.0.8"
+version = "0.0.9"
 authors = ["Aster <192607617@qq.com>"]
 description = "Discover and resolve Nifty project configuration files"
 repository = "https://github.com/oovm/npm-tools"

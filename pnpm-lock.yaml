@@ -34,6 +34,12 @@ importers:
       '@doki-land/nifty-darwin-arm64':
         specifier: workspace:*
         version: link:../nifty-darwin-arm64
+      '@doki-land/nifty-darwin-x64':
+        specifier: workspace:*
+        version: link:../nifty-darwin-x64
+      '@doki-land/nifty-linux-arm64':
+        specifier: workspace:*
+        version: link:../nifty-linux-arm64
       '@doki-land/nifty-linux-x64':
         specifier: workspace:*
         version: link:../nifty-linux-x64
