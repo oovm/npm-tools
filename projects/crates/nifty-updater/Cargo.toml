@@ -1,6 +1,6 @@
 [package]
 name = "nifty-updater"
-version = "0.0.9"
+version = "0.0.12"
 authors = ["Aster <192607617@qq.com>"]
 description = "Update cargo and npm dependencies for Nifty hybrid projects"
 repository = "https://github.com/oovm/npm-tools"
