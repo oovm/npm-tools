@@ -70,9 +70,15 @@ jobs:
           - os: ubuntu-latest
             short: linux-x64
             lib: projects/packages/nifty-linux-x64/lib
+          - os: ubuntu-24.04-arm
+            short: linux-arm64
+            lib: projects/packages/nifty-linux-arm64/lib
           - os: macos-latest
             short: darwin-arm64
             lib: projects/packages/nifty-darwin-arm64/lib
+          - os: macos-15-intel
+            short: darwin-x64
+            lib: projects/packages/nifty-darwin-x64/lib
     steps:
       - name: Checkout tag peel
         uses: actions/checkout@v5
@@ -180,7 +186,7 @@ jobs:
             cp -r "$d"/. "dist/native-flat/$short/" || true
           done
           find dist/native-flat -type f -print
-          for short in win32-x64 linux-x64 darwin-arm64; do
+          for short in win32-x64 linux-x64 linux-arm64 darwin-arm64 darwin-x64; do
             if ! find "dist/native-flat/$short" -name 'nifty*.node' -type f | grep -q .; then
               echo "missing native binary for $short under dist/native-flat" >&2
               exit 1
