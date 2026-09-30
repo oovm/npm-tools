@@ -99,7 +99,8 @@ Usage:
   nifty publish --otp 123456
   nifty publish -C <cwd>
 
---placeholder publishes workspace packages that have no registry version yet as 0.0.0
-(name claim / Trusted Publisher prep). Packages already on npm are skipped.
+--placeholder publishes publishable workspace packages (non-private) with no registry
+version yet as 0.0.0 (name claim / Trusted Publisher prep). Packages already on npm
+are skipped. Remove private from package.json for packages you intend to ship.
 `);
 }

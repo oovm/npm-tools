@@ -54,9 +54,11 @@ nifty trust
 
 **`--placeholder`**: for each publishable workspace package with **no version on the registry**, publish
 workspace contents as **`0.0.0`** (claim the name / prep Trusted Publisher). Packages that already exist on
-npm are skipped. Default set is non-private workspace packages. With `publish.packages` in `nifty.config.ts`
-(or `--package`), **private** workspace packages may be included — `private` is stripped on publish (same as
-`publishConfig.name` rename). Prefer this over per-repo `publish-placeholder.mjs`. Then run **`nifty trust`**.
+npm are skipped. Publishable means `private` is **not** set (or `false`) in `package.json`; dependents with a
+required dependency on a private workspace package are skipped too. Remove `private` from packages you intend to
+ship — do not use `publish.packages` to override `private`. Optional `publish.packages` / `--package` only
+**narrows** the non-private set. Prefer `nifty publish --placeholder` over per-repo placeholder scripts. Then run
+**`nifty trust`**.
 
 Optional subset (new package only, or retry one failure):
 
@@ -66,8 +68,8 @@ nifty trust --only @doki-land/nifty-skills
 ```
 
 **First publish of a new package name** (e.g. `@doki-land/nifty-skills`): run **`nifty trust`** after `nifty publish` so
-GitHub Actions OIDC can publish on the next tag. `nifty trust` uses `publish.packages` from `nifty.config.ts` when set,
-otherwise all non-private workspace packages.
+GitHub Actions OIDC can publish on the next tag. `nifty trust` uses `publish.packages` from `nifty.config.ts` when set
+(subset only — still respects `private`), otherwise all publishable workspace packages.
 
 Local auth: `NPM_TOKEN`, `--npm-token`, `--otp`, or `--totp-secret` (see `nifty publish --help`). Trust live
 configuration requires OTP/TOTP.
