@@ -3,7 +3,7 @@ use std::collections::{BTreeMap, HashMap};
 use petgraph::algo::{is_cyclic_directed, tarjan_scc, toposort};
 use petgraph::{Directed, Graph};
 
-use crate::workspace::{NpmPackage, collect_internal_dependency_names};
+use crate::workspace::{NpmPackage, collect_internal_dependency_names, unpublishable_package_names};
 use crate::Result;
 
 /// Topological publish order: dependencies before dependents.
@@ -54,7 +54,12 @@ pub fn plan_publish_order(all_packages: &[NpmPackage]) -> Result<Vec<String>> {
         .iter()
         .map(|package| (package.name.clone(), package.clone()))
         .collect::<BTreeMap<_, _>>();
-    let publishable: Vec<NpmPackage> = all_packages.iter().filter(|package| !package.private).cloned().collect();
+    let blocked = unpublishable_package_names(all_packages, &by_name);
+    let publishable: Vec<NpmPackage> = all_packages
+        .iter()
+        .filter(|package| !blocked.contains(&package.name))
+        .cloned()
+        .collect();
     sort_packages_for_publish(&publishable, &by_name)
 }
 

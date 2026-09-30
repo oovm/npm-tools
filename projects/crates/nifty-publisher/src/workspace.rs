@@ -121,8 +121,7 @@ fn list_pnpm_workspace_packages(root: &Path) -> Result<Vec<NpmPackage>> {
                 continue;
             }
             let package = load_package(&dir, manifest_path)?;
-            // Keep private packages: `nifty publish --package` / `publish.packages` may target them
-            // (workspace `private: true` only blocks accidental bare `npm publish`).
+            // Workspace `private: true` blocks publish/trust; dependents with required private deps are blocked too.
             if !seen.insert(package.name.clone()) {
                 continue;
             }
@@ -225,6 +224,58 @@ pub fn find_package_by_target<'a>(
         return Some(package);
     }
     by_name.values().find(|package| registry_name(package) == target)
+}
+
+const REQUIRED_DEPENDENCY_FIELDS: [&str; 2] = ["dependencies", "peerDependencies"];
+
+/// Required (non-optional) workspace dependency names for publish eligibility.
+pub fn collect_required_internal_dependency_names(
+    package: &NpmPackage,
+    by_name: &BTreeMap<String, NpmPackage>,
+) -> HashSet<String> {
+    let mut deps = HashSet::new();
+    for field in REQUIRED_DEPENDENCY_FIELDS {
+        let entries = dependency_entries(package, field);
+        for (dep_name, spec) in entries {
+            if by_name.contains_key(&dep_name) {
+                deps.insert(dep_name);
+                continue;
+            }
+            if let Some(resolved) = resolve_workspace_dependency_name(&spec, &package.dir, by_name) {
+                deps.insert(resolved);
+            }
+        }
+    }
+    deps
+}
+
+/// Workspace packages that must not publish: `private: true` plus dependents blocked by a required private dep.
+pub fn unpublishable_package_names(
+    packages: &[NpmPackage],
+    by_name: &BTreeMap<String, NpmPackage>,
+) -> HashSet<String> {
+    let mut blocked: HashSet<String> = packages
+        .iter()
+        .filter(|package| package.private)
+        .map(|package| package.name.clone())
+        .collect();
+    let mut changed = true;
+    while changed {
+        changed = false;
+        for package in packages {
+            if blocked.contains(&package.name) {
+                continue;
+            }
+            for dep in collect_required_internal_dependency_names(package, by_name) {
+                if blocked.contains(&dep) {
+                    blocked.insert(package.name.clone());
+                    changed = true;
+                    break;
+                }
+            }
+        }
+    }
+    blocked
 }
 
 pub fn collect_internal_dependency_names(
