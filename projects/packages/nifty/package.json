@@ -1,6 +1,6 @@
 {
     "name": "@doki-land/nifty",
-    "version": "0.0.8",
+    "version": "0.0.9",
     "description": "Gitmoji-first commit conventions and release helpers (Node-API + TypeScript)",
     "type": "module",
     "license": "MPL-2.0",
@@ -25,6 +25,8 @@
     },
     "optionalDependencies": {
         "@doki-land/nifty-darwin-arm64": "workspace:*",
+        "@doki-land/nifty-darwin-x64": "workspace:*",
+        "@doki-land/nifty-linux-arm64": "workspace:*",
         "@doki-land/nifty-linux-x64": "workspace:*",
         "@doki-land/nifty-win32-x64": "workspace:*"
     },

@@ -35,11 +35,25 @@ const NATIVE_PLATFORMS = [
         sourceDir: "projects/packages/nifty-linux-x64",
     },
     {
+        short: "linux-arm64",
+        nodeFile: "nifty-linux-arm64-gnu.node",
+        os: ["linux"],
+        cpu: ["arm64"],
+        sourceDir: "projects/packages/nifty-linux-arm64",
+    },
+    {
         short: "darwin-arm64",
         nodeFile: "nifty-darwin-arm64.node",
         os: ["darwin"],
         cpu: ["arm64"],
         sourceDir: "projects/packages/nifty-darwin-arm64",
+    },
+    {
+        short: "darwin-x64",
+        nodeFile: "nifty-darwin-x64.node",
+        os: ["darwin"],
+        cpu: ["x64"],
+        sourceDir: "projects/packages/nifty-darwin-x64",
     },
 ];
 
