@@ -4,7 +4,10 @@ use crate::cache::{PlaceholderCache, TrustExpect};
 use crate::npm::NpmRunner;
 use crate::otp::{OtpAuth, OtpOverrides};
 use crate::trust_expect::resolve_trust_expect;
-use crate::workspace::{find_workspace_root, list_workspace_packages};
+use crate::workspace::{
+    find_package_by_target, find_workspace_root, list_workspace_packages, registry_name,
+    unpublishable_package_names,
+};
 use crate::Result;
 
 pub const TRUST_REPO: &str = "oovm/npm-tools";
@@ -78,13 +81,33 @@ pub fn trust_workspace(options: TrustOptions) -> Result<TrustReport> {
 }
 
 fn resolve_trust_package_names(root: &std::path::Path, options: &TrustOptions) -> Result<Vec<String>> {
-    let mut names = if let Some(list) = &options.packages {
-        list.clone()
+    let workspace = list_workspace_packages(root)?;
+    let by_name = workspace
+        .iter()
+        .map(|package| (package.name.clone(), package.clone()))
+        .collect::<std::collections::BTreeMap<_, _>>();
+    let blocked = unpublishable_package_names(&workspace, &by_name);
+
+    let mut names: Vec<String> = if let Some(list) = &options.packages {
+        list.iter()
+            .filter(|target| {
+                if let Some(package) = find_package_by_target(&by_name, target) {
+                    if blocked.contains(&package.name) {
+                        println!(
+                            "skip trust target {target} (private workspace package or depends on one)"
+                        );
+                        return false;
+                    }
+                }
+                true
+            })
+            .cloned()
+            .collect()
     } else {
-        list_workspace_packages(root)?
-            .into_iter()
-            .filter(|package| !package.private)
-            .map(|package| package.name)
+        workspace
+            .iter()
+            .filter(|package| !blocked.contains(&package.name))
+            .map(|package| registry_name(package).to_string())
             .collect()
     };
     names.sort();

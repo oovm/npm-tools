@@ -17,7 +17,9 @@ pub use cache::{PlaceholderCache, CACHE_DIR_NAME, CACHE_FILE_NAME};
 pub use graph::plan_publish_order;
 pub use otp::{OtpAuth, OtpOverrides};
 pub use trust::{TrustOptions, TrustReport, TRUST_ENV, TRUST_FILE, TRUST_REPO};
-pub use workspace::{NpmPackage, PackageManifest, find_workspace_root, list_workspace_packages};
+pub use workspace::{
+    NpmPackage, PackageManifest, find_workspace_root, list_workspace_packages, registry_name,
+};
 
 pub type Result<T> = std::result::Result<T, String>;
 
@@ -79,9 +81,13 @@ pub fn publish_workspace(options: PublishOptions) -> Result<PublishReport> {
     let mut placeholder_names = BTreeSet::new();
     if options.placeholder {
         for name in &order {
-            let live = runner.view_version(name)?;
+            let package = by_name
+                .get(name)
+                .ok_or_else(|| format!("missing workspace package {name}"))?;
+            let registry = registry_name(package);
+            let live = runner.view_version(registry)?;
             if live.is_some() {
-                println!("skip placeholder {name} (already on registry)");
+                println!("skip placeholder {registry} (already on registry)");
                 skipped_versions.push(name.clone());
                 continue;
             }
@@ -96,13 +102,14 @@ pub fn publish_workspace(options: PublishOptions) -> Result<PublishReport> {
         let package = by_name
             .get(name)
             .ok_or_else(|| format!("missing workspace package {name}"))?;
+        let registry = registry_name(package);
         let publish_version = if options.placeholder {
             PLACEHOLDER_VERSION
         } else {
             package.version.as_str()
         };
         if !options.placeholder {
-            let live = runner.view_version(name)?;
+            let live = runner.view_version(registry)?;
             let resolved = cache::resolve_published_version(&mut cache, name, live);
             if cache::should_skip_publish(
                 &cache,
@@ -112,7 +119,7 @@ pub fn publish_workspace(options: PublishOptions) -> Result<PublishReport> {
                 options.refresh,
                 options.dry_run,
             ) {
-                println!("skip publish {name}@{} (already on registry)", package.version);
+                println!("skip publish {registry}@{} (already on registry)", package.version);
                 skipped_versions.push(name.clone());
                 continue;
             }
@@ -124,7 +131,7 @@ pub fn publish_workspace(options: PublishOptions) -> Result<PublishReport> {
             println!("skip publish {name} (no staged native binary)");
             continue;
         }
-        println!("publishing {name}@{publish_version}");
+        println!("publishing {registry}@{publish_version}");
         let result = publish_package(
             package,
             &by_name,
@@ -214,24 +221,26 @@ pub fn trust_workspace(options: TrustOptions) -> Result<TrustReport> {
 
 /// Resolve which workspace packages participate in this publish.
 ///
-/// Default: all non-private packages. With `--package` / `publish.packages`,
-/// private packages may be included (manifest `private` is stripped on publish).
+/// Default: all publishable packages (`private: false` and not blocked by a required private dep).
+/// With `--package` / `publish.packages`, narrow to that subset; `private` is never overridden.
 fn resolve_candidate_packages(
     packages: &[NpmPackage],
     by_name: &BTreeMap<String, NpmPackage>,
     targets: &[String],
 ) -> Result<(Vec<NpmPackage>, Vec<String>)> {
-    use crate::workspace::find_package_by_target;
+    use crate::workspace::{find_package_by_target, unpublishable_package_names};
+
+    let blocked = unpublishable_package_names(packages, by_name);
 
     if targets.is_empty() {
         let skipped = packages
             .iter()
-            .filter(|package| package.private)
+            .filter(|package| blocked.contains(&package.name))
             .map(|package| package.name.clone())
             .collect::<Vec<_>>();
         let candidates = packages
             .iter()
-            .filter(|package| !package.private)
+            .filter(|package| !blocked.contains(&package.name))
             .cloned()
             .collect::<Vec<_>>();
         return Ok((candidates, skipped));
@@ -243,6 +252,12 @@ fn resolve_candidate_packages(
         let Some(package) = find_package_by_target(by_name, target) else {
             return Err(format!("workspace package not found: {target}"));
         };
+        if blocked.contains(&package.name) {
+            println!(
+                "skip publish target {target} (private workspace package or depends on one — remove `private` to publish)"
+            );
+            continue;
+        }
         if seen.insert(package.name.clone()) {
             candidates.push(package.clone());
         }
@@ -253,7 +268,7 @@ fn resolve_candidate_packages(
         .collect::<BTreeSet<_>>();
     let skipped = packages
         .iter()
-        .filter(|package| package.private && !candidate_names.contains(&package.name))
+        .filter(|package| blocked.contains(&package.name) && !candidate_names.contains(&package.name))
         .map(|package| package.name.clone())
         .collect::<Vec<_>>();
     Ok((candidates, skipped))
@@ -349,6 +364,14 @@ mod publish_filter_tests {
         }
     }
 
+    fn package_with_deps(name: &str, private: bool, deps: &[(&str, &str)]) -> NpmPackage {
+        let mut pkg = package(name, private);
+        for (dep_name, spec) in deps {
+            pkg.manifest.dependencies.insert(dep_name.to_string(), spec.to_string());
+        }
+        pkg
+    }
+
     fn package_with_publish_name(workspace_name: &str, registry_name: &str, private: bool) -> NpmPackage {
         let mut package = package(workspace_name, private);
         package.manifest.publish_config = Some(PublishConfig {
@@ -371,7 +394,7 @@ mod publish_filter_tests {
     }
 
     #[test]
-    fn explicit_targets_allow_private_packages() {
+    fn explicit_targets_skip_private_packages() {
         let packages = vec![package("@scope/main", false), package("@scope/native", true)];
         let by_name = packages
             .iter()
@@ -379,13 +402,27 @@ mod publish_filter_tests {
             .collect::<BTreeMap<_, _>>();
         let (candidates, skipped) =
             resolve_candidate_packages(&packages, &by_name, &["@scope/native".to_string()]).expect("resolve");
-        assert_eq!(candidates.iter().map(|p| p.name.as_str()).collect::<Vec<_>>(), vec!["@scope/native"]);
-        assert!(skipped.is_empty());
+        assert!(candidates.is_empty());
+        assert_eq!(skipped, vec!["@scope/native".to_string()]);
+    }
+
+    #[test]
+    fn required_private_dependency_blocks_dependent() {
+        let private = package("@scope/private", true);
+        let main = package_with_deps("@scope/main", false, &[("@scope/private", "workspace:*")]);
+        let packages = vec![main, private];
+        let by_name = packages
+            .iter()
+            .map(|package| (package.name.clone(), package.clone()))
+            .collect::<BTreeMap<_, _>>();
+        let (candidates, skipped) = resolve_candidate_packages(&packages, &by_name, &[]).expect("resolve");
+        assert!(candidates.is_empty());
+        assert_eq!(skipped.len(), 2);
     }
 
     #[test]
     fn explicit_targets_resolve_publish_config_name() {
-        let packages = vec![package_with_publish_name("vmz", "@vmz/vmz", true)];
+        let packages = vec![package_with_publish_name("vmz", "@vmz/vmz", false)];
         let by_name = packages
             .iter()
             .map(|package| (package.name.clone(), package.clone()))
