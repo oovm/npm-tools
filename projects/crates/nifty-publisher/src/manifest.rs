@@ -15,19 +15,33 @@ const DEPENDENCY_FIELDS: [&str; 4] = [
     "peerDependencies",
 ];
 
+/// Options for [`patch_manifest_for_publish`].
+#[derive(Debug, Clone, Copy, Default)]
+pub struct PatchPublishOptions<'a> {
+    /// Force `version` on the published manifest (e.g. `0.0.0` for `--placeholder`).
+    pub publish_version: Option<&'a str>,
+    /// Workspace dependency names that should resolve to `0.0.0` this run.
+    pub placeholder_dep_names: Option<&'a std::collections::BTreeSet<String>>,
+}
+
 pub fn patch_manifest_for_publish(
     original: &str,
     package: &NpmPackage,
     by_name: &BTreeMap<String, NpmPackage>,
+    opts: PatchPublishOptions<'_>,
 ) -> Result<String> {
     let mut value: Value = serde_json::from_str(original).map_err(|err| err.to_string())?;
     let object = value.as_object_mut().ok_or_else(|| "package.json root must be an object".to_string())?;
+
+    if let Some(version) = opts.publish_version {
+        object.insert("version".to_string(), Value::String(version.to_string()));
+    }
 
     for field in DEPENDENCY_FIELDS {
         let Some(entries) = object.get(field).and_then(Value::as_object) else {
             continue;
         };
-        let patched = patch_dependency_entries(entries, &package.dir, by_name)?;
+        let patched = patch_dependency_entries(entries, &package.dir, by_name, opts.placeholder_dep_names)?;
         object.insert(field.to_string(), Value::Object(patched));
     }
 
@@ -67,13 +81,20 @@ fn patch_dependency_entries(
     entries: &serde_json::Map<String, Value>,
     package_dir: &Path,
     by_name: &BTreeMap<String, NpmPackage>,
+    placeholder_dep_names: Option<&std::collections::BTreeSet<String>>,
 ) -> Result<serde_json::Map<String, Value>> {
     let mut next = serde_json::Map::new();
     for (name, spec_value) in entries {
         let spec = spec_value.as_str().ok_or_else(|| format!("dependency {name} must be a string"))?;
-        let version = resolve_workspace_dependency(name, spec, package_dir, by_name)
-            .map(|package| package.version.clone())
-            .unwrap_or_else(|| spec.to_string());
+        let version = if let Some(package) = resolve_workspace_dependency(name, spec, package_dir, by_name) {
+            if placeholder_dep_names.is_some_and(|names| names.contains(name)) {
+                "0.0.0".to_string()
+            } else {
+                package.version.clone()
+            }
+        } else {
+            spec.to_string()
+        };
         next.insert(name.clone(), Value::String(version));
     }
     Ok(next)
@@ -95,4 +116,66 @@ fn resolve_workspace_dependency<'a>(
     }
     let target_dir = package_dir.join(spec.trim_start_matches("file:"));
     by_name.values().find(|candidate| candidate.dir == target_dir)
+}
+
+#[cfg(test)]
+mod tests {
+    use std::collections::{BTreeMap, BTreeSet};
+    use std::path::PathBuf;
+
+    use super::{PatchPublishOptions, patch_manifest_for_publish};
+    use crate::workspace::{NpmPackage, PackageManifest};
+
+    fn pkg(name: &str, version: &str) -> NpmPackage {
+        let manifest = PackageManifest {
+            name: name.to_string(),
+            version: version.to_string(),
+            private: false,
+            dependencies: BTreeMap::new(),
+            dev_dependencies: BTreeMap::new(),
+            optional_dependencies: BTreeMap::new(),
+            peer_dependencies: BTreeMap::new(),
+            os: None,
+            cpu: None,
+        };
+        NpmPackage {
+            name: name.to_string(),
+            version: version.to_string(),
+            dir: PathBuf::from(name),
+            manifest_path: PathBuf::from(name).join("package.json"),
+            private: false,
+            manifest,
+        }
+    }
+
+    #[test]
+    fn placeholder_forces_version_and_workspace_deps() {
+        let main = pkg("@scope/main", "0.1.5");
+        let platform = pkg("@scope/platform", "0.1.5");
+        let by_name = BTreeMap::from([
+            ("@scope/main".to_string(), main.clone()),
+            ("@scope/platform".to_string(), platform),
+        ]);
+        let placeholder_deps = BTreeSet::from(["@scope/platform".to_string()]);
+        let original = r#"{
+  "name": "@scope/main",
+  "version": "0.1.5",
+  "dependencies": {
+    "@scope/platform": "workspace:*"
+  }
+}"#;
+        let patched = patch_manifest_for_publish(
+            original,
+            &main,
+            &by_name,
+            PatchPublishOptions {
+                publish_version: Some("0.0.0"),
+                placeholder_dep_names: Some(&placeholder_deps),
+            },
+        )
+        .expect("patch");
+        let value: serde_json::Value = serde_json::from_str(&patched).expect("json");
+        assert_eq!(value["version"], "0.0.0");
+        assert_eq!(value["dependencies"]["@scope/platform"], "0.0.0");
+    }
 }

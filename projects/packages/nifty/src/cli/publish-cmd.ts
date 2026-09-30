@@ -10,6 +10,7 @@ export function registerPublishCommand(cli: Cli): void {
     cli.command("publish", "cli.cmd.publish")
         .option("--dry-run", "cli.opt.dry-run")
         .option("--refresh", "cli.opt.refresh")
+        .option("--placeholder", "cli.opt.placeholder")
         .option("--package <name>", "cli.opt.package")
         .option("--tag <tag>", "cli.opt.tag")
         .option("--access <access>", "cli.opt.access")
@@ -27,6 +28,7 @@ export async function cmdPublish(options: ParsedOptions): Promise<number> {
         cwd: cwdFrom(options),
         dryRun: flag(options, "dry-run"),
         refresh: flag(options, "refresh"),
+        placeholder: flag(options, "placeholder"),
         tag: str(options, "tag"),
         access: str(options, "access") ?? "public",
         ...(packages.length === 1 ? { only: packages[0] } : {}),

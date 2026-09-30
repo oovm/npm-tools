@@ -47,9 +47,15 @@ are uploaded.
 ```bash
 nifty publish --dry-run
 nifty publish --access public
+nifty publish --placeholder
 nifty trust --dry-run
 nifty trust
 ```
+
+**`--placeholder`**: for each non-private workspace package with **no version on the registry**, publish
+workspace contents as **`0.0.0`** (claim the name / prep Trusted Publisher). Packages that already exist on
+npm are skipped. Prefer this over per-repo `publish-placeholder.mjs` stub synthesis when packages already live
+in the workspace. Then run **`nifty trust`**.
 
 Optional subset (new package only, or retry one failure):
 
