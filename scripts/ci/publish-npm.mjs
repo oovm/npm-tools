@@ -166,7 +166,11 @@ function isLowerThanLatestTagError(blob) {
     return /Cannot implicitly apply the "latest" tag because previously published version/i.test(blob);
 }
 
-/** Point `latest` at an already-published version (OIDC). Idempotent when already set. */
+/**
+ * Best-effort: point `latest` at an already-published version.
+ * Trusted Publisher OIDC typically cannot `npm dist-tag` (E401) — callers must not fail the release on that.
+ * Idempotent when already set.
+ */
 function ensureLatestTag(name, version) {
     const view = run("npm", ["view", name, "dist-tags.latest"]);
     if (view.status === 0 && view.stdout === version) {
@@ -180,10 +184,7 @@ function ensureLatestTag(name, version) {
     if (r.status === 0) return true;
     const blob = `${r.stdout}\n${r.stderr}`;
     if (/already set to version|Tag already exists on|is already set to/i.test(blob)) return true;
-    if (isAuthFailure(blob)) {
-        fail(`OIDC/auth failed for dist-tag ${name}@${version}. Trusted Publisher: file=publish-npm.yml env=NPM_PUBLISH repo=oovm/npm-tools`);
-    }
-    console.error(blob.slice(0, 1200));
+    console.warn(`ci-publish-npm: dist-tag latest skipped for ${name}@${version}: ${blob.slice(0, 240).trim()}`);
     return false;
 }
 
@@ -254,8 +255,8 @@ function publishNative(version, artifactsRoot) {
         const name = `@doki-land/nifty-${plat.short}`;
         const artDir = path.join(artifactsRoot, plat.short);
         if (versionExists(name, version)) {
-            console.log(` ✓ ${name}@${version} already on registry — ensure latest`);
-            if (!ensureLatestTag(name, version)) fail(`dist-tag latest failed for ${name}@${version}`);
+            console.log(` ✓ ${name}@${version} already on registry — ensure latest (best-effort)`);
+            ensureLatestTag(name, version);
             skipped += 1;
             continue;
         }
@@ -292,13 +293,18 @@ function publishNative(version, artifactsRoot) {
         });
 
         // Same tag policy as JS: prefer `latest`, fall back to `release-X.Y.Z` only when npm rejects lower-than-latest.
+        // Successful publish with default tag already points `latest` — do not call `npm dist-tag`
+        // (Trusted Publisher OIDC allows publish, not dist-tag PUT).
         const outcome = npmPublish(stage, name, version);
         if (outcome === "published") {
             published += 1;
-            if (!ensureLatestTag(name, version)) fail(`dist-tag latest failed for ${name}@${version}`);
         } else if (outcome === "exists") {
-            console.log(` ✓ ${name}@${version} already on registry — ensure latest`);
-            if (!ensureLatestTag(name, version)) fail(`dist-tag latest failed for ${name}@${version}`);
+            console.log(` ✓ ${name}@${version} already on registry — ensure latest (best-effort)`);
+            if (!ensureLatestTag(name, version)) {
+                console.warn(
+                    `ci-publish-npm: could not retag ${name}@${version} as latest (OIDC often cannot dist-tag; next successful publish heals)`,
+                );
+            }
             skipped += 1;
         } else if (outcome === "auth") {
             fail(`OIDC/auth failed for ${name}. Trusted Publisher: file=publish-npm.yml env=NPM_PUBLISH repo=oovm/npm-tools`);
@@ -334,8 +340,8 @@ function publishJs(version, artifactsRoot) {
         if (!name) fail(`no name for ${spec.dir}`);
 
         if (versionExists(name, version)) {
-            console.log(` ✓ ${name}@${version} already on registry — ensure latest`);
-            if (!ensureLatestTag(name, version)) fail(`dist-tag latest failed for ${name}@${version}`);
+            console.log(` ✓ ${name}@${version} already on registry — ensure latest (best-effort)`);
+            ensureLatestTag(name, version);
             skipped += 1;
             continue;
         }
@@ -391,10 +397,9 @@ function publishJs(version, artifactsRoot) {
         const outcome = npmPublish(stage, name, version);
         if (outcome === "published") {
             published += 1;
-            if (!ensureLatestTag(name, version)) fail(`dist-tag latest failed for ${name}@${version}`);
         } else if (outcome === "exists") {
-            console.log(` ✓ ${name}@${version} already on registry — ensure latest`);
-            if (!ensureLatestTag(name, version)) fail(`dist-tag latest failed for ${name}@${version}`);
+            console.log(` ✓ ${name}@${version} already on registry — ensure latest (best-effort)`);
+            ensureLatestTag(name, version);
             skipped += 1;
         } else if (outcome === "auth") {
             fail(`OIDC/auth failed for ${name}. Trusted Publisher: file=publish-npm.yml env=NPM_PUBLISH repo=oovm/npm-tools`);
