@@ -81,6 +81,7 @@ mod tests {
             peer_dependencies: BTreeMap::new(),
             os: None,
             cpu: None,
+            publish_config: None,
         };
         NpmPackage {
             name: name.to_string(),

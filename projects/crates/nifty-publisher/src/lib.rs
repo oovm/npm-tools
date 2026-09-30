@@ -68,16 +68,8 @@ pub fn publish_workspace(options: PublishOptions) -> Result<PublishReport> {
         .iter()
         .map(|package| (package.name.clone(), package.clone()))
         .collect::<BTreeMap<_, _>>();
-    let skipped = packages
-        .iter()
-        .filter(|package| package.private)
-        .map(|package| package.name.clone())
-        .collect::<Vec<_>>();
-    let order = graph::sort_packages_for_publish(
-        &packages.iter().filter(|package| !package.private).cloned().collect::<Vec<_>>(),
-        &by_name,
-    )?;
-    let order = filter_publish_order(order, &by_name, &publish_targets)?;
+    let (candidates, skipped) = resolve_candidate_packages(&packages, &by_name, &publish_targets)?;
+    let order = graph::sort_packages_for_publish(&candidates, &by_name)?;
 
     let access = options.access.as_deref().or(Some("public"));
     let mut published = Vec::new();
@@ -220,33 +212,51 @@ pub fn trust_workspace(options: TrustOptions) -> Result<TrustReport> {
     trust::trust_workspace(options)
 }
 
-fn filter_publish_order(
-    order: Vec<String>,
+/// Resolve which workspace packages participate in this publish.
+///
+/// Default: all non-private packages. With `--package` / `publish.packages`,
+/// private packages may be included (manifest `private` is stripped on publish).
+fn resolve_candidate_packages(
+    packages: &[NpmPackage],
     by_name: &BTreeMap<String, NpmPackage>,
     targets: &[String],
-) -> Result<Vec<String>> {
+) -> Result<(Vec<NpmPackage>, Vec<String>)> {
+    use crate::workspace::find_package_by_target;
+
     if targets.is_empty() {
-        return Ok(order);
+        let skipped = packages
+            .iter()
+            .filter(|package| package.private)
+            .map(|package| package.name.clone())
+            .collect::<Vec<_>>();
+        let candidates = packages
+            .iter()
+            .filter(|package| !package.private)
+            .cloned()
+            .collect::<Vec<_>>();
+        return Ok((candidates, skipped));
     }
 
-    for name in targets {
-        let Some(package) = by_name.get(name) else {
-            return Err(format!("workspace package not found: {name}"));
+    let mut candidates = Vec::new();
+    let mut seen = BTreeSet::new();
+    for target in targets {
+        let Some(package) = find_package_by_target(by_name, target) else {
+            return Err(format!("workspace package not found: {target}"));
         };
-        if package.private {
-            return Err(format!("cannot publish private package: {name}"));
+        if seen.insert(package.name.clone()) {
+            candidates.push(package.clone());
         }
     }
-
-    let target_set = targets.iter().collect::<std::collections::BTreeSet<_>>();
-    let filtered = order.into_iter().filter(|name| target_set.contains(name)).collect::<Vec<_>>();
-    if filtered.is_empty() {
-        return Err(format!(
-            "no publishable packages matched filter: {}",
-            targets.join(", ")
-        ));
-    }
-    Ok(filtered)
+    let candidate_names = candidates
+        .iter()
+        .map(|package| package.name.clone())
+        .collect::<BTreeSet<_>>();
+    let skipped = packages
+        .iter()
+        .filter(|package| package.private && !candidate_names.contains(&package.name))
+        .map(|package| package.name.clone())
+        .collect::<Vec<_>>();
+    Ok((candidates, skipped))
 }
 
 fn resolve_publish_targets(options: &PublishOptions) -> Result<Vec<String>> {
@@ -281,6 +291,7 @@ mod native_binary_tests {
             peer_dependencies: BTreeMap::new(),
             os,
             cpu,
+            publish_config: None,
         };
         NpmPackage {
             name: name.to_string(),
@@ -312,45 +323,76 @@ mod publish_filter_tests {
     use std::collections::BTreeMap;
     use std::path::PathBuf;
 
-    use super::filter_publish_order;
-    use crate::workspace::{NpmPackage, PackageManifest};
+    use super::resolve_candidate_packages;
+    use crate::workspace::{NpmPackage, PackageManifest, PublishConfig};
 
-    fn package(name: &str) -> NpmPackage {
+    fn package(name: &str, private: bool) -> NpmPackage {
         let manifest = PackageManifest {
             name: name.to_string(),
             version: "0.0.0".to_string(),
-            private: false,
+            private,
             dependencies: BTreeMap::new(),
             dev_dependencies: BTreeMap::new(),
             optional_dependencies: BTreeMap::new(),
             peer_dependencies: BTreeMap::new(),
             os: None,
             cpu: None,
+            publish_config: None,
         };
         NpmPackage {
             name: name.to_string(),
             version: "0.0.0".to_string(),
             dir: PathBuf::from(name),
             manifest_path: PathBuf::from(name).join("package.json"),
-            private: false,
+            private,
             manifest,
         }
     }
 
+    fn package_with_publish_name(workspace_name: &str, registry_name: &str, private: bool) -> NpmPackage {
+        let mut package = package(workspace_name, private);
+        package.manifest.publish_config = Some(PublishConfig {
+            name: Some(registry_name.to_string()),
+            access: None,
+        });
+        package
+    }
+
     #[test]
-    fn keeps_subset_in_topo_order() {
-        let by_name = BTreeMap::from([
-            ("@scope/platform".to_string(), package("@scope/platform")),
-            ("@scope/main".to_string(), package("@scope/main")),
-            ("@scope/skills".to_string(), package("@scope/skills")),
-        ]);
-        let order = vec![
-            "@scope/platform".to_string(),
-            "@scope/main".to_string(),
-            "@scope/skills".to_string(),
-        ];
-        let filtered = filter_publish_order(order, &by_name, &["@scope/skills".to_string()]).expect("filter");
-        assert_eq!(filtered, vec!["@scope/skills".to_string()]);
+    fn default_skips_private_packages() {
+        let packages = vec![package("@scope/main", false), package("@scope/native", true)];
+        let by_name = packages
+            .iter()
+            .map(|package| (package.name.clone(), package.clone()))
+            .collect::<BTreeMap<_, _>>();
+        let (candidates, skipped) = resolve_candidate_packages(&packages, &by_name, &[]).expect("resolve");
+        assert_eq!(candidates.iter().map(|p| p.name.as_str()).collect::<Vec<_>>(), vec!["@scope/main"]);
+        assert_eq!(skipped, vec!["@scope/native".to_string()]);
+    }
+
+    #[test]
+    fn explicit_targets_allow_private_packages() {
+        let packages = vec![package("@scope/main", false), package("@scope/native", true)];
+        let by_name = packages
+            .iter()
+            .map(|package| (package.name.clone(), package.clone()))
+            .collect::<BTreeMap<_, _>>();
+        let (candidates, skipped) =
+            resolve_candidate_packages(&packages, &by_name, &["@scope/native".to_string()]).expect("resolve");
+        assert_eq!(candidates.iter().map(|p| p.name.as_str()).collect::<Vec<_>>(), vec!["@scope/native"]);
+        assert!(skipped.is_empty());
+    }
+
+    #[test]
+    fn explicit_targets_resolve_publish_config_name() {
+        let packages = vec![package_with_publish_name("vmz", "@vmz/vmz", true)];
+        let by_name = packages
+            .iter()
+            .map(|package| (package.name.clone(), package.clone()))
+            .collect::<BTreeMap<_, _>>();
+        let (candidates, _) =
+            resolve_candidate_packages(&packages, &by_name, &["@vmz/vmz".to_string()]).expect("resolve");
+        assert_eq!(candidates.iter().map(|p| p.name.as_str()).collect::<Vec<_>>(), vec!["vmz"]);
     }
 }
 
