@@ -225,6 +225,7 @@ export type PublisherExports = {
         cwd?: string;
         dryRun?: boolean;
         refresh?: boolean;
+        placeholder?: boolean;
         only?: string;
         packages?: string[];
         tag?: string;
@@ -293,6 +294,7 @@ type NativeBinding = {
         cwd?: string | null;
         dryRun?: boolean | null;
         refresh?: boolean | null;
+        placeholder?: boolean | null;
         tag?: string | null;
         access?: string | null;
         npm?: string | null;
@@ -695,6 +697,7 @@ function wrapBinding(binding: NativeBinding): NiftyNative {
                     ...(options.cwd !== undefined ? { cwd: options.cwd } : {}),
                     ...(options.dryRun !== undefined ? { dryRun: options.dryRun } : {}),
                     ...(options.refresh !== undefined ? { refresh: options.refresh } : {}),
+                    ...(options.placeholder !== undefined ? { placeholder: options.placeholder } : {}),
                     ...(options.only !== undefined ? { only: options.only } : {}),
                     ...(options.packages !== undefined ? { packages: options.packages } : {}),
                     ...(options.tag !== undefined ? { tag: options.tag } : {}),

@@ -9,7 +9,7 @@ mod trust;
 mod trust_expect;
 mod workspace;
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -21,12 +21,16 @@ pub use workspace::{NpmPackage, PackageManifest, find_workspace_root, list_works
 
 pub type Result<T> = std::result::Result<T, String>;
 
+const PLACEHOLDER_VERSION: &str = "0.0.0";
+
 /// Options for [`publish_workspace`].
 #[derive(Debug, Clone, Default)]
 pub struct PublishOptions {
     pub cwd: Option<PathBuf>,
     pub dry_run: bool,
     pub refresh: bool,
+    /// Publish never-published workspace packages as `0.0.0` stubs (claim name / OIDC prep).
+    pub placeholder: bool,
     pub tag: Option<String>,
     pub access: Option<String>,
     pub npm: Option<PathBuf>,
@@ -78,29 +82,57 @@ pub fn publish_workspace(options: PublishOptions) -> Result<PublishReport> {
     let access = options.access.as_deref().or(Some("public"));
     let mut published = Vec::new();
     let mut skipped_versions = Vec::new();
+
+    // Placeholder: only packages with no registry version yet. Force publish as 0.0.0.
+    let mut placeholder_names = BTreeSet::new();
+    if options.placeholder {
+        for name in &order {
+            let live = runner.view_version(name)?;
+            if live.is_some() {
+                println!("skip placeholder {name} (already on registry)");
+                skipped_versions.push(name.clone());
+                continue;
+            }
+            placeholder_names.insert(name.clone());
+        }
+    }
+
     for name in &order {
+        if options.placeholder && !placeholder_names.contains(name) {
+            continue;
+        }
         let package = by_name
             .get(name)
             .ok_or_else(|| format!("missing workspace package {name}"))?;
-        let live = runner.view_version(name)?;
-        let resolved = cache::resolve_published_version(&mut cache, name, live);
-        if cache::should_skip_publish(
-            &cache,
-            name,
-            &package.version,
-            &resolved,
-            options.refresh,
-            options.dry_run,
-        ) {
-            println!("skip publish {name}@{} (already on registry)", package.version);
-            skipped_versions.push(name.clone());
-            continue;
+        let publish_version = if options.placeholder {
+            PLACEHOLDER_VERSION
+        } else {
+            package.version.as_str()
+        };
+        if !options.placeholder {
+            let live = runner.view_version(name)?;
+            let resolved = cache::resolve_published_version(&mut cache, name, live);
+            if cache::should_skip_publish(
+                &cache,
+                name,
+                &package.version,
+                &resolved,
+                options.refresh,
+                options.dry_run,
+            ) {
+                println!("skip publish {name}@{} (already on registry)", package.version);
+                skipped_versions.push(name.clone());
+                continue;
+            }
         }
-        if is_native_binary_package(package) && !has_staged_native_binary(package) {
+        if is_native_binary_package(package)
+            && !has_staged_native_binary(package)
+            && !options.placeholder
+        {
             println!("skip publish {name} (no staged native binary)");
             continue;
         }
-        println!("publishing {name}@{version}", name = name, version = package.version);
+        println!("publishing {name}@{publish_version}");
         let result = publish_package(
             package,
             &by_name,
@@ -109,19 +141,29 @@ pub fn publish_workspace(options: PublishOptions) -> Result<PublishReport> {
             access,
             options.npm.as_deref(),
             &auth,
+            if options.placeholder {
+                Some(PLACEHOLDER_VERSION)
+            } else {
+                None
+            },
+            if options.placeholder {
+                Some(&placeholder_names)
+            } else {
+                None
+            },
         );
         match result {
             Ok(()) => {
                 if !options.dry_run {
-                    cache.record_version(name, &package.version);
+                    cache.record_version(name, publish_version);
                     cache.save(&root)?;
                 }
                 published.push(name.clone());
             }
             Err(message) if already_published(&message) => {
-                cache.record_version(name, &package.version);
+                cache.record_version(name, publish_version);
                 cache.save(&root)?;
-                println!("skip publish {name}@{} (registry says already published)", package.version);
+                println!("skip publish {name}@{publish_version} (registry says already published)");
                 skipped_versions.push(name.clone());
             }
             Err(message) => return Err(message),
@@ -320,9 +362,19 @@ fn publish_package(
     access: Option<&str>,
     npm: Option<&Path>,
     auth: &OtpAuth,
+    publish_version: Option<&str>,
+    placeholder_dep_names: Option<&BTreeSet<String>>,
 ) -> Result<()> {
     let original = fs::read_to_string(&package.manifest_path).map_err(|err| err.to_string())?;
-    let next = manifest::patch_manifest_for_publish(&original, package, by_name)?;
+    let next = manifest::patch_manifest_for_publish(
+        &original,
+        package,
+        by_name,
+        manifest::PatchPublishOptions {
+            publish_version,
+            placeholder_dep_names,
+        },
+    )?;
 
     let mut restored = false;
     let mut restore = || {

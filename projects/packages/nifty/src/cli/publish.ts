@@ -4,6 +4,8 @@ import { authPayload, parseAuthArgs } from "./authArgs.js";
 export type PublishOptions = {
     cwd?: string;
     dryRun?: boolean;
+    refresh?: boolean;
+    placeholder?: boolean;
     tag?: string;
     access?: string;
 };
@@ -23,6 +25,7 @@ export async function runPublish(argv: string[]): Promise<void> {
         cwd: options.cwd,
         dryRun: options.dryRun,
         refresh: options.refresh,
+        placeholder: options.placeholder,
         tag: options.tag,
         access: options.access,
         ...authPayload(options.auth),
@@ -34,6 +37,7 @@ function parsePublishArgs(argv: string[]) {
     let cwd: string | undefined;
     let dryRun = false;
     let refresh = false;
+    let placeholder = false;
     let tag: string | undefined;
     let access = "public";
     const auth = parseAuthArgs(argv);
@@ -44,6 +48,8 @@ function parsePublishArgs(argv: string[]) {
             dryRun = true;
         } else if (arg === "--refresh") {
             refresh = true;
+        } else if (arg === "--placeholder") {
+            placeholder = true;
         } else if (arg === "-C" || arg === "--cwd") {
             cwd = argv[++i];
         } else if (arg === "--tag") {
@@ -58,7 +64,7 @@ function parsePublishArgs(argv: string[]) {
         }
     }
 
-    return { cwd, dryRun, refresh, tag, access, auth };
+    return { cwd, dryRun, refresh, placeholder, tag, access, auth };
 }
 
 export function printPublishReport(report: PublishReport, dryRun?: boolean): void {
@@ -87,9 +93,13 @@ Usage:
   nifty publish
   nifty publish --dry-run
   nifty publish --refresh
+  nifty publish --placeholder
   nifty publish --tag next
   nifty publish --access public
   nifty publish --otp 123456
   nifty publish -C <cwd>
+
+--placeholder publishes workspace packages that have no registry version yet as 0.0.0
+(name claim / Trusted Publisher prep). Packages already on npm are skipped.
 `);
 }

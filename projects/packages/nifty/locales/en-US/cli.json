@@ -44,6 +44,7 @@
   "cli.opt.check": "Check formatting without writing files",
   "cli.opt.dry-run": "Print actions without writing or publishing",
   "cli.opt.refresh": "Ignore publish/trust cache and re-check registry",
+  "cli.opt.placeholder": "Publish never-published workspace packages as 0.0.0 (name claim)",
   "cli.opt.version": "Explicit semver target version",
   "cli.opt.patch": "Bump patch segment",
   "cli.opt.minor": "Bump minor segment",
