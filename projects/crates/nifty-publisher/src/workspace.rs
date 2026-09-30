@@ -35,6 +35,18 @@ pub struct PackageManifest {
     pub os: Option<Vec<String>>,
     #[serde(default)]
     pub cpu: Option<Vec<String>>,
+    #[serde(rename = "publishConfig", default)]
+    pub publish_config: Option<PublishConfig>,
+}
+
+/// Subset of `package.json` `publishConfig` used when staging for npm.
+#[derive(Debug, Clone, Deserialize, Default)]
+pub struct PublishConfig {
+    /// Registry package name when it differs from the workspace `name` (e.g. `vmz` → `@vmz/vmz`).
+    #[serde(default)]
+    pub name: Option<String>,
+    #[serde(default)]
+    pub access: Option<String>,
 }
 
 /// One npm package directory in the workspace.
@@ -109,7 +121,9 @@ fn list_pnpm_workspace_packages(root: &Path) -> Result<Vec<NpmPackage>> {
                 continue;
             }
             let package = load_package(&dir, manifest_path)?;
-            if package.private || !seen.insert(package.name.clone()) {
+            // Keep private packages: `nifty publish --package` / `publish.packages` may target them
+            // (workspace `private: true` only blocks accidental bare `npm publish`).
+            if !seen.insert(package.name.clone()) {
                 continue;
             }
             packages.push(package);
@@ -189,6 +203,28 @@ pub fn load_package(dir: &Path, manifest_path: PathBuf) -> Result<NpmPackage> {
         private: manifest.private,
         manifest,
     })
+}
+
+/// npm registry name: `publishConfig.name` when set, otherwise workspace `name`.
+pub fn registry_name(package: &NpmPackage) -> &str {
+    package
+        .manifest
+        .publish_config
+        .as_ref()
+        .and_then(|config| config.name.as_deref())
+        .filter(|name| !name.is_empty())
+        .unwrap_or(package.name.as_str())
+}
+
+/// Resolve a publish/trust target against workspace `name` or `publishConfig.name`.
+pub fn find_package_by_target<'a>(
+    by_name: &'a BTreeMap<String, NpmPackage>,
+    target: &str,
+) -> Option<&'a NpmPackage> {
+    if let Some(package) = by_name.get(target) {
+        return Some(package);
+    }
+    by_name.values().find(|package| registry_name(package) == target)
 }
 
 pub fn collect_internal_dependency_names(

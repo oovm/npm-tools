@@ -46,6 +46,15 @@ pub fn patch_manifest_for_publish(
     }
 
     object.remove("private");
+    if let Some(registry_name) = package
+        .manifest
+        .publish_config
+        .as_ref()
+        .and_then(|config| config.name.as_ref())
+        .filter(|name| !name.is_empty())
+    {
+        object.insert("name".to_string(), Value::String(registry_name.clone()));
+    }
     ensure_publish_metadata(object);
 
     Ok(format!("{}\n", serde_json::to_string_pretty(&value).map_err(|err| err.to_string())?))
@@ -137,6 +146,7 @@ mod tests {
             peer_dependencies: BTreeMap::new(),
             os: None,
             cpu: None,
+            publish_config: None,
         };
         NpmPackage {
             name: name.to_string(),

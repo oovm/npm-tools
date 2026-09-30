@@ -52,10 +52,11 @@ nifty trust --dry-run
 nifty trust
 ```
 
-**`--placeholder`**: for each non-private workspace package with **no version on the registry**, publish
+**`--placeholder`**: for each publishable workspace package with **no version on the registry**, publish
 workspace contents as **`0.0.0`** (claim the name / prep Trusted Publisher). Packages that already exist on
-npm are skipped. Prefer this over per-repo `publish-placeholder.mjs` stub synthesis when packages already live
-in the workspace. Then run **`nifty trust`**.
+npm are skipped. Default set is non-private workspace packages. With `publish.packages` in `nifty.config.ts`
+(or `--package`), **private** workspace packages may be included — `private` is stripped on publish (same as
+`publishConfig.name` rename). Prefer this over per-repo `publish-placeholder.mjs`. Then run **`nifty trust`**.
 
 Optional subset (new package only, or retry one failure):
 

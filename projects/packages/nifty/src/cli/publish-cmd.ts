@@ -2,6 +2,7 @@ import type { Cli, ParsedOptions } from "@vmz/commander";
 
 import { loadNiftyNative } from "../native.js";
 import { authPayload } from "./authArgs.js";
+import { loadConfig } from "../config/loadConfig.js";
 import { bootstrapFromOptions } from "./context.js";
 import { printPublishReport } from "./publish.js";
 import { authFromOptions, cwdFrom, flag, str, strList } from "./options.js";
@@ -22,7 +23,9 @@ export function registerPublishCommand(cli: Cli): void {
 
 export async function cmdPublish(options: ParsedOptions): Promise<number> {
     await bootstrapFromOptions(options);
+    const { config } = await loadConfig({ cwd: cwdFrom(options), createIfMissing: false });
     const packages = strList(options, "package");
+    const fromConfig = config.publish?.packages ?? [];
     const native = loadNiftyNative();
     const report = native.publisher["publish-workspace"]({
         cwd: cwdFrom(options),
@@ -31,8 +34,13 @@ export async function cmdPublish(options: ParsedOptions): Promise<number> {
         placeholder: flag(options, "placeholder"),
         tag: str(options, "tag"),
         access: str(options, "access") ?? "public",
-        ...(packages.length === 1 ? { only: packages[0] } : {}),
-        ...(packages.length > 1 ? { packages } : {}),
+        ...(packages.length === 1
+            ? { only: packages[0] }
+            : packages.length > 1
+              ? { packages }
+              : fromConfig.length > 0
+                ? { packages: fromConfig }
+                : {}),
         ...authPayload(authFromOptions(options)),
     });
     printPublishReport(report, flag(options, "dry-run"));
