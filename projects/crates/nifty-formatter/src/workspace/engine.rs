@@ -4,12 +4,12 @@ use oxc_formatter::JsFormatOptions;
 
 use super::{FormatFileResult, oak, oxc, style};
 
-/// Format JavaScript/TypeScript/JSX/TSX: Oak AST print first, `oxc_formatter` fallback.
+/// Format JS/TS/JSX/TSX via Oak. Target frontend is Oak only.
 pub fn format_source(path: &Path, source: &str) -> Result<FormatFileResult, String> {
     format_source_with_options(path, source, style::default_format_options())
 }
 
-/// Format JavaScript/TypeScript/JSX/TSX: Oak AST print first, `oxc_formatter` fallback.
+/// Format JS/TS/JSX/TSX via Oak. `oxc_formatter` below is legacy debt for uncovered inputs and must shrink to zero.
 pub fn format_source_with_options(
     path: &Path,
     source: &str,
@@ -21,6 +21,7 @@ pub fn format_source_with_options(
             output,
         });
     }
+    // TODO(P4): remove once Oak print covers this input (today: JSX/TSX and other unprintable nodes).
     oxc::format_source_with_options(path, source, options)
 }
 
