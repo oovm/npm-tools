@@ -15,7 +15,8 @@ pub fn format_source_with_options(
     source: &str,
     options: JsFormatOptions,
 ) -> Result<FormatFileResult, String> {
-    if let Ok(output) = oak::format_source(path, source) {
+    let cst_options = style::cst_format_options_from_js(&options);
+    if let Ok(output) = oak::format_source(path, source, &cst_options) {
         return Ok(FormatFileResult {
             changed: output != source,
             output,
@@ -87,6 +88,18 @@ mod tests {
     #[test]
     fn cst_format_preserves_asi_sensitive_continuation() {
         let input = "const total = base\n+ extra";
+        let result = format_source_with_options(
+            Path::new("sample.ts"),
+            input,
+            default_format_options(),
+        )
+        .expect("format");
+        assert_eq!(result.output, input);
+    }
+
+    #[test]
+    fn cst_format_preserves_decorated_const_statement() {
+        let input = "@Component()\nconst  x=1";
         let result = format_source_with_options(
             Path::new("sample.ts"),
             input,
