@@ -9,6 +9,6 @@ pub use release::{format_release_notes, format_release_section, ReleaseCommit};
 pub use render::{author_mention, commit_bullet, render_section_bullets};
 pub use subject::format_subject;
 pub use workspace::{
-    default_format_options, format_source, resolve_format_options, run_format, FormatFileResult,
-    FormatReport, FormatStyleOptions, RunFormatOptions,
+    default_format_options, format_source, format_source_with_options, resolve_format_options,
+    run_format, FormatFileResult, FormatReport, FormatStyleOptions, RunFormatOptions,
 };

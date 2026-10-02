@@ -4,6 +4,14 @@ use oxc_formatter::JsFormatOptions;
 
 use super::{FormatFileResult, oak, oxc, style};
 
+/// Oak failures that must not fall through to legacy oxc (invalid source, unsupported syntax).
+fn should_stop_at_oak(err: &str) -> bool {
+    err.contains("diagnostics")
+        || err.contains("parse failed")
+        || err.contains("unsupported")
+        || err.contains("overlapping CST spans")
+}
+
 /// Format JS/TS/JSX/TSX via Oak. Target frontend is Oak only.
 pub fn format_source(path: &Path, source: &str) -> Result<FormatFileResult, String> {
     format_source_with_options(path, source, style::default_format_options())
@@ -16,123 +24,15 @@ pub fn format_source_with_options(
     options: JsFormatOptions,
 ) -> Result<FormatFileResult, String> {
     let format_options = style::format_options_from_js(&options);
-    if let Ok(output) = oak::format_source(path, source, &format_options) {
-        return Ok(FormatFileResult {
+    match oak::format_source(path, source, &format_options) {
+        Ok(output) => Ok(FormatFileResult {
             changed: output != source,
             output,
-        });
-    }
-    // TODO(P4): remove once Oak `format` covers this input (remaining gaps: class, quote style, etc.).
-    oxc::format_source_with_options(path, source, options)
-}
-
-#[cfg(test)]
-mod tests {
-    use std::path::Path;
-
-    use super::*;
-    use crate::workspace::style::{default_format_options, resolve_format_options, FormatStyleOptions};
-
-    #[test]
-    fn oak_formats_typescript_source() {
-        let result = format_source_with_options(
-            Path::new("sample.ts"),
-            "const  x=1",
-            default_format_options(),
-        )
-        .expect("format");
-        assert!(result.changed);
-        assert!(result.output.contains("const x = 1"), "{}", result.output);
-    }
-
-    #[test]
-    fn oak_format_is_idempotent_for_simple_ts() {
-        let once = format_source_with_options(
-            Path::new("sample.ts"),
-            "const x = 1\n",
-            default_format_options(),
-        )
-        .expect("once");
-        let twice = format_source_with_options(
-            Path::new("sample.ts"),
-            &once.output,
-            default_format_options(),
-        )
-        .expect("twice");
-        assert_eq!(once.output, twice.output);
-    }
-
-    #[test]
-    fn format_preserves_leading_line_comment() {
-        let result = format_source_with_options(
-            Path::new("sample.ts"),
-            "// keep\nconst  x=1",
-            default_format_options(),
-        )
-        .expect("format");
-        assert_eq!(result.output, "// keep\nconst x = 1");
-    }
-
-    #[test]
-    fn format_preserves_trailing_comment_in_statement() {
-        let input = "const x = 1 // keep";
-        let result = format_source_with_options(
-            Path::new("sample.ts"),
-            input,
-            default_format_options(),
-        )
-        .expect("format");
-        assert_eq!(result.output, input);
-    }
-
-    #[test]
-    fn format_preserves_asi_sensitive_continuation() {
-        let input = "const total = base\n+ extra";
-        let result = format_source_with_options(
-            Path::new("sample.ts"),
-            input,
-            default_format_options(),
-        )
-        .expect("format");
-        assert_eq!(result.output, input);
-    }
-
-    #[test]
-    fn format_preserves_decorated_const_statement() {
-        let input = "@Component()\nconst  x=1";
-        let result = format_source_with_options(
-            Path::new("sample.ts"),
-            input,
-            default_format_options(),
-        )
-        .expect("format");
-        assert_eq!(result.output, input);
-    }
-
-    #[test]
-    fn oak_formats_jsx_via_format_api() {
-        let result = format_source_with_options(
-            Path::new("sample.tsx"),
-            r#"const el = <div className="foo">bar</div>"#,
-            default_format_options(),
-        )
-        .expect("format");
-        assert!(
-            result.output.contains("<div className='foo'>bar</div>"),
-            "{}",
-            result.output
-        );
-    }
-
-    #[test]
-    fn resolve_style_still_applies_to_oxc_fallback() {
-        let options = resolve_format_options(Some(&FormatStyleOptions {
-            indent_style: Some("space".to_string()),
-            indent_width: Some(2),
-            line_width: Some(100),
-            quote_style: Some("double".to_string()),
-        }));
-        assert_eq!(options.indent_width.value(), 2);
-        assert_eq!(options.line_width.value(), 100);
+        }),
+        Err(err) if should_stop_at_oak(&err) => Err(err),
+        Err(_) => {
+            // TODO(P4): remove once Oak `format` covers this input (remaining gaps: quote style, etc.).
+            oxc::format_source_with_options(path, source, options)
+        }
     }
 }

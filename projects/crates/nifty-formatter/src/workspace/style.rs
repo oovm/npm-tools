@@ -1,4 +1,4 @@
-use oak_typescript::FormatOptions;
+use oak_typescript::formatter::FormatOptions;
 use oxc_formatter::{JsFormatOptions, QuoteStyle};
 use oxc_formatter_core::{IndentStyle, IndentWidth, LineWidth};
 
