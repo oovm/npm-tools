@@ -18,3 +18,12 @@ fn accepts_init_gitmoji_subject() {
     assert_eq!(parsed.gitmoji.as_deref(), Some("🎂"));
     assert_eq!(parsed.section, Section::Other);
 }
+
+#[test]
+fn accepts_pin_gitmoji_subject() {
+    let subject = "📌 Pin homepage to published `@notedge/panduck` `0.0.2`";
+    assert!(validate_subject(subject));
+    let parsed = parse_subject(subject);
+    assert_eq!(parsed.gitmoji.as_deref(), Some("📌"));
+    assert_eq!(parsed.section, Section::Other);
+}

@@ -18,8 +18,10 @@ Every commit **subject** (first line) must:
 Known gitmojis (Nifty default set):
 
 ```text
-✨ 🎨 🚀 🐛 🚑 🔥 💥 ♻️ 🔧 📝 👷 🧹 ⬆️ 🧪 🔨 📦
+✨ 🎨 🚀 🐛 🚑 🔥 💥 ♻️ 🔧 📝 👷 🧹 ⬆️ 🧪 🔨 📦 📌
 ```
+
+`📌` is for dependency or version pins (for example locking a site to a published npm version).
 
 ## Commands
 
