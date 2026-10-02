@@ -54,12 +54,13 @@ static GITMOJI_SECTION: LazyLock<HashMap<&'static str, Section>> = LazyLock::new
         ("🎀", Section::Other),
         ("⚡", Section::Other),
         ("🔒", Section::Other),
+        ("📌", Section::Other),
     ])
 });
 
-static KNOWN_GITMOJIS: [&str; 24] = [
+static KNOWN_GITMOJIS: [&str; 25] = [
     "✨", "🎨", "🚀", "🐛", "🚑", "🔥", "💥", "♻️", "🔧", "📝", "👷", "🧹", "⬆️", "🧪", "🔨", "📦", "🎂", "🎉",
-    "🚧", "🚫", "💄", "🎀", "⚡", "🔒",
+    "🚧", "🚫", "💄", "🎀", "⚡", "🔒", "📌",
 ];
 
 /// Nifty 认可的 gitmoji 列表（subject 必须以其中之一开头）。
