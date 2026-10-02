@@ -36,6 +36,16 @@ fn oak_formats_typescript_source() {
 }
 
 #[test]
+fn oak_formats_jsx_source() {
+    let result = format_source(
+        Path::new("sample.tsx"),
+        r#"const el = <div className="foo">bar</div>"#,
+    )
+    .expect("format");
+    assert!(result.output.contains("<div className='foo'>bar</div>"));
+}
+
+#[test]
 fn oak_format_is_idempotent_for_simple_ts() {
     let once = format_source(Path::new("sample.ts"), "const x = 1\n").expect("once");
     let twice = format_source(Path::new("sample.ts"), &once.output).expect("twice");
