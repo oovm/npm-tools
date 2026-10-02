@@ -1,4 +1,4 @@
-//! Node-API bindings for workspace formatting (Oak AST print + `oxc_formatter` fallback + `cargo fmt`).
+//! Node-API bindings for workspace formatting (Oak target, legacy `oxc_formatter` until P4 removal + `cargo fmt`).
 
 use napi::bindgen_prelude::*;
 use napi_derive::napi;
