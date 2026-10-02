@@ -10,7 +10,7 @@ pub struct FormatStyleOptions {
     pub quote_style: Option<String>,
 }
 
-/// Nifty default oxc style: 4 spaces, single quotes, line width 144.
+/// Nifty default style for `oxc_formatter` fallback: 4 spaces, single quotes, line width 144.
 pub fn default_format_options() -> JsFormatOptions {
     JsFormatOptions {
         indent_style: IndentStyle::Space,

@@ -41,7 +41,7 @@ pub struct RunFormatOptions {
 
 pub type Result<T> = std::result::Result<T, String>;
 
-/// Format JavaScript/TypeScript/JSON via Oak (with `oxc_formatter` fallback) and Rust via `cargo fmt`.
+/// Format JS/TS/JSX/TSX via Oak AST print (`oxc_formatter` fallback) and Rust via `cargo fmt`.
 pub fn run_format(options: RunFormatOptions) -> Result<FormatReport> {
     let cwd = options
         .cwd

@@ -34,3 +34,10 @@ fn oak_formats_typescript_source() {
     assert!(result.changed);
     assert!(result.output.contains("const x = 1"));
 }
+
+#[test]
+fn oak_format_is_idempotent_for_simple_ts() {
+    let once = format_source(Path::new("sample.ts"), "const x = 1\n").expect("once");
+    let twice = format_source(Path::new("sample.ts"), &once.output).expect("twice");
+    assert_eq!(once.output, twice.output);
+}
