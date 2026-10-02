@@ -15,7 +15,6 @@ projects/packages/nifty/dist/
 
 # Rust
 target/
-Cargo.lock
 
 # Nifty native binaries (regenerate with `npm run build:napi` at repo root)
 projects/packages/nifty-*/lib/*.node

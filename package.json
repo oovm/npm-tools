@@ -2,9 +2,9 @@
     "private": true,
     "packageManager": "pnpm@11.24.0",
     "scripts": {
-        "build": "cargo build --release",
+        "build": "cargo build --release --locked",
         "build:napi": "node scripts/build-napi.mjs",
-        "test": "cargo test --release",
+        "test": "cargo test --release --locked",
         "fmt": "nifty format",
         "fmt:check": "nifty format --check",
         "p": "git push && git push --tags --prune",
