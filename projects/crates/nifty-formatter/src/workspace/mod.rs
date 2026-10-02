@@ -1,4 +1,6 @@
 mod cargo;
+mod engine;
+mod oak;
 mod oxc;
 mod style;
 mod walk;
@@ -8,9 +10,8 @@ use std::path::{Path, PathBuf};
 
 use nifty_config::{detect_project_layout, ProjectKind};
 
-pub use oxc::format_source;
+pub use engine::{format_source, format_source_with_options};
 pub use style::{FormatStyleOptions, default_format_options, resolve_format_options};
-
 /// One formatted file outcome.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FormatFileResult {
@@ -40,7 +41,7 @@ pub struct RunFormatOptions {
 
 pub type Result<T> = std::result::Result<T, String>;
 
-/// Format JavaScript/TypeScript/JSON via `oxc_formatter` and Rust via `cargo fmt`.
+/// Format JavaScript/TypeScript/JSON via Oak (with `oxc_formatter` fallback) and Rust via `cargo fmt`.
 pub fn run_format(options: RunFormatOptions) -> Result<FormatReport> {
     let cwd = options
         .cwd
@@ -84,7 +85,7 @@ fn format_path(
     options: &oxc_formatter::JsFormatOptions,
 ) -> Result<()> {
     let source = fs::read_to_string(path).map_err(|err| format!("{}: {err}", path.display()))?;
-    let result = oxc::format_source_with_options(path, &source, options.clone())?;
+    let result = engine::format_source_with_options(path, &source, options.clone())?;
 
     if !result.changed {
         report.unchanged += 1;

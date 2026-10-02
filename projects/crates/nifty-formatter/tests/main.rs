@@ -29,7 +29,7 @@ fn author_mention_falls_back_to_name() {
 }
 
 #[test]
-fn oxc_formats_typescript_source() {
+fn oak_formats_typescript_source() {
     let result = format_source(Path::new("sample.ts"), "const  x=1").expect("format");
     assert!(result.changed);
     assert!(result.output.contains("const x = 1"));
