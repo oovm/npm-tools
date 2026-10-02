@@ -1,4 +1,4 @@
-use oak_typescript::cst_format::CstFormatOptions;
+use oak_typescript::FormatOptions;
 use oxc_formatter::{JsFormatOptions, QuoteStyle};
 use oxc_formatter_core::{IndentStyle, IndentWidth, LineWidth};
 
@@ -52,9 +52,9 @@ pub fn resolve_format_options(style: Option<&FormatStyleOptions>) -> JsFormatOpt
     options
 }
 
-/// Map legacy `oxc_formatter` options into Oak `cst_format` options until oxc is removed.
-pub fn cst_format_options_from_js(options: &JsFormatOptions) -> CstFormatOptions {
-    CstFormatOptions {
+/// Map legacy `oxc_formatter` options into Oak `FormatOptions` until oxc is removed.
+pub fn format_options_from_js(options: &JsFormatOptions) -> FormatOptions {
+    FormatOptions {
         indent_width: options.indent_width.value(),
         line_width: usize::from(options.line_width.value()),
     }
@@ -79,15 +79,15 @@ mod tests {
     }
 
     #[test]
-    fn maps_js_options_into_cst_format_options() {
+    fn maps_js_options_into_oak_format_options() {
         let js = resolve_format_options(Some(&FormatStyleOptions {
             indent_style: Some("space".to_string()),
             indent_width: Some(2),
             line_width: Some(100),
             quote_style: None,
         }));
-        let cst = cst_format_options_from_js(&js);
-        assert_eq!(cst.indent_width, 2);
-        assert_eq!(cst.line_width, 100);
+        let oak = format_options_from_js(&js);
+        assert_eq!(oak.indent_width, 2);
+        assert_eq!(oak.line_width, 100);
     }
 }
