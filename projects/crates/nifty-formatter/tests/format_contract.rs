@@ -1,5 +1,5 @@
 //! Shared Oak `format` contract through the Nifty workspace adapter.
-//! Matrix: `规划设计/vmz/handoffs/2026-10-02-oak-formatter-capability-matrix.md`
+//! Conformance matrix: `projects/packages/nifty-skills` Oak formatter fixtures and this test suite.
 
 use std::path::Path;
 
