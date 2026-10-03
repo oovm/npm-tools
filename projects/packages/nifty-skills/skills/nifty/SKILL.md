@@ -14,7 +14,7 @@ workspaces. Native git work uses **gix** (Rust). Changelog tag ranges use the `g
 ## Before you act
 
 1. Confirm `@doki-land/nifty` is installed (`nifty --help`) or use `pnpm exec nifty` in the npm-tools repo.
-2. Look for `nifty.config.ts` at the project root (`defineConfig`, `authorMap` path to `author-github.json`, `publish.packages`, `changelog.*`).
+2. Look for `nifty.config.ts` at the project root (`defineConfig`, `authorMap`, `trust.npm`, optional `publish.packages`, `changelog.*`).
 3. Load a focused sub-skill when the task is narrow (see table below).
 
 ## Sub-skills

@@ -20,18 +20,17 @@ export default {
         repo: "owner/name",
     },
     trust: {
-        repo: "owner/name",
-        file: "publish-npm.yml",
-        environment: "NPM_PUBLISH",
-    },
-    publish: {
-        packages: ["@scope/app", "@scope/app-native"],
+        npm: {
+            repo: "owner/name",
+            file: "publish-npm.yml",
+            environment: "NPM_PUBLISH",
+        },
     },
 };
 ```
 
-`trust.*` pins the GitHub Actions Trusted Publisher target for **`nifty trust`** (prefer over `NIFTY_TRUST_*` env vars).
-`publish.packages` lists every package name for **`nifty trust`**, including registry-only native sidecars.
+`trust.npm` pins the GitHub Actions Trusted Publisher target for **`nifty trust`** (prefer over `NIFTY_TRUST_*` env vars).
+Omit `publish.packages` unless you need a **narrow subset** — default is every workspace package that is not `private: true`.
 
 ## Version bump
 
@@ -77,8 +76,8 @@ nifty trust --only @doki-land/nifty-skills
 GitHub Actions OIDC can publish on the next tag. `nifty trust` uses `publish.packages` from `nifty.config.ts` when set
 (subset only — still respects `private`), otherwise all publishable workspace packages.
 
-Local auth: `NPM_TOKEN`, `--npm-token`, `--otp`, or `--totp-secret` (see `nifty publish --help`). Trust live
-configuration requires OTP/TOTP.
+Local auth: `NPM_TOKEN`, `--npm-token`, `--otp`, or `--totp-secret` (see `nifty publish --help`). Trust uses the
+registry API with bearer token from `NPM_TOKEN` or `~/.npmrc`. Add OTP/TOTP on 2FA accounts when the registry asks.
 
 **npm-tools CI**: tag `vX.Y.Z` triggers `.github/workflows/publish-npm.yml` → `scripts/ci/publish-npm.mjs` (OIDC, no
 long-lived token in YAML). Native `.node` files ship as `@doki-land/nifty-*` optional packages, not GitHub Release

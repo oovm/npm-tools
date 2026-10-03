@@ -32,4 +32,5 @@ export {
     type NiftyFormatPreset,
     type NiftyFormatStyleConfig,
     type NiftyTrustConfig,
+    type NiftyTrustNpmConfig,
 } from "./types.js";

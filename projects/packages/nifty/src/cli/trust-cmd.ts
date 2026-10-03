@@ -23,12 +23,13 @@ export async function cmdTrust(options: ParsedOptions): Promise<number> {
     await bootstrapFromOptions(options);
     const { config } = await loadConfig({ cwd: cwdFrom(options), createIfMissing: false });
     const native = loadNiftyNative();
+    const fromConfig = config.publish?.packages ?? [];
     const report = native.publisher["trust-workspace"]({
         cwd: cwdFrom(options),
         dryRun: flag(options, "dry-run"),
         refresh: flag(options, "refresh"),
         only: str(options, "only"),
-        packages: config.publish?.packages,
+        ...(fromConfig.length > 0 ? { packages: fromConfig } : {}),
         ...trustPayloadFromConfig(config),
         ...authPayload(authFromOptions(options)),
     });
