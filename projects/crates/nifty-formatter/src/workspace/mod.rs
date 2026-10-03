@@ -1,7 +1,6 @@
 mod cargo;
 mod engine;
 mod oak;
-mod oxc;
 mod style;
 mod walk;
 
@@ -41,7 +40,7 @@ pub struct RunFormatOptions {
 
 pub type Result<T> = std::result::Result<T, String>;
 
-/// Format JS/TS/JSX/TSX via Oak (legacy `oxc_formatter` only until Oak coverage closes) and Rust via `cargo fmt`.
+/// Format JS/TS/JSX/TSX via Oak and Rust via cargo fmt.
 pub fn run_format(options: RunFormatOptions) -> Result<FormatReport> {
     let cwd = options
         .cwd
@@ -69,7 +68,7 @@ pub fn run_format(options: RunFormatOptions) -> Result<FormatReport> {
             includes: options.includes.clone(),
             excludes: options.excludes.clone(),
         };
-        let format_options = resolve_format_options(options.style.as_ref());
+        let format_options = resolve_format_options(options.style.as_ref())?;
         for path in walk::discover_format_targets(&layout.root, &discover)? {
             format_path(&path, options.check, &mut report, &format_options)?;
         }
@@ -82,7 +81,7 @@ fn format_path(
     path: &Path,
     check: bool,
     report: &mut FormatReport,
-    options: &oxc_formatter::JsFormatOptions,
+    options: &oak_typescript::formatter::FormatOptions,
 ) -> Result<()> {
     let source = fs::read_to_string(path).map_err(|err| format!("{}: {err}", path.display()))?;
     let result = engine::format_source_with_options(path, &source, options.clone())?;

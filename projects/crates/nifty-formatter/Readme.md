@@ -13,7 +13,7 @@ Nifty formatting helpers and workspace formatter.
 | Target                              | Engine                                    |
 |-------------------------------------|-------------------------------------------|
 | `*.rs` (Cargo workspace)            | `cargo fmt --all`                         |
-| `*.ts` / `*.js` / `*.jsx` / `*.tsx` | `oxc_formatter` (git pin `oxfmt_v0.70.0`) |
+| `*.ts` / `*.js` / `*.jsx` / `*.tsx` | Oak public format contract |
 
 Default JS style comes from `nifty.config` `format.style` (4 spaces, single quotes, line width 144).
 

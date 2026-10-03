@@ -13,10 +13,6 @@ edition = "2021"
 nifty-config = { path = "../nifty-config" }
 nifty-types = { path = "../nifty-types" }
 oak-typescript = { git = "https://github.com/yggdrasil-language/oaks.git", branch = "dev" }
-oxc_allocator = { git = "https://github.com/oxc-project/oxc", tag = "oxfmt_v0.70.0" }
-oxc_formatter = { git = "https://github.com/oxc-project/oxc", tag = "oxfmt_v0.70.0" }
-oxc_formatter_core = { git = "https://github.com/oxc-project/oxc", tag = "oxfmt_v0.70.0" }
-oxc_span = { git = "https://github.com/oxc-project/oxc", tag = "oxfmt_v0.70.0" }
 serde_json = "1.0"
 walkdir = "2.5"
 

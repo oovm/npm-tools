@@ -37,7 +37,7 @@ workspaces. Native git work uses **gix** (Rust). Changelog tag ranges use the `g
 | `nifty publish --placeholder`                | Publish never-published workspace packages as `0.0.0`          |
 | `nifty trust`                                | Configure npm Trusted Publisher                                |
 | `nifty update`                               | Bump Cargo and npm dependencies                                |
-| `nifty format`                               | Format Rust via `cargo fmt` and JS/TS/JSON via `oxc_formatter` |
+| `nifty format`                               | Format Rust via `cargo fmt` and JS/TS through Oak |
 | `nifty upload`                               | GitHub Release assets or GitHub Pages                          |
 | `nifty install-native`                       | Stage CI `.node` artifacts into platform packages              |
 | `nifty retime`                               | Spread timestamps on a new branch                              |
