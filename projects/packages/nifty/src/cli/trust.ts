@@ -68,10 +68,11 @@ export function printTrustReport(report: TrustReport): void {
 function printTrustHelp(): void {
     console.log(`nifty trust — configure npm Trusted Publisher for workspace packages
 
-Reads trust.* from nifty.config.ts (repo / file / environment).
-Auth: NPM_TOTP_SECRET / NPM_OTP / NPM_TOKEN from env or .env.placeholder.local.
+Reads trust.npm from nifty.config.ts (repo / file / environment).
+Auth: NPM_TOKEN from env or .env.placeholder.local, or npm login token in project .npmrc / ~/.npmrc.
+Optional NPM_TOTP_SECRET / NPM_OTP for 2FA accounts (npm-otp header).
 Trust list cache lives in .cache/npm-placeholder.json.
-Today this shells to npm CLI — registry API trust is planned.
+Uses the npm registry API (/-/package/*/trust), not npm trust CLI.
 
 Usage:
   nifty trust

@@ -20,13 +20,18 @@ export type NiftyFormatStyleConfig = {
 };
 
 /** npm Trusted Publisher target for `nifty trust` (GitHub Actions OIDC). */
-export type NiftyTrustConfig = {
+export type NiftyTrustNpmConfig = {
     /** GitHub `owner/repo` for the publishing workflow. */
     repo?: string;
     /** Workflow filename, e.g. `release-npm.yml`. */
     file?: string;
     /** GitHub Environment name, e.g. `NPM_PUBLISH`. */
     environment?: string;
+};
+
+/** Trusted publisher wiring (`nifty trust`). Only `npm` is supported today. */
+export type NiftyTrustConfig = {
+    npm?: NiftyTrustNpmConfig;
 };
 
 /** Workspace format options (`nifty format` reads `nifty.config` `format`). */
@@ -59,12 +64,15 @@ export type NiftyConfig = {
     npmRoot?: string;
     /** npm publish / Trusted Publisher (CI uses publish-npm.yml). */
     publish?: {
-        /** Package names to trust (includes registry-only native sidecars). */
+        /**
+         * Optional narrow subset for `nifty publish` / `nifty trust`.
+         * Default: every workspace package that is not `private: true` (and not blocked by a private dep).
+         */
         packages?: string[];
     };
     /**
-     * Trusted Publisher wiring for `nifty trust`.
-     * Prefer this over `NIFTY_TRUST_*` env vars. Registry API trust is planned to replace npm CLI.
+     * Trusted publisher wiring for `nifty trust`.
+     * Prefer `trust.npm` over `NIFTY_TRUST_*` env vars. `nifty trust` uses the npm registry API.
      */
     trust?: NiftyTrustConfig;
     /** Release reference changelog defaults (`nifty change-logs`). */

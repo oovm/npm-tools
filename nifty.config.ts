@@ -16,19 +16,10 @@ export default defineConfig({
         releasesDir: "documentation/maintenance/releases",
     },
     trust: {
-        repo: "oovm/npm-tools",
-        file: "publish-npm.yml",
-        environment: "NPM_PUBLISH",
-    },
-    publish: {
-        packages: [
-            "@doki-land/nifty",
-            "@doki-land/nifty-skills",
-            "@doki-land/nifty-win32-x64",
-            "@doki-land/nifty-linux-x64",
-            "@doki-land/nifty-linux-arm64",
-            "@doki-land/nifty-darwin-arm64",
-            "@doki-land/nifty-darwin-x64",
-        ],
+        npm: {
+            repo: "oovm/npm-tools",
+            file: "publish-npm.yml",
+            environment: "NPM_PUBLISH",
+        },
     },
 });

@@ -38,6 +38,7 @@ export {
     type NiftyFormatPreset,
     type NiftyFormatStyleConfig,
     type NiftyTrustConfig,
+    type NiftyTrustNpmConfig,
     trustPayloadFromConfig,
     type ProjectKind,
     type ProjectLayout,
