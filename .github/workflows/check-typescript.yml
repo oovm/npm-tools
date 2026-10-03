@@ -1,0 +1,26 @@
+name: Check TypeScript
+
+# Nifty format and @doki-land/nifty typecheck. Rust checks: check-rust.yml
+# Publish: publish-npm.yml on v*.*.* tags.
+on:
+  push:
+    branches: [master, dev]
+  pull_request:
+    branches: [master, dev]
+
+jobs:
+  typescript:
+    name: pnpm packages
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dtolnay/rust-toolchain@nightly
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run build:napi
+      - run: pnpm fmt:check
+      - run: pnpm --filter @doki-land/nifty run typecheck
