@@ -1,5 +1,7 @@
-name: Rust
+name: Check Rust
 
+# Rust build/test only. TypeScript checks: check-typescript.yml
+# Publish: publish-npm.yml on v*.*.* tags.
 on:
   push:
     branches: [master, dev]
@@ -10,20 +12,17 @@ jobs:
   build:
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
     steps:
       - uses: actions/checkout@v5
-
       - uses: dtolnay/rust-toolchain@nightly
-
       - uses: Swatinem/rust-cache@v2
         with:
           shared-key: rust-ci-${{ matrix.os }}
           cache-on-failure: true
-
       - name: Build
         run: cargo build --release --locked
-
       - name: Tests
         run: cargo test --release --locked

@@ -8,6 +8,8 @@ time-travel.*
 .vs/
 .idea/
 *.iml
+*.log
+*.txt
 
 # Node
 node_modules/
@@ -15,6 +17,7 @@ projects/packages/nifty/dist/
 
 # Rust
 target/
+.cargo/config.toml
 
 # Nifty native binaries (regenerate with `npm run build:napi` at repo root)
 projects/packages/nifty-*/lib/*.node
