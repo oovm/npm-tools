@@ -1,6 +1,6 @@
 [package]
 name = "nifty-uploader"
-version = "0.0.12"
+version = "0.1.0"
 authors = ["Aster <192607617@qq.com>"]
 description = "Publish artifacts to GitHub Pages and GitHub Releases"
 repository = "https://github.com/oovm/npm-tools"
