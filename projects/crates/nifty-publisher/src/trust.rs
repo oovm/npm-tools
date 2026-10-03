@@ -1,8 +1,6 @@
-use serde_json::Value;
-
-use crate::cache::{PlaceholderCache, TrustExpect};
-use crate::npm::NpmRunner;
+use crate::cache::PlaceholderCache;
 use crate::otp::{OtpAuth, OtpOverrides};
+use crate::registry_trust::{RegistryTrustClient, TrustCreateOutcome};
 use crate::trust_expect::{resolve_trust_expect, TrustExpectInput};
 use crate::workspace::{
     find_package_by_target, find_workspace_root, list_workspace_packages, registry_name,
@@ -23,6 +21,7 @@ pub struct TrustOptions {
     pub packages: Option<Vec<String>>,
     pub npm: Option<std::path::PathBuf>,
     pub otp: OtpOverrides,
+    pub trust: Option<TrustExpectInput>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -42,9 +41,8 @@ pub fn trust_workspace(options: TrustOptions) -> Result<TrustReport> {
     let expect = resolve_trust_expect(&root, options.trust.as_ref());
     let names = resolve_trust_package_names(&root, &options)?;
     let auth = OtpAuth::load(&root, options.otp);
+    let client = RegistryTrustClient::from_workspace(&auth, &root)?;
     let mut cache = PlaceholderCache::load(&root, &expect);
-    let has_otp = auth.has_otp();
-    let runner = NpmRunner::new(options.npm.as_deref(), auth);
 
     let mut report = TrustReport {
         root: root.clone(),
@@ -54,15 +52,7 @@ pub fn trust_workspace(options: TrustOptions) -> Result<TrustReport> {
     };
 
     for name in names {
-        match configure_trust(
-            &runner,
-            &mut cache,
-            &expect,
-            &name,
-            options.dry_run,
-            options.refresh,
-            has_otp,
-        ) {
+        match configure_trust(&client, &mut cache, &expect, &name, options.dry_run, options.refresh) {
             Ok(TrustOutcome::Configured) => report.configured.push(name),
             Ok(TrustOutcome::Skipped) => report.skipped.push(name),
             Err(message) => {
@@ -128,54 +118,28 @@ enum TrustOutcome {
 }
 
 fn configure_trust(
-    runner: &NpmRunner,
+    client: &RegistryTrustClient,
     cache: &mut PlaceholderCache,
-    expect: &TrustExpect,
+    expect: &crate::cache::TrustExpect,
     package: &str,
     dry_run: bool,
     refresh: bool,
-    has_otp: bool,
 ) -> Result<TrustOutcome> {
     if cache.trust_matches_cached(package, refresh) {
         println!("trusted publisher already configured for {package} (cache)");
         return Ok(TrustOutcome::Skipped);
     }
 
-    if !has_otp {
-        return Err(
-            "npm trust requires 2FA for live trust list: set NPM_TOTP_SECRET in .env.placeholder.local or pass --otp / --totp-secret"
-                .into(),
-        );
-    }
-
-    let list = runner.run(&["trust", "list", package, "--json"], None)?;
-    if list.status != 0 {
-        let blob = format!("{}\n{}", list.stdout, list.stderr);
-        if blob.contains("EOTP") || blob.contains("one-time password") {
-            return Err("npm requested OTP (EOTP)".into());
-        }
-        if refresh {
-            eprintln!(
-                "warn: npm trust list failed for {package}; continuing with --refresh"
-            );
-        } else {
-            return Err(blob);
-        }
-    }
-
-    let configs = match parse_trust_list(&list.stdout) {
+    let configs = match client.list(package) {
         Ok(configs) => configs,
         Err(err) if refresh => {
-            eprintln!(
-                "warn: could not parse npm trust list for {package}: {err}; continuing with --refresh"
-            );
+            eprintln!("warn: registry trust list failed for {package}: {err}; continuing with --refresh");
             Vec::new()
         }
         Err(err) => return Err(err),
     };
     cache.record_trust_list(package, configs.clone());
-    let classification = crate::cache::classify_configs(&configs, expect);
-    if classification.matches {
+    if crate::registry_trust::trust_already_matches(&configs, expect) {
         return Ok(TrustOutcome::Skipped);
     }
 
@@ -184,53 +148,14 @@ fn configure_trust(
         return Ok(TrustOutcome::Configured);
     }
 
-    let args = [
-        "trust",
-        "github",
-        package,
-        &format!("--file={}", expect.file),
-        &format!("--repo={}", expect.repo),
-        &format!("--env={}", expect.env),
-        "--allow-publish",
-        "--allow-stage-publish",
-        "--yes",
-    ];
-    let created = runner.run(&args, None)?;
-    if created.status != 0 {
-        return Err(format!("{}\n{}", created.stdout, created.stderr));
+    match client.create(package, expect)? {
+        TrustCreateOutcome::Created => {
+            println!("configured trusted publisher for {package}");
+            Ok(TrustOutcome::Configured)
+        }
+        TrustCreateOutcome::AlreadyExists => {
+            println!("trusted publisher already exists for {package}");
+            Ok(TrustOutcome::Skipped)
+        }
     }
-    println!("configured trusted publisher for {package}");
-    Ok(TrustOutcome::Configured)
-}
-
-fn parse_trust_list(stdout: &str) -> Result<Vec<Value>> {
-    let trimmed = stdout.trim();
-    if trimmed.is_empty() || trimmed.contains("No trust configurations found") {
-        return Ok(Vec::new());
-    }
-    let json = extract_json_payload(trimmed);
-    let data: Value = serde_json::from_str(json).map_err(|err| err.to_string())?;
-    if let Some(array) = data.as_array() {
-        return Ok(array.clone());
-    }
-    if let Some(array) = data.get("configurations").and_then(Value::as_array) {
-        return Ok(array.clone());
-    }
-    if let Some(array) = data.get("items").and_then(Value::as_array) {
-        return Ok(array.clone());
-    }
-    if data.is_object() {
-        return Ok(vec![data]);
-    }
-    Ok(Vec::new())
-}
-
-fn extract_json_payload(stdout: &str) -> &str {
-    if let Some(start) = stdout.find('[') {
-        return stdout[start..].trim();
-    }
-    if let Some(start) = stdout.find('{') {
-        return stdout[start..].trim();
-    }
-    stdout.trim()
 }
