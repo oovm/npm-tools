@@ -3,7 +3,7 @@ use serde_json::Value;
 use crate::cache::{PlaceholderCache, TrustExpect};
 use crate::npm::NpmRunner;
 use crate::otp::{OtpAuth, OtpOverrides};
-use crate::trust_expect::resolve_trust_expect;
+use crate::trust_expect::{resolve_trust_expect, TrustExpectInput};
 use crate::workspace::{
     find_package_by_target, find_workspace_root, list_workspace_packages, registry_name,
     unpublishable_package_names,
@@ -39,7 +39,7 @@ pub fn trust_workspace(options: TrustOptions) -> Result<TrustReport> {
         .clone()
         .unwrap_or_else(|| std::env::current_dir().expect("current dir"));
     let root = find_workspace_root(&cwd)?;
-    let expect = resolve_trust_expect(&root);
+    let expect = resolve_trust_expect(&root, options.trust.as_ref());
     let names = resolve_trust_package_names(&root, &options)?;
     let auth = OtpAuth::load(&root, options.otp);
     let mut cache = PlaceholderCache::load(&root, &expect);
@@ -148,16 +148,31 @@ fn configure_trust(
         );
     }
 
-    let list = runner.run(&["trust", "list", package], None)?;
+    let list = runner.run(&["trust", "list", package, "--json"], None)?;
     if list.status != 0 {
         let blob = format!("{}\n{}", list.stdout, list.stderr);
         if blob.contains("EOTP") || blob.contains("one-time password") {
             return Err("npm requested OTP (EOTP)".into());
         }
-        return Err(blob);
+        if refresh {
+            eprintln!(
+                "warn: npm trust list failed for {package}; continuing with --refresh"
+            );
+        } else {
+            return Err(blob);
+        }
     }
 
-    let configs = parse_trust_list(&list.stdout)?;
+    let configs = match parse_trust_list(&list.stdout) {
+        Ok(configs) => configs,
+        Err(err) if refresh => {
+            eprintln!(
+                "warn: could not parse npm trust list for {package}: {err}; continuing with --refresh"
+            );
+            Vec::new()
+        }
+        Err(err) => return Err(err),
+    };
     cache.record_trust_list(package, configs.clone());
     let classification = crate::cache::classify_configs(&configs, expect);
     if classification.matches {
@@ -193,7 +208,8 @@ fn parse_trust_list(stdout: &str) -> Result<Vec<Value>> {
     if trimmed.is_empty() || trimmed.contains("No trust configurations found") {
         return Ok(Vec::new());
     }
-    let data: Value = serde_json::from_str(trimmed).map_err(|err| err.to_string())?;
+    let json = extract_json_payload(trimmed);
+    let data: Value = serde_json::from_str(json).map_err(|err| err.to_string())?;
     if let Some(array) = data.as_array() {
         return Ok(array.clone());
     }
@@ -207,4 +223,14 @@ fn parse_trust_list(stdout: &str) -> Result<Vec<Value>> {
         return Ok(vec![data]);
     }
     Ok(Vec::new())
+}
+
+fn extract_json_payload(stdout: &str) -> &str {
+    if let Some(start) = stdout.find('[') {
+        return stdout[start..].trim();
+    }
+    if let Some(start) = stdout.find('{') {
+        return stdout[start..].trim();
+    }
+    stdout.trim()
 }

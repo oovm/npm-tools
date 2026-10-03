@@ -21,6 +21,7 @@ export {
     type LoadedNiftyConfig,
 } from "./loadConfig.js";
 export { resolveFormatConfig, type ResolvedFormatOptions } from "./formatPresets.js";
+export { trustPayloadFromConfig } from "./trustPayload.js";
 export {
     CONFIG_FILE_NAMES,
     type NiftyAuthorEntry,
@@ -30,4 +31,5 @@ export {
     type NiftyFormatConfig,
     type NiftyFormatPreset,
     type NiftyFormatStyleConfig,
+    type NiftyTrustConfig,
 } from "./types.js";
