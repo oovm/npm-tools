@@ -6,15 +6,15 @@
 
 ## Install
 
-`ash
+```bash
 npm install @doki-land/nifty
-`
+```
 
 ## CLI
 
-`ash
+```bash
 nifty --help
-`
+```
 
 See the [npm-tools README](https://github.com/oovm/npm-tools/blob/dev/README.md) for development.
 
