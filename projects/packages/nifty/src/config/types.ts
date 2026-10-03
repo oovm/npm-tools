@@ -19,6 +19,16 @@ export type NiftyFormatStyleConfig = {
     quoteStyle?: "single" | "double";
 };
 
+/** npm Trusted Publisher target for `nifty trust` (GitHub Actions OIDC). */
+export type NiftyTrustConfig = {
+    /** GitHub `owner/repo` for the publishing workflow. */
+    repo?: string;
+    /** Workflow filename, e.g. `release-npm.yml`. */
+    file?: string;
+    /** GitHub Environment name, e.g. `NPM_PUBLISH`. */
+    environment?: string;
+};
+
 /** Workspace format options (`nifty format` reads `nifty.config` `format`). */
 export type NiftyFormatConfig = {
     /** Select built-in include roots for Nifty hybrid monorepos. */
@@ -52,6 +62,11 @@ export type NiftyConfig = {
         /** Package names to trust (includes registry-only native sidecars). */
         packages?: string[];
     };
+    /**
+     * Trusted Publisher wiring for `nifty trust`.
+     * Prefer this over `NIFTY_TRUST_*` env vars. Registry API trust is planned to replace npm CLI.
+     */
+    trust?: NiftyTrustConfig;
     /** Release reference changelog defaults (`nifty change-logs`). */
     changelog?: {
         /** GitHub `owner/repo` for contrib.rocks (default: parse `origin`). */

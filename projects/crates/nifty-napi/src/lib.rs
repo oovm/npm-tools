@@ -284,6 +284,9 @@ pub struct PublishWorkspaceOptions {
     pub token: Option<String>,
     pub only: Option<String>,
     pub packages: Option<Vec<String>>,
+    pub trust_repo: Option<String>,
+    pub trust_file: Option<String>,
+    pub trust_environment: Option<String>,
 }
 
 #[napi(object)]
@@ -297,6 +300,9 @@ pub struct TrustWorkspaceOptions {
     pub otp: Option<String>,
     pub totp_secret: Option<String>,
     pub token: Option<String>,
+    pub trust_repo: Option<String>,
+    pub trust_file: Option<String>,
+    pub trust_environment: Option<String>,
 }
 
 #[napi(object)]
@@ -322,6 +328,7 @@ pub fn publisher_publish_workspace(options: PublishWorkspaceOptions) -> Result<P
             otp,
             only: options.only,
             packages: options.packages,
+            trust: map_trust_input(&options),
         })
         .map(|report| PublishReport {
             root: report.root.display().to_string(),
@@ -345,6 +352,7 @@ pub fn publisher_trust_workspace(options: TrustWorkspaceOptions) -> Result<Trust
             packages: options.packages,
             npm: options.npm.map(std::path::PathBuf::from),
             otp,
+            trust: map_trust_input_from_trust(&options),
         })
         .map(|report| TrustReport {
             root: report.root.display().to_string(),
@@ -369,6 +377,39 @@ fn map_trust_otp_options(options: &TrustWorkspaceOptions) -> CoreOtpOverrides {
         static_otp: options.otp.clone(),
         token: options.token.clone(),
     }
+}
+
+fn map_trust_input(options: &PublishWorkspaceOptions) -> Option<nifty_publisher::trust_expect::TrustExpectInput> {
+    trust_input(
+        options.trust_repo.as_deref(),
+        options.trust_file.as_deref(),
+        options.trust_environment.as_deref(),
+    )
+}
+
+fn map_trust_input_from_trust(
+    options: &TrustWorkspaceOptions,
+) -> Option<nifty_publisher::trust_expect::TrustExpectInput> {
+    trust_input(
+        options.trust_repo.as_deref(),
+        options.trust_file.as_deref(),
+        options.trust_environment.as_deref(),
+    )
+}
+
+fn trust_input(
+    repo: Option<&str>,
+    file: Option<&str>,
+    env: Option<&str>,
+) -> Option<nifty_publisher::trust_expect::TrustExpectInput> {
+    if repo.is_none() && file.is_none() && env.is_none() {
+        return None;
+    }
+    Some(nifty_publisher::trust_expect::TrustExpectInput {
+        repo: repo.map(str::to_string),
+        file: file.map(str::to_string),
+        env: env.map(str::to_string),
+    })
 }
 
 #[napi]

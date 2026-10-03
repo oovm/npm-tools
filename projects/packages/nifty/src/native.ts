@@ -234,6 +234,9 @@ export type PublisherExports = {
         otp?: string;
         totpSecret?: string;
         token?: string;
+        trustRepo?: string;
+        trustFile?: string;
+        trustEnvironment?: string;
     }) => PublishReport;
     "trust-workspace": (options: {
         cwd?: string;
@@ -245,6 +248,9 @@ export type PublisherExports = {
         otp?: string;
         totpSecret?: string;
         token?: string;
+        trustRepo?: string;
+        trustFile?: string;
+        trustEnvironment?: string;
     }) => TrustReport;
 };
 
@@ -706,6 +712,11 @@ function wrapBinding(binding: NativeBinding): NiftyNative {
                     ...(options.otp !== undefined ? { otp: options.otp } : {}),
                     ...(options.totpSecret !== undefined ? { totpSecret: options.totpSecret } : {}),
                     ...(options.token !== undefined ? { token: options.token } : {}),
+                    ...(options.trustRepo !== undefined ? { trustRepo: options.trustRepo } : {}),
+                    ...(options.trustFile !== undefined ? { trustFile: options.trustFile } : {}),
+                    ...(options.trustEnvironment !== undefined
+                        ? { trustEnvironment: options.trustEnvironment }
+                        : {}),
                 }),
             "trust-workspace": (options) =>
                 binding.publisherTrustWorkspace({
@@ -718,6 +729,11 @@ function wrapBinding(binding: NativeBinding): NiftyNative {
                     ...(options.otp !== undefined ? { otp: options.otp } : {}),
                     ...(options.totpSecret !== undefined ? { totpSecret: options.totpSecret } : {}),
                     ...(options.token !== undefined ? { token: options.token } : {}),
+                    ...(options.trustRepo !== undefined ? { trustRepo: options.trustRepo } : {}),
+                    ...(options.trustFile !== undefined ? { trustFile: options.trustFile } : {}),
+                    ...(options.trustEnvironment !== undefined
+                        ? { trustEnvironment: options.trustEnvironment }
+                        : {}),
                 }),
         },
     };

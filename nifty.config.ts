@@ -15,6 +15,11 @@ export default defineConfig({
         repo: "oovm/npm-tools",
         releasesDir: "documentation/maintenance/releases",
     },
+    trust: {
+        repo: "oovm/npm-tools",
+        file: "publish-npm.yml",
+        environment: "NPM_PUBLISH",
+    },
     publish: {
         packages: [
             "@doki-land/nifty",

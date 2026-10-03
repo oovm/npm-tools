@@ -6,7 +6,7 @@ mod manifest;
 mod npm;
 mod otp;
 mod trust;
-mod trust_expect;
+pub mod trust_expect;
 mod workspace;
 
 use std::collections::{BTreeMap, BTreeSet};
@@ -41,6 +41,7 @@ pub struct PublishOptions {
     pub only: Option<String>,
     /// Publish an explicit subset (multiple `--package` flags).
     pub packages: Option<Vec<String>>,
+    pub trust: Option<trust_expect::TrustExpectInput>,
 }
 
 /// Result of [`publish_workspace`].
@@ -62,7 +63,7 @@ pub fn publish_workspace(options: PublishOptions) -> Result<PublishReport> {
     let root = find_workspace_root(&cwd)?;
     let publish_targets = resolve_publish_targets(&options)?;
     let auth = OtpAuth::load(&root, options.otp);
-    let trust_expect = trust_expect::resolve_trust_expect(&root);
+    let trust_expect = trust_expect::resolve_trust_expect(&root, options.trust.as_ref());
     let mut cache = cache::PlaceholderCache::load(&root, &trust_expect);
     let runner = npm::NpmRunner::new(options.npm.as_deref(), auth.clone());
     let packages = list_workspace_packages(&root)?;

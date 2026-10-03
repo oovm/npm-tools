@@ -19,12 +19,18 @@ export default {
         releasesDir: "documentation/maintenance/releases",
         repo: "owner/name",
     },
+    trust: {
+        repo: "owner/name",
+        file: "publish-npm.yml",
+        environment: "NPM_PUBLISH",
+    },
     publish: {
         packages: ["@scope/app", "@scope/app-native"],
     },
 };
 ```
 
+`trust.*` pins the GitHub Actions Trusted Publisher target for **`nifty trust`** (prefer over `NIFTY_TRUST_*` env vars).
 `publish.packages` lists every package name for **`nifty trust`**, including registry-only native sidecars.
 
 ## Version bump

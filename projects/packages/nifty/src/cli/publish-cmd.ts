@@ -3,6 +3,7 @@ import type { Cli, ParsedOptions } from "@vmz/commander";
 import { loadNiftyNative } from "../native.js";
 import { authPayload } from "./authArgs.js";
 import { loadConfig } from "../config/loadConfig.js";
+import { trustPayloadFromConfig } from "../config/trustPayload.js";
 import { bootstrapFromOptions } from "./context.js";
 import { printPublishReport } from "./publish.js";
 import { authFromOptions, cwdFrom, flag, str, strList } from "./options.js";
@@ -41,6 +42,7 @@ export async function cmdPublish(options: ParsedOptions): Promise<number> {
               : fromConfig.length > 0
                 ? { packages: fromConfig }
                 : {}),
+        ...trustPayloadFromConfig(config),
         ...authPayload(authFromOptions(options)),
     });
     printPublishReport(report, flag(options, "dry-run"));

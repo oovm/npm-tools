@@ -3,6 +3,7 @@ import type { Cli, ParsedOptions } from "@vmz/commander";
 import { loadNiftyNative } from "../native.js";
 import { authPayload } from "./authArgs.js";
 import { loadConfig } from "../config/loadConfig.js";
+import { trustPayloadFromConfig } from "../config/trustPayload.js";
 import { bootstrapFromOptions } from "./context.js";
 import { printTrustReport } from "./trust.js";
 import { authFromOptions, cwdFrom, flag, str } from "./options.js";
@@ -28,6 +29,7 @@ export async function cmdTrust(options: ParsedOptions): Promise<number> {
         refresh: flag(options, "refresh"),
         only: str(options, "only"),
         packages: config.publish?.packages,
+        ...trustPayloadFromConfig(config),
         ...authPayload(authFromOptions(options)),
     });
     printTrustReport(report);
