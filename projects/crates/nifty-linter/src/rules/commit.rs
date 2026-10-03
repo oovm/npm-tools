@@ -5,8 +5,8 @@ use crate::rule::{
 
 const BARE_SYMBOLS: &[&str] = &[
     "Button", "DatePicker", "Drawer", "Empty", "Alert", "Dialog", "Form", "Card", "Link", "RouteId", "SSR",
-    "BindingId", "UserCard", "IndexPage", "VMZ", "Biome", "OXC", "HTML", "ESM", "N-API", "Rust", "Node", "pnpm",
-    "CI", "nifty", "Octokit", "octocrab", "oxc", "AST", "HMR", "DevInput", "CLI", "TS",
+    "BindingId", "UserCard", "IndexPage", "VMZ", "Biome", "HTML", "ESM", "N-API", "Rust", "Node", "pnpm",
+    "CI", "nifty", "Octokit", "octocrab", "AST", "HMR", "DevInput", "CLI", "TS",
 ];
 
 pub fn lint_commit_hygiene(ctx: &LintContext, commit: &CommitInput) -> Vec<LintDiagnostic> {
