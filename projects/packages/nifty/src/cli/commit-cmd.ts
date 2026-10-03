@@ -64,7 +64,7 @@ export async function cmdCommitExport(options: ParsedOptions): Promise<number> {
             path,
             from: base,
             to: str(options, "ref") ?? "HEAD",
-            cwd: cwdFrom(options),
+            cwd: cwdFrom(options) ?? process.cwd(),
             json: flag(options, "json"),
             errorsOnly: flag(options, "errors-only"),
             reportTitle: "commit export lint",

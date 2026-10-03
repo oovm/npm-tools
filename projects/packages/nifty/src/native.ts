@@ -40,18 +40,12 @@ export type GitExports = {
         repoRoot: string,
         fromRef: string | undefined,
         toRef: string,
-    ) => Array<{
-        hash: string;
-        email: string;
-        author: string;
-        subject: string;
-        body: string;
-        gitmoji?: string;
-        section: string;
-    }>;
+    ) => NativeCommitRecord[];
     "detect-github-repo": (repoRoot: string) => string | undefined;
     "parse-github-remote": (url: string) => string | undefined;
 };
+
+type NativeCommitRecord = Omit<CommitRecord, "section"> & { section: string };
 
 export type PublishReport = {
     root: string;
@@ -769,7 +763,7 @@ export function mapRangeInfo(raw: { version: string; "from-ref"?: string; "to-re
     };
 }
 
-export function mapCommitRecord(raw: CommitRecord): CommitRecord {
+export function mapCommitRecord(raw: NativeCommitRecord): CommitRecord {
     return {
         hash: raw.hash,
         email: raw.email,
