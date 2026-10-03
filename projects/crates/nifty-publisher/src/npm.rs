@@ -1,6 +1,7 @@
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 
+use crate::npmrc;
 use crate::otp::OtpAuth;
 use crate::Result;
 
@@ -99,7 +100,7 @@ fn run_command(program: &Path, args: &[String], cwd: Option<&Path>, inherit: boo
 }
 
 fn try_run(program: &Path, args: &[String], cwd: Option<&Path>, inherit: bool, auth: &OtpAuth) -> Result<NpmOutput> {
-    let user_config = write_user_npmrc(auth)?;
+    let user_config = npm_user_config(auth, cwd)?;
     let mut command = Command::new(program);
     command.args(args);
     if let Some(cwd) = cwd {
@@ -109,7 +110,7 @@ fn try_run(program: &Path, args: &[String], cwd: Option<&Path>, inherit: bool, a
     if inherit {
         command.stdout(Stdio::inherit()).stderr(Stdio::inherit());
         let status = command.status().map_err(|err| err.to_string())?;
-        cleanup_user_npmrc(user_config);
+        cleanup_temp_npmrc(user_config);
         return Ok(NpmOutput {
             status: status.code().unwrap_or(1),
             stdout: String::new(),
@@ -118,7 +119,7 @@ fn try_run(program: &Path, args: &[String], cwd: Option<&Path>, inherit: bool, a
     }
 
     let output = command.output().map_err(|err| err.to_string())?;
-    cleanup_user_npmrc(user_config);
+    cleanup_temp_npmrc(user_config);
     Ok(NpmOutput {
         status: output.status.code().unwrap_or(1),
         stdout: String::from_utf8_lossy(&output.stdout).to_string(),
@@ -128,7 +129,7 @@ fn try_run(program: &Path, args: &[String], cwd: Option<&Path>, inherit: bool, a
 
 #[cfg(windows)]
 fn try_run_via_cmd(program: &Path, args: &[String], cwd: Option<&Path>, inherit: bool, auth: &OtpAuth) -> Result<NpmOutput> {
-    let user_config = write_user_npmrc(auth)?;
+    let user_config = npm_user_config(auth, cwd)?;
     let mut command = Command::new("cmd");
     command.arg("/C").arg(program);
     command.args(args);
@@ -139,7 +140,7 @@ fn try_run_via_cmd(program: &Path, args: &[String], cwd: Option<&Path>, inherit:
     if inherit {
         command.stdout(Stdio::inherit()).stderr(Stdio::inherit());
         let status = command.status().map_err(|err| err.to_string())?;
-        cleanup_user_npmrc(user_config);
+        cleanup_temp_npmrc(user_config);
         return Ok(NpmOutput {
             status: status.code().unwrap_or(1),
             stdout: String::new(),
@@ -147,7 +148,7 @@ fn try_run_via_cmd(program: &Path, args: &[String], cwd: Option<&Path>, inherit:
         });
     }
     let output = command.output().map_err(|err| err.to_string())?;
-    cleanup_user_npmrc(user_config);
+    cleanup_temp_npmrc(user_config);
     Ok(NpmOutput {
         status: output.status.code().unwrap_or(1),
         stdout: String::from_utf8_lossy(&output.stdout).to_string(),
@@ -169,18 +170,31 @@ fn apply_auth_env(command: &mut Command, auth: &OtpAuth, user_config: Option<&Pa
     }
 }
 
-fn write_user_npmrc(auth: &OtpAuth) -> Result<Option<PathBuf>> {
-    if let Some(token) = &auth.token {
-        let path = std::env::temp_dir().join(format!("nifty-npmrc-{}", std::process::id()));
-        std::fs::write(&path, format!("//registry.npmjs.org/:_authToken={token}\n")).map_err(|err| err.to_string())?;
+fn npm_user_config(auth: &OtpAuth, cwd: Option<&Path>) -> Result<Option<PathBuf>> {
+    let root = cwd
+        .map(Path::to_path_buf)
+        .unwrap_or_else(|| std::env::current_dir().expect("current dir"));
+    if let Some(path) = npmrc::npm_config_path(&root) {
         return Ok(Some(path));
+    }
+    if let Some(token) = auth.token.as_deref().map(str::trim).filter(|value| !value.is_empty()) {
+        return write_temp_npmrc(token);
     }
     Ok(None)
 }
 
-fn cleanup_user_npmrc(path: Option<PathBuf>) {
+fn write_temp_npmrc(token: &str) -> Result<Option<PathBuf>> {
+    let path = std::env::temp_dir().join(format!("nifty-npmrc-{}", std::process::id()));
+    std::fs::write(&path, format!("//registry.npmjs.org/:_authToken={token}\n"))
+        .map_err(|err| err.to_string())?;
+    Ok(Some(path))
+}
+
+fn cleanup_temp_npmrc(path: Option<PathBuf>) {
     if let Some(path) = path {
-        let _ = std::fs::remove_file(path);
+        if path.starts_with(std::env::temp_dir()) {
+            let _ = std::fs::remove_file(path);
+        }
     }
 }
 
