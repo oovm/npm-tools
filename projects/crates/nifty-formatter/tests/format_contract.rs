@@ -27,6 +27,13 @@ fn formats_supported_top_level_class() {
 }
 
 #[test]
+fn formats_nifty_native_contract() {
+    let source = include_str!("../../../packages/nifty/src/native.ts");
+    format_source_with_options(Path::new("native.ts"), source, default_format_options())
+        .unwrap_or_else(|err| panic!("native.ts format failed: {err}"));
+}
+
+#[test]
 fn preserves_trailing_comment_and_block_comment_in_statement() {
     let input = "const x = 1 /* mid */ // end";
     assert_eq!(format_sample("sample.ts", input), input);
