@@ -11,7 +11,7 @@ pub struct FormatStyleOptions {
 
 /// Default Oak formatter options.
 pub fn default_format_options() -> FormatOptions {
-    FormatOptions { indent_width: 4, line_width: 144 }
+    FormatOptions { indent_width: 4, line_width: 144, type_erasure: false }
 }
 
 /// Resolve workspace style into the Oak formatter contract.
@@ -26,6 +26,7 @@ pub fn resolve_format_options(style: Option<&FormatStyleOptions>) -> Result<Form
     Ok(FormatOptions {
         indent_width: style.indent_width.unwrap_or(4),
         line_width: usize::from(style.line_width.unwrap_or(144)),
+        type_erasure: false,
     })
 }
 

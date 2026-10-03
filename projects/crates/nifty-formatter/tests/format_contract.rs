@@ -21,11 +21,9 @@ fn preserves_leading_line_comment_and_normalizes_const() {
 }
 
 #[test]
-fn rejects_unsupported_top_level_class() {
-    assert!(
-        format_source_with_options(Path::new("sample.ts"), "class Foo {}", default_format_options())
-            .is_err()
-    );
+fn formats_supported_top_level_class() {
+    let output = format_sample("sample.ts", "class Foo {}");
+    assert_eq!(output, "class Foo {}");
 }
 
 #[test]
