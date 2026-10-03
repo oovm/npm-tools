@@ -1,7 +1,7 @@
 {
   "cli.intro": "nifty — gitmoji-first release tooling for hybrid cargo + npm workspaces",
   "cli.cmd.update": "Update Cargo and npm/pnpm dependencies",
-  "cli.cmd.format": "Format Rust with cargo fmt and JS/TS/JSON with oxc_formatter",
+  "cli.cmd.format": "Format Rust with cargo fmt and JS/TS through Oak",
   "cli.cmd.lint": "Lint commit subjects and cargo workspace hygiene",
   "cli.cmd.check": "Lint commit subjects, cargo workspace hygiene, and fail on errors",
   "cli.cmd.upload": "Upload generic assets to GitHub Release or GitHub Pages",

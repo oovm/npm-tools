@@ -7,7 +7,7 @@ export type NiftyAuthorEntry = {
 /** Built-in workspace format presets (`nifty.config` `format.preset`). */
 export type NiftyFormatPreset = "default" | "nifty" | "npm-tools" | "vmz";
 
-/** `oxc_formatter` style knobs (`nifty.config` `format.style`). */
+/** Oak formatter style knobs (`nifty.config` `format.style`). */
 export type NiftyFormatStyleConfig = {
     /** Indent with spaces or tabs (default: `space`). */
     indentStyle?: "space" | "tab";
@@ -44,9 +44,9 @@ export type NiftyFormatConfig = {
     excludes?: string[];
     /** Run `cargo fmt` (default: true when a Cargo workspace is detected). */
     rust?: boolean;
-    /** Run `oxc_formatter` on JS/TS targets (default: true). */
+    /** Run Oak formatting on JS/TS targets (default: true). */
     javascript?: boolean;
-    /** Inline oxc formatter style (not an external config file path). */
+    /** Inline Oak formatter style (not an external config file path). */
     style?: NiftyFormatStyleConfig;
 };
 

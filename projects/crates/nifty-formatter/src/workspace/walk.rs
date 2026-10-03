@@ -148,7 +148,7 @@ fn collect_tree(root: &Path, out: &mut Vec<PathBuf>) {
 
 fn is_format_target(path: &Path) -> bool {
     match path.extension().and_then(|ext| ext.to_str()) {
-        // oxc_formatter only accepts JS/TS extensions (not `.json` / `.jsonc`).
+        // Oak format currently accepts JS/TS extensions (not `.json` / `.jsonc`).
         Some("ts" | "mts" | "cts" | "js" | "mjs" | "cjs" | "jsx" | "tsx") => true,
         _ => false,
     }
