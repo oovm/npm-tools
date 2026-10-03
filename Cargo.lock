@@ -111,9 +111,9 @@ checksum = "72f5acc6cb2ba439de613abc23857ec3d78374d8ed5ac84e9d11336e87da8649"
 
 [[package]]
 name = "cc"
-version = "1.5.1"
+version = "1.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f360145194ee8e21db5ee7f3fcd4fe52210864c75c985dae33218202c8bbe040"
+checksum = "f74872d07caf508b30a21f6836e7d7016a2eaf7d9ff4f48deaa58cd8a0407630"
 dependencies = [
  "find-msvc-tools",
  "shlex",
@@ -1230,9 +1230,9 @@ dependencies = [
 
 [[package]]
 name = "libc"
-version = "0.2.189"
+version = "0.2.190"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3eaf3ede3fee6db1a4c2ee091bf8a8b4dccdc6d17f656fb07896ee72867612f2"
+checksum = "ce5d3ddc6d3fa000eb1536d85e147bfe31aacaba692ed6a876f95cb7c855be78"
 
 [[package]]
 name = "libloading"
@@ -1517,7 +1517,7 @@ dependencies = [
 [[package]]
 name = "oak-core"
 version = "0.0.12"
-source = "git+https://github.com/yggdrasil-language/oaks.git?branch=dev#e825678e37aad0f7504791138bbb05b150d35312"
+source = "git+https://github.com/yggdrasil-language/oaks.git?branch=dev#2d18ebb7e46e6f7eac168f26123e3e8a92551b33"
 dependencies = [
  "serde",
  "smallvec",
@@ -1528,7 +1528,7 @@ dependencies = [
 [[package]]
 name = "oak-javascript"
 version = "0.0.12"
-source = "git+https://github.com/yggdrasil-language/oaks.git?branch=dev#e825678e37aad0f7504791138bbb05b150d35312"
+source = "git+https://github.com/yggdrasil-language/oaks.git?branch=dev#2d18ebb7e46e6f7eac168f26123e3e8a92551b33"
 dependencies = [
  "oak-core",
  "oak-typescript",
@@ -1538,7 +1538,7 @@ dependencies = [
 [[package]]
 name = "oak-macros"
 version = "0.0.12"
-source = "git+https://github.com/yggdrasil-language/oaks.git?branch=dev#e825678e37aad0f7504791138bbb05b150d35312"
+source = "git+https://github.com/yggdrasil-language/oaks.git?branch=dev#2d18ebb7e46e6f7eac168f26123e3e8a92551b33"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1548,7 +1548,7 @@ dependencies = [
 [[package]]
 name = "oak-pretty-print"
 version = "0.0.12"
-source = "git+https://github.com/yggdrasil-language/oaks.git?branch=dev#e825678e37aad0f7504791138bbb05b150d35312"
+source = "git+https://github.com/yggdrasil-language/oaks.git?branch=dev#2d18ebb7e46e6f7eac168f26123e3e8a92551b33"
 dependencies = [
  "oak-core",
  "oak-macros",
@@ -1559,7 +1559,7 @@ dependencies = [
 [[package]]
 name = "oak-testing"
 version = "0.0.12"
-source = "git+https://github.com/yggdrasil-language/oaks.git?branch=dev#e825678e37aad0f7504791138bbb05b150d35312"
+source = "git+https://github.com/yggdrasil-language/oaks.git?branch=dev#2d18ebb7e46e6f7eac168f26123e3e8a92551b33"
 dependencies = [
  "oak-core",
  "serde",
@@ -1571,7 +1571,7 @@ dependencies = [
 [[package]]
 name = "oak-typescript"
 version = "0.0.12"
-source = "git+https://github.com/yggdrasil-language/oaks.git?branch=dev#e825678e37aad0f7504791138bbb05b150d35312"
+source = "git+https://github.com/yggdrasil-language/oaks.git?branch=dev#2d18ebb7e46e6f7eac168f26123e3e8a92551b33"
 dependencies = [
  "oak-core",
  "oak-pretty-print",

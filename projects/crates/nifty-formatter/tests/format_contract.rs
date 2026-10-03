@@ -21,9 +21,20 @@ fn preserves_leading_line_comment_and_normalizes_const() {
 }
 
 #[test]
-fn formats_supported_top_level_class() {
-    let output = format_sample("sample.ts", "class Foo {}");
-    assert_eq!(output, "class Foo {}");
+fn rejects_unsupported_top_level_class() {
+    let err = format_source_with_options(
+        Path::new("sample.ts"),
+        "class Foo {}",
+        default_format_options(),
+    )
+    .unwrap_err();
+    assert!(err.contains("unsupported top-level CST node"), "err={err}");
+}
+
+#[test]
+fn formats_nifty_native_import_header() {
+    let source = r#"import type { CommitRecord } from "./types.js";"#;
+    format_sample("native.ts", source);
 }
 
 #[test]

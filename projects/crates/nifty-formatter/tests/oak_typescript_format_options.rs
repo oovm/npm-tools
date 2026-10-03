@@ -1,4 +1,4 @@
-//! Moved from `oak-typescript/src/cst_format/options.rs`.
+//! Moved from `oak-typescript/src/formatter/cst_options.rs`.
 
 use oak_typescript::formatter::FormatOptions;
 

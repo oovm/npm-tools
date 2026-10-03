@@ -1,4 +1,4 @@
-//! Moved from `oak-typescript/src/cst_format/red_tree/mod.rs` — public formatter entry only.
+//! Moved from `oak-typescript/src/formatter/red_tree/mod.rs` — public formatter entry only.
 
 use oak_typescript::formatter::{FormatOptions, format_source};
 
