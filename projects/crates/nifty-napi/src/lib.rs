@@ -316,6 +316,7 @@ pub struct TrustReport {
 #[napi]
 pub fn publisher_publish_workspace(options: PublishWorkspaceOptions) -> Result<PublishReport> {
     let otp = map_otp_options(&options);
+    let trust = map_trust_input(&options);
     map_err(
         nifty_publisher::publish_workspace(CorePublishOptions {
             cwd: options.cwd.map(std::path::PathBuf::from),
@@ -327,8 +328,8 @@ pub fn publisher_publish_workspace(options: PublishWorkspaceOptions) -> Result<P
             npm: options.npm.map(std::path::PathBuf::from),
             otp,
             only: options.only,
-            packages: options.packages,
-            trust: map_trust_input(&options),
+            packages: options.packages.clone(),
+            trust,
         })
         .map(|report| PublishReport {
             root: report.root.display().to_string(),
@@ -343,6 +344,7 @@ pub fn publisher_publish_workspace(options: PublishWorkspaceOptions) -> Result<P
 #[napi]
 pub fn publisher_trust_workspace(options: TrustWorkspaceOptions) -> Result<TrustReport> {
     let otp = map_trust_otp_options(&options);
+    let trust = map_trust_input_from_trust(&options);
     map_err(
         nifty_publisher::trust_workspace(CoreTrustOptions {
             cwd: options.cwd.map(std::path::PathBuf::from),
@@ -350,9 +352,9 @@ pub fn publisher_trust_workspace(options: TrustWorkspaceOptions) -> Result<Trust
             refresh: options.refresh.unwrap_or(false),
             only: options.only,
             packages: options.packages,
-            npm: options.npm.map(std::path::PathBuf::from),
+            npm: options.npm.clone().map(std::path::PathBuf::from),
             otp,
-            trust: map_trust_input_from_trust(&options),
+            trust,
         })
         .map(|report| TrustReport {
             root: report.root.display().to_string(),
