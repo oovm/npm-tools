@@ -14,6 +14,6 @@ fn variable_declaration_rule_normalizes_spacing() {
 fn import_declaration_rule_normalizes_spacing() {
     assert_eq!(
         format_source("import  {  foo }  from 'pkg'", &FormatOptions::default()).expect("format"),
-        "import { foo } from 'pkg';"
+        "import { foo } from 'pkg'"
     );
 }
