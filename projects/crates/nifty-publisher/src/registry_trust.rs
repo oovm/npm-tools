@@ -30,9 +30,14 @@ impl RegistryTrustClient {
             return Ok(Vec::new());
         }
         if !(200..300).contains(&status) {
-            return Err(format!("registry trust list failed for {package} ({status}): {body}"));
+            return Err(registry_trust_error("list", package, status, &body));
         }
-        parse_trust_configs(&body)
+        parse_trust_configs(&body).map_err(|err| {
+            format!(
+                "registry trust list returned an invalid response for {package} (200): {err}. {hint}",
+                hint = response_hint(&body),
+            )
+        })
     }
 
     pub fn create(&self, package: &str, expect: &TrustExpect) -> Result<TrustCreateOutcome> {
@@ -45,7 +50,7 @@ impl RegistryTrustClient {
         match status {
             200 | 201 => Ok(TrustCreateOutcome::Created),
             409 => Ok(TrustCreateOutcome::AlreadyExists),
-            _ => Err(format!("registry trust create failed for {package} ({status}): {response_body}")),
+            _ => Err(registry_trust_error("create", package, status, &response_body)),
         }
     }
 }
@@ -82,6 +87,36 @@ fn trust_create_body(expect: &TrustExpect) -> Value {
         },
         "permissions": ["createPackage"],
     }])
+}
+
+fn registry_trust_error(action: &str, package: &str, status: u16, body: &str) -> String {
+    let lower = body.to_ascii_lowercase();
+    let otp_hint = if status == 401
+        || status == 403
+        || lower.contains("otp")
+        || lower.contains("one-time password")
+        || lower.contains("two-factor")
+        || lower.contains("2fa")
+    {
+        " Set `NPM_TOTP_SECRET` or pass `--otp` with a current six-digit code."
+    }
+    else {
+        ""
+    };
+    format!("registry trust {action} failed for {package} ({status}).{otp_hint} Response: {hint}", hint = response_hint(body),)
+}
+
+fn response_hint(body: &str) -> String {
+    let line = body.lines().map(str::trim).find(|line| !line.is_empty()).unwrap_or("empty response");
+    if line.to_ascii_lowercase().contains("token") {
+        return "registry response mentions a token".to_string();
+    }
+    let mut hint = line.to_string();
+    if hint.len() > 240 {
+        hint.truncate(240);
+        hint.push_str("...");
+    }
+    hint
 }
 
 pub fn parse_trust_configs(body: &str) -> Result<Vec<Value>> {
@@ -196,5 +231,23 @@ mod tests {
                 env: "NPM_PUBLISH".to_string(),
             },
         ));
+    }
+
+    #[test]
+    fn reports_actionable_otp_errors_without_dumping_body() {
+        let message = registry_trust_error("list", "@scope/pkg", 403, "otp required: secret-token");
+        assert!(message.contains("NPM_TOTP_SECRET"));
+        assert!(message.contains("--otp"));
+        assert!(!message.contains("secret-token"));
+    }
+
+    #[test]
+    fn parse_failure_can_be_wrapped_with_response_context() {
+        let err = parse_trust_configs("npm error e401 Unauthorized").expect_err("must reject text");
+        let message = format!(
+            "registry trust list returned an invalid response for @scope/pkg (200): {err}. {}",
+            response_hint("npm error e401 Unauthorized\n")
+        );
+        assert!(message.contains("npm error e401 Unauthorized"));
     }
 }

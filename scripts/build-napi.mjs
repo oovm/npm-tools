@@ -8,49 +8,49 @@ const napiDir = join(root, "projects/crates/nifty-napi");
 
 /** @type {Record<string, { packageDir: string, fileName: string }>} */
 const ARTIFACTS = {
-    "index.win32-x64-msvc.node": {
-        packageDir: "nifty-win32-x64",
-        fileName: "nifty-win32-x64-msvc.node",
+    "index.win32-x64-msvc.node" : {
+        packageDir : "nifty-win32-x64",
+        fileName : "nifty-win32-x64-msvc.node",
     },
-    "index.linux-x64-gnu.node": {
-        packageDir: "nifty-linux-x64",
-        fileName: "nifty-linux-x64-gnu.node",
+    "index.linux-x64-gnu.node" : {
+        packageDir : "nifty-linux-x64",
+        fileName : "nifty-linux-x64-gnu.node",
     },
-    "index.darwin-x64.node": {
-        packageDir: "nifty-darwin-x64",
-        fileName: "nifty-darwin-x64.node",
+    "index.darwin-x64.node" : {
+        packageDir : "nifty-darwin-x64",
+        fileName : "nifty-darwin-x64.node",
     },
-    "index.darwin-arm64.node": {
-        packageDir: "nifty-darwin-arm64",
-        fileName: "nifty-darwin-arm64.node",
+    "index.darwin-arm64.node" : {
+        packageDir : "nifty-darwin-arm64",
+        fileName : "nifty-darwin-arm64.node",
     },
-    "index.linux-arm64-gnu.node": {
-        packageDir: "nifty-linux-arm64",
-        fileName: "nifty-linux-arm64-gnu.node",
+    "index.linux-arm64-gnu.node" : {
+        packageDir : "nifty-linux-arm64",
+        fileName : "nifty-linux-arm64-gnu.node",
     },
 };
 
-function findBuiltNodes(dir) {
-    return readdirSync(dir).filter((name) => name.endsWith(".node"));
+function findBuiltNodes(dir){
+    return readdirSync(dir).filter((name) =>name.endsWith(".node"));
 }
 
-execSync("pnpm exec napi build --platform --release", { cwd: napiDir, stdio: "inherit", shell: true });
+execSync("pnpm exec napi build --platform --release", { cwd : napiDir, stdio : "inherit", shell : true });
 
 const built = findBuiltNodes(napiDir);
-if (built.length === 0) {
+if (built.length === 0){
     throw new Error(`No .node artifacts under ${napiDir}`);
 }
 
 let copied = 0;
-for (const name of built) {
+for (const name of built){
     const mapping = ARTIFACTS[name];
-    if (!mapping) {
+    if (!mapping){
         console.warn(`skip unmapped artifact: ${name}`);
         continue;
     }
     const libDir = join(root, "projects/packages", mapping.packageDir, "lib");
-    mkdirSync(libDir, { recursive: true });
-    for (const existing of readdirSync(libDir).filter((entry) => entry.endsWith(".node"))) {
+    mkdirSync(libDir, { recursive : true });
+    for (const existing of readdirSync(libDir).filter((entry) =>entry.endsWith(".node"))){
         unlinkSync(join(libDir, existing));
     }
     const dest = join(libDir, mapping.fileName);
@@ -59,6 +59,6 @@ for (const name of built) {
     copied += 1;
 }
 
-if (copied === 0) {
+if (copied === 0){
     throw new Error(`Built nodes (${built.join(", ")}) did not match any platform package mapping`);
 }

@@ -33,6 +33,25 @@ fn formats_nifty_native_import_header() {
 }
 
 #[test]
+fn formats_optional_property_spacing() {
+    let source = include_str!("../../../packages/nifty/src/cli/authArgs.ts");
+    let output = format_sample("authArgs.ts", source);
+    assert!(output.contains("otp?: string;"), "output={output:?}");
+    assert!(!output.contains("otp ? :"), "output={output:?}");
+}
+
+#[test]
+fn formats_comparisons_nullish_coalescing_and_ternary_object_values() {
+    let input = "const value=items.length>0?items[0]:fallback; const roots={cargoRoot:config.cargoRoot??layout.root};";
+    let output = format_sample("sample.ts", input);
+    assert_eq!(
+        output,
+        "const value = items.length > 0 ? items[0] : fallback; const roots = { cargoRoot: config.cargoRoot ?? layout.root };"
+    );
+    assert_eq!(format_sample("sample.ts", &output), output);
+}
+
+#[test]
 fn formats_release_cli_with_regex_literals_without_changing_tokens() {
     let source = include_str!("../../../packages/nifty/src/cli/bump.ts");
     let output = format_sample("bump.ts", source);
@@ -68,7 +87,11 @@ fn workspace_typescript_formatting_preserves_every_token() {
     let token_texts = |source: &str| {
         let mut session = ParseSession::default();
         let text = SourceText::new(source);
-        lexer.lex(&text, &[], &mut session).result.unwrap().iter()
+        lexer
+            .lex(&text, &[], &mut session)
+            .result
+            .unwrap()
+            .iter()
             .filter(|token| !matches!(token.kind, TypeScriptTokenType::Whitespace | TypeScriptTokenType::Newline))
             .map(|token| (token.kind, source[token.span.start..token.span.end].to_owned()))
             .collect::<Vec<_>>()
