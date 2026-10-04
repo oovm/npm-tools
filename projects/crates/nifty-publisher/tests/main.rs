@@ -64,6 +64,7 @@ fn publish_workspace_dry_run_restores_manifest() {
         access: Some("public".to_string()),
         npm: None,
         otp: OtpOverrides::default(),
+        trust: None,
         only: None,
         packages: None,
     })

@@ -23,13 +23,61 @@ fn preserves_leading_line_comment_and_normalizes_const() {
 #[test]
 fn formats_top_level_class_without_ast_fallback() {
     let output = format_sample("sample.ts", "class Foo{}");
-    assert_eq!(output, "class Foo { }");
+    assert_eq!(output, "class Foo {}");
 }
 
 #[test]
 fn formats_nifty_native_import_header() {
     let source = r#"import type { CommitRecord } from "./types.js";"#;
     format_sample("native.ts", source);
+}
+
+#[test]
+fn formats_optional_property_spacing() {
+    let source = include_str!("../../../packages/nifty/src/cli/authArgs.ts");
+    let output = format_sample("authArgs.ts", source);
+    assert!(output.contains("otp?: string;"), "output={output:?}");
+    assert!(!output.contains("otp ? :"), "output={output:?}");
+}
+
+#[test]
+fn formats_comparisons_nullish_coalescing_and_ternary_object_values() {
+    let input = "const value=items.length>0?items[0]:fallback; const roots={cargoRoot:config.cargoRoot??layout.root};";
+    let output = format_sample("sample.ts", input);
+    assert_eq!(
+        output,
+        "const value = items.length > 0 ? items[0] : fallback; const roots = { cargoRoot: config.cargoRoot ?? layout.root };"
+    );
+    assert_eq!(format_sample("sample.ts", &output), output);
+}
+
+#[test]
+fn keeps_colons_tight_before_multiline_nullish_values() {
+    let input = "const roots = {\n    npmRoot :\n        config.npmRoot ??\n        layout.npmWorkspaceRoot,\n};";
+    let output = format_sample("sample.ts", input);
+    assert!(output.contains("npmRoot:"), "output={output:?}");
+    assert!(!output.contains("npmRoot :"), "output={output:?}");
+    assert_eq!(format_sample("sample.ts", &output), output);
+}
+
+#[test]
+fn formats_parenthesized_ternary_colon() {
+    let input = "const value = (condition ? expression() : undefined);";
+    assert_eq!(format_sample("sample.ts", input), input);
+    let malformed = "const value = (condition ? expression(): undefined);";
+    assert_eq!(format_sample("sample.ts", malformed), input);
+}
+
+#[test]
+fn formats_workspace_parenthesized_ternary_colons() {
+    let source = include_str!("../../../packages/nifty/src/nifty.ts");
+    let output = format_sample("nifty.ts", source);
+    assert!(output.contains("Cargo\\.toml$/, \"\") : undefined"), "output={output:?}");
+    assert!(output.contains("package\\.json$/, \"\") : undefined"), "output={output:?}");
+    assert!(output.contains("npmRoot:"), "output={output:?}");
+    assert!(!output.contains("npmRoot :"), "output={output:?}");
+    assert!(output.contains("static async open(options: NiftyOpenOptions = {}): Promise<Nifty>"), "output={output:?}");
+    assert!(output.contains("githubToken !== undefined ? { githubToken } : {}"), "output={output:?}");
 }
 
 #[test]
@@ -68,7 +116,11 @@ fn workspace_typescript_formatting_preserves_every_token() {
     let token_texts = |source: &str| {
         let mut session = ParseSession::default();
         let text = SourceText::new(source);
-        lexer.lex(&text, &[], &mut session).result.unwrap().iter()
+        lexer
+            .lex(&text, &[], &mut session)
+            .result
+            .unwrap()
+            .iter()
             .filter(|token| !matches!(token.kind, TypeScriptTokenType::Whitespace | TypeScriptTokenType::Newline))
             .map(|token| (token.kind, source[token.span.start..token.span.end].to_owned()))
             .collect::<Vec<_>>()
@@ -153,7 +205,7 @@ fn jsx_cases_format_and_idempotent() {
             assert_eq!(out, expected, "input={input:?}");
         }
         else {
-            assert!(out.contains("<div className = \"foo\">bar</div>"), "out={out:?}");
+            assert!(out.contains("<div className=\"foo\">bar</div>"), "out={out:?}");
         }
         assert_eq!(format_sample("sample.tsx", &out), out, "input={input:?}");
     }
