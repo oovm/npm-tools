@@ -33,6 +33,32 @@ fn formats_nifty_native_import_header() {
 }
 
 #[test]
+fn formats_release_cli_with_regex_literals_without_changing_tokens() {
+    let source = include_str!("../../../packages/nifty/src/cli/bump.ts");
+    let output = format_sample("bump.ts", source);
+    assert_eq!(format_sample("bump.ts", &output), output);
+    assert!(output.contains(r#"/^version\s*=\s*"([^"]*)"/m"#));
+    assert!(output.contains(r#"/^\d+\.\d+\.\d+(-[\w.-]+)?$/"#));
+}
+
+#[test]
+fn preserves_regex_bodies_and_distinguishes_division() {
+    for source in [
+        r#"const pattern=/[{}()\[\]'"/]+/gu;"#,
+        r#"const pattern=/a\/b/; const ratio = left / right / scale;"#,
+        r#"function matches(text: string) { return /["}]/.test(text); }"#,
+    ] {
+        let output = format_sample("regex.ts", source);
+        assert_eq!(format_sample("regex.ts", &output), output);
+        for literal in [r#"/[{}()\[\]'"/]+/gu"#, r#"/a\/b/"#, r#"/["}]/"#] {
+            if source.contains(literal) {
+                assert!(output.contains(literal), "output={output:?}");
+            }
+        }
+    }
+}
+
+#[test]
 fn preserves_trailing_comment_and_block_comment_in_statement() {
     let input = "const x = 1 /* mid */ // end";
     assert_eq!(format_sample("sample.ts", input), input);
