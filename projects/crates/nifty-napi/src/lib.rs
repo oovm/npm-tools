@@ -5,21 +5,22 @@ mod git_tools;
 mod lint;
 mod updater;
 
-use std::collections::HashMap;
-use std::path::Path;
+use std::{collections::HashMap, path::Path};
 
 use napi::bindgen_prelude::*;
 use napi_derive::napi;
 use nifty_formatter::{author_mention, commit_bullet, format_subject as fmt_subject};
 use nifty_git::{
-    CommitRecord as CoreCommit, RangeInfo as CoreRange, TagInfo as CoreTag, collect_commits, detect_github_repo,
-    discover_root, format_tag_list, list_tag_infos, list_version_tags, parse_github_remote_repo, resolve_range,
+    CommitRecord as CoreCommit, RangeInfo as CoreRange, TagInfo as CoreTag, collect_commits, detect_github_repo, discover_root,
+    format_tag_list, list_tag_infos, list_version_tags, parse_github_remote_repo, resolve_range,
 };
-use nifty_publisher::{OtpOverrides as CoreOtpOverrides, PublishOptions as CorePublishOptions, TrustOptions as CoreTrustOptions};
+use nifty_publisher::{
+    OtpOverrides as CoreOtpOverrides, PublishOptions as CorePublishOptions, TrustOptions as CoreTrustOptions,
+};
 use nifty_types::{
-    GithubAuthor as CoreAuthor, avatar_url, display_login, github_from_noreply_email, known_gitmojis,
-    leading_gitmoji, load_author_map_from_json, parse_subject, profile_url, resolve_github_author,
-    section_for_gitmoji, section_name, strip_gitmoji, validate_subject,
+    GithubAuthor as CoreAuthor, avatar_url, display_login, github_from_noreply_email, known_gitmojis, leading_gitmoji,
+    load_author_map_from_json, parse_subject, profile_url, resolve_github_author, section_for_gitmoji, section_name,
+    strip_gitmoji, validate_subject,
 };
 
 #[napi(object)]
@@ -62,17 +63,11 @@ pub struct CommitRecord {
 }
 
 fn to_napi_author(author: CoreAuthor) -> GithubAuthor {
-    GithubAuthor {
-        id: author.id.map(|id| id as i64),
-        login: author.login,
-    }
+    GithubAuthor { id: author.id.map(|id| id as i64), login: author.login }
 }
 
 fn from_napi_author(author: &GithubAuthor) -> CoreAuthor {
-    CoreAuthor {
-        id: author.id.map(|id| id as u64),
-        login: author.login.clone(),
-    }
+    CoreAuthor { id: author.id.map(|id| id as u64), login: author.login.clone() }
 }
 
 fn load_map(json: &str) -> HashMap<String, CoreAuthor> {
@@ -84,18 +79,11 @@ fn map_err<T>(result: std::result::Result<T, String>) -> Result<T> {
 }
 
 fn to_napi_tag(tag: CoreTag) -> TagInfo {
-    TagInfo {
-        name: tag.name,
-        short_hash: tag.short_hash,
-    }
+    TagInfo { name: tag.name, short_hash: tag.short_hash }
 }
 
 fn to_napi_range(range: CoreRange) -> RangeInfo {
-    RangeInfo {
-        version: range.version,
-        from_ref: range.from_ref,
-        to_ref: range.to_ref,
-    }
+    RangeInfo { version: range.version, from_ref: range.from_ref, to_ref: range.to_ref }
 }
 
 fn to_napi_commit(commit: CoreCommit) -> CommitRecord {
@@ -126,11 +114,7 @@ pub fn gitmoji_validate_subject(subject: String) -> bool {
 #[napi]
 pub fn gitmoji_parse_subject(subject: String) -> ParsedSubject {
     let parsed = parse_subject(&subject);
-    ParsedSubject {
-        gitmoji: parsed.gitmoji,
-        body: parsed.body,
-        section: section_name(parsed.section).to_string(),
-    }
+    ParsedSubject { gitmoji: parsed.gitmoji, body: parsed.body, section: section_name(parsed.section).to_string() }
 }
 
 #[napi]
@@ -220,15 +204,7 @@ pub fn git_resolve_range(
     from_ref: Option<String>,
     to_ref: Option<String>,
 ) -> Result<RangeInfo> {
-    map_err(
-        resolve_range(
-            Path::new(&repo_root),
-            version.as_deref(),
-            from_ref.as_deref(),
-            to_ref.as_deref(),
-        )
-        .map(to_napi_range),
-    )
+    map_err(resolve_range(Path::new(&repo_root), version.as_deref(), from_ref.as_deref(), to_ref.as_deref()).map(to_napi_range))
 }
 
 #[napi]
@@ -366,37 +342,19 @@ pub fn publisher_trust_workspace(options: TrustWorkspaceOptions) -> Result<Trust
 }
 
 fn map_otp_options(options: &PublishWorkspaceOptions) -> CoreOtpOverrides {
-    CoreOtpOverrides {
-        totp_secret: options.totp_secret.clone(),
-        static_otp: options.otp.clone(),
-        token: options.token.clone(),
-    }
+    CoreOtpOverrides { totp_secret: options.totp_secret.clone(), static_otp: options.otp.clone(), token: options.token.clone() }
 }
 
 fn map_trust_otp_options(options: &TrustWorkspaceOptions) -> CoreOtpOverrides {
-    CoreOtpOverrides {
-        totp_secret: options.totp_secret.clone(),
-        static_otp: options.otp.clone(),
-        token: options.token.clone(),
-    }
+    CoreOtpOverrides { totp_secret: options.totp_secret.clone(), static_otp: options.otp.clone(), token: options.token.clone() }
 }
 
 fn map_trust_input(options: &PublishWorkspaceOptions) -> Option<nifty_publisher::trust_expect::TrustExpectInput> {
-    trust_input(
-        options.trust_repo.as_deref(),
-        options.trust_file.as_deref(),
-        options.trust_environment.as_deref(),
-    )
+    trust_input(options.trust_repo.as_deref(), options.trust_file.as_deref(), options.trust_environment.as_deref())
 }
 
-fn map_trust_input_from_trust(
-    options: &TrustWorkspaceOptions,
-) -> Option<nifty_publisher::trust_expect::TrustExpectInput> {
-    trust_input(
-        options.trust_repo.as_deref(),
-        options.trust_file.as_deref(),
-        options.trust_environment.as_deref(),
-    )
+fn map_trust_input_from_trust(options: &TrustWorkspaceOptions) -> Option<nifty_publisher::trust_expect::TrustExpectInput> {
+    trust_input(options.trust_repo.as_deref(), options.trust_file.as_deref(), options.trust_environment.as_deref())
 }
 
 fn trust_input(

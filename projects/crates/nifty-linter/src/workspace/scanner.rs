@@ -40,11 +40,7 @@ pub struct WorkspaceFinding {
 /// TypeScript sources over `1000` lines.
 pub fn scan_large_typescript_files(root: &std::path::Path) -> Vec<WorkspaceFinding> {
     let mut findings = Vec::new();
-    for entry in WalkDir::new(root)
-        .into_iter()
-        .filter_entry(should_walk_entry)
-        .filter_map(Result::ok)
-    {
+    for entry in WalkDir::new(root).into_iter().filter_entry(should_walk_entry).filter_map(Result::ok) {
         if !entry.file_type().is_file() || !is_typescript_source(entry.path()) {
             continue;
         }

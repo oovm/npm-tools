@@ -1,8 +1,12 @@
 //! Node-API bindings for commit history apply/retime and changelog helpers.
 
-use std::env;
-use std::path::{Path, PathBuf};
+use std::{
+    env,
+    path::{Path, PathBuf},
+};
 
+use napi::bindgen_prelude::*;
+use napi_derive::napi;
 use nifty_history::{
     changelog::{
         collect_commits as changelog_collect_commits, collect_contributors_from_commits, detect_github_repo,
@@ -10,24 +14,19 @@ use nifty_history::{
         render_contributor_wall, render_reference, resolve_range as changelog_resolve_range,
     },
     commit::{
-        RetimeOptions, RetimeRootOptions, collect_commits as reword_collect_commits, dry_run_plan, export_map,
-        head_ref_name, move_ref, open, parse_map, plan_rewrite, resolve_map, resolve_ref_tip, resolve_rev, run_retime,
-        run_retime_root, short,
+        RetimeOptions, RetimeRootOptions, collect_commits as reword_collect_commits, dry_run_plan, export_map, head_ref_name,
+        move_ref, open, parse_map, plan_rewrite, resolve_map, resolve_ref_tip, resolve_rev, run_retime, run_retime_root, short,
     },
     repo::find_git_root,
     validation,
 };
-use napi::bindgen_prelude::*;
-use napi_derive::napi;
 
 fn map_err<T>(result: nifty_history::Result<T>) -> Result<T> {
     result.map_err(|error| Error::from_reason(error.to_string()))
 }
 
 fn repo_root_from_cwd(cwd: Option<String>) -> Result<PathBuf> {
-    let start = cwd
-        .map(PathBuf::from)
-        .unwrap_or_else(|| env::current_dir().unwrap_or_else(|_| PathBuf::from(".")));
+    let start = cwd.map(PathBuf::from).unwrap_or_else(|| env::current_dir().unwrap_or_else(|_| PathBuf::from(".")));
     map_err(find_git_root(start))
 }
 
@@ -215,10 +214,7 @@ pub fn git_tools_commit_export(options: CommitExportOptions) -> Result<CommitExp
     let count = map_err(reword_collect_commits(&repo, exclusive_base, tip))?.len();
     let path = PathBuf::from(&options.path);
     map_err(export_map(&repo, exclusive_base, tip, &path))?;
-    Ok(CommitExportReport {
-        count: count as u32,
-        path: path.display().to_string(),
-    })
+    Ok(CommitExportReport { count: count as u32, path: path.display().to_string() })
 }
 
 #[napi]
@@ -267,10 +263,7 @@ pub fn git_tools_reword_export(options: RewordExportOptions) -> Result<RewordExp
         r#ref: options.r#ref,
         path: options.path,
     })?;
-    Ok(RewordExportReport {
-        count: report.count,
-        path: report.path,
-    })
+    Ok(RewordExportReport { count: report.count, path: report.path })
 }
 
 #[napi]
@@ -314,11 +307,7 @@ pub fn git_tools_retime_range(options: RetimeRangeOptions) -> Result<RetimeRepor
             tip: options.tip.unwrap_or_else(|| "HEAD".to_string()),
         },
     ))?;
-    Ok(RetimeReport {
-        branch: summary.branch,
-        new_tip: short(summary.new_tip),
-        rewritten: summary.rewritten as u32,
-    })
+    Ok(RetimeReport { branch: summary.branch, new_tip: short(summary.new_tip), rewritten: summary.rewritten as u32 })
 }
 
 #[napi]
@@ -334,11 +323,7 @@ pub fn git_tools_retime_root(options: RetimeRootOptionsNapi) -> Result<RetimeRep
             message: options.message,
         },
     ))?;
-    Ok(RetimeReport {
-        branch: summary.branch,
-        new_tip: short(summary.new_tip),
-        rewritten: summary.rewritten as u32,
-    })
+    Ok(RetimeReport { branch: summary.branch, new_tip: short(summary.new_tip), rewritten: summary.rewritten as u32 })
 }
 
 fn resolve_github_repo(repo_root: &Path, override_repo: Option<&str>) -> Result<String> {
@@ -375,14 +360,8 @@ pub fn git_tools_changelog_render(options: ChangelogRenderOptions) -> Result<Cha
     }
 
     let github_repo = resolve_github_repo(&repo_root, options.repo.as_deref())?;
-    let author_map_path = options
-        .author_map
-        .map(PathBuf::from)
-        .unwrap_or_else(|| default_author_map_path(&repo_root));
-    let releases_dir = options
-        .releases_dir
-        .map(PathBuf::from)
-        .unwrap_or_else(|| default_releases_dir(&repo_root));
+    let author_map_path = options.author_map.map(PathBuf::from).unwrap_or_else(|| default_author_map_path(&repo_root));
+    let releases_dir = options.releases_dir.map(PathBuf::from).unwrap_or_else(|| default_releases_dir(&repo_root));
     let author_map = load_author_map(&author_map_path);
 
     let (version, from_ref, to_ref) = map_err(changelog_resolve_range(
@@ -396,15 +375,8 @@ pub fn git_tools_changelog_render(options: ChangelogRenderOptions) -> Result<Cha
     let groups = group_commits(&commits);
     let contributors = collect_contributors_from_commits(&commits, &author_map);
     let contributor_wall = render_contributor_wall(&contributors, &github_repo);
-    let notes = render_reference(
-        &version,
-        from_ref.as_deref(),
-        &to_ref,
-        &groups,
-        &contributor_wall,
-        commits.len(),
-        &author_map,
-    );
+    let notes =
+        render_reference(&version, from_ref.as_deref(), &to_ref, &groups, &contributor_wall, commits.len(), &author_map);
 
     let range_label = match from_ref.as_deref() {
         Some(from) => format!("{from}..{to_ref}"),
@@ -416,13 +388,7 @@ pub fn git_tools_changelog_render(options: ChangelogRenderOptions) -> Result<Cha
         std::fs::create_dir_all(&releases_dir).map_err(|err| Error::from_reason(err.to_string()))?;
         let out_path = releases_dir.join(format!("v{version}.reference.md"));
         std::fs::write(&out_path, &notes).map_err(|err| Error::from_reason(err.to_string()))?;
-        written_path = Some(
-            out_path
-                .strip_prefix(&repo_root)
-                .unwrap_or(&out_path)
-                .display()
-                .to_string(),
-        );
+        written_path = Some(out_path.strip_prefix(&repo_root).unwrap_or(&out_path).display().to_string());
     }
 
     Ok(ChangelogRenderReport {
@@ -447,14 +413,13 @@ pub fn git_tools_changelog_lookup(options: ChangelogLookupOptions) -> Result<Cha
     let author = if let Some(email) = options.email {
         map_err(lookup_github_user_by_email(&email, &map, token, fetch))?
             .ok_or_else(|| Error::from_reason(format!("no GitHub user found for email `{email}`")))?
-    } else if let Some(login) = options.login {
+    }
+    else if let Some(login) = options.login {
         map_err(fetch_github_user_by_login(&login, token))?
-    } else {
+    }
+    else {
         return Err(Error::from_reason(validation("lookup requires --email or --login").to_string()));
     };
 
-    Ok(ChangelogGithubAuthor {
-        id: author.id.map(|id| id as i64),
-        login: author.login,
-    })
+    Ok(ChangelogGithubAuthor { id: author.id.map(|id| id as i64), login: author.login })
 }

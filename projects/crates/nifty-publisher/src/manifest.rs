@@ -1,19 +1,12 @@
-use std::collections::BTreeMap;
-use std::path::Path;
+use std::{collections::BTreeMap, path::Path};
 
 use serde_json::Value;
 
-use crate::workspace::NpmPackage;
-use crate::Result;
+use crate::{Result, workspace::NpmPackage};
 
 const PUBLISH_REPOSITORY_URL: &str = "git+https://github.com/oovm/npm-tools.git";
 
-const DEPENDENCY_FIELDS: [&str; 4] = [
-    "dependencies",
-    "devDependencies",
-    "optionalDependencies",
-    "peerDependencies",
-];
+const DEPENDENCY_FIELDS: [&str; 4] = ["dependencies", "devDependencies", "optionalDependencies", "peerDependencies"];
 
 /// Options for [`patch_manifest_for_publish`].
 #[derive(Debug, Clone, Copy, Default)]
@@ -38,7 +31,8 @@ pub fn patch_manifest_for_publish(
     }
 
     for field in DEPENDENCY_FIELDS {
-        let Some(entries) = object.get(field).and_then(Value::as_object) else {
+        let Some(entries) = object.get(field).and_then(Value::as_object)
+        else {
             continue;
         };
         let patched = patch_dependency_entries(entries, &package.dir, by_name, opts.placeholder_dep_names)?;
@@ -46,12 +40,8 @@ pub fn patch_manifest_for_publish(
     }
 
     object.remove("private");
-    if let Some(registry_name) = package
-        .manifest
-        .publish_config
-        .as_ref()
-        .and_then(|config| config.name.as_ref())
-        .filter(|name| !name.is_empty())
+    if let Some(registry_name) =
+        package.manifest.publish_config.as_ref().and_then(|config| config.name.as_ref()).filter(|name| !name.is_empty())
     {
         object.insert("name".to_string(), Value::String(registry_name.clone()));
     }
@@ -77,12 +67,9 @@ fn ensure_publish_metadata(object: &mut serde_json::Map<String, Value>) {
         );
     }
 
-    let publish_config = object
-        .entry("publishConfig".to_string())
-        .or_insert_with(|| Value::Object(serde_json::Map::new()));
+    let publish_config = object.entry("publishConfig".to_string()).or_insert_with(|| Value::Object(serde_json::Map::new()));
     if let Value::Object(map) = publish_config {
-        map.entry("access".to_string())
-            .or_insert_with(|| Value::String("public".to_string()));
+        map.entry("access".to_string()).or_insert_with(|| Value::String("public".to_string()));
     }
 }
 
@@ -98,10 +85,12 @@ fn patch_dependency_entries(
         let version = if let Some(package) = resolve_workspace_dependency(name, spec, package_dir, by_name) {
             if placeholder_dep_names.is_some_and(|names| names.contains(name)) {
                 "0.0.0".to_string()
-            } else {
+            }
+            else {
                 package.version.clone()
             }
-        } else {
+        }
+        else {
             spec.to_string()
         };
         next.insert(name.clone(), Value::String(version));
@@ -129,8 +118,10 @@ fn resolve_workspace_dependency<'a>(
 
 #[cfg(test)]
 mod tests {
-    use std::collections::{BTreeMap, BTreeSet};
-    use std::path::PathBuf;
+    use std::{
+        collections::{BTreeMap, BTreeSet},
+        path::PathBuf,
+    };
 
     use super::{PatchPublishOptions, patch_manifest_for_publish};
     use crate::workspace::{NpmPackage, PackageManifest};
@@ -162,10 +153,7 @@ mod tests {
     fn placeholder_forces_version_and_workspace_deps() {
         let main = pkg("@scope/main", "0.1.5");
         let platform = pkg("@scope/platform", "0.1.5");
-        let by_name = BTreeMap::from([
-            ("@scope/main".to_string(), main.clone()),
-            ("@scope/platform".to_string(), platform),
-        ]);
+        let by_name = BTreeMap::from([("@scope/main".to_string(), main.clone()), ("@scope/platform".to_string(), platform)]);
         let placeholder_deps = BTreeSet::from(["@scope/platform".to_string()]);
         let original = r#"{
   "name": "@scope/main",
@@ -178,10 +166,7 @@ mod tests {
             original,
             &main,
             &by_name,
-            PatchPublishOptions {
-                publish_version: Some("0.0.0"),
-                placeholder_dep_names: Some(&placeholder_deps),
-            },
+            PatchPublishOptions { publish_version: Some("0.0.0"), placeholder_dep_names: Some(&placeholder_deps) },
         )
         .expect("patch");
         let value: serde_json::Value = serde_json::from_str(&patched).expect("json");

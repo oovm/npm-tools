@@ -21,21 +21,14 @@ impl LintContext {
     }
 
     pub fn severity_for(&self, rule_id: &str) -> Option<RuleSeverity> {
-        self.rules
-            .iter()
-            .find(|rule| rule.id == rule_id && rule.enabled)
-            .map(|rule| rule.severity)
+        self.rules.iter().find(|rule| rule.id == rule_id && rule.enabled).map(|rule| rule.severity)
     }
 }
 
 impl CommitInput {
     pub fn subject_only(subject: impl Into<String>) -> Self {
         let subject = normalize_commit_text(subject.into());
-        Self {
-            hash: None,
-            subject: subject.clone(),
-            message: Some(subject),
-        }
+        Self { hash: None, subject: subject.clone(), message: Some(subject) }
     }
 
     pub fn full_message(&self) -> &str {

@@ -49,10 +49,7 @@ mod tests {
 
     #[test]
     fn rejects_styles_not_represented_by_oak() {
-        let style = FormatStyleOptions {
-            quote_style: Some("double".to_string()),
-            ..FormatStyleOptions::default()
-        };
+        let style = FormatStyleOptions { quote_style: Some("double".to_string()), ..FormatStyleOptions::default() };
         assert!(resolve_format_options(Some(&style)).is_err());
     }
 }

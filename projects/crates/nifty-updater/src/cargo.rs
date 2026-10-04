@@ -1,22 +1,21 @@
-use std::collections::{BTreeMap, BTreeSet};
-use std::fs;
-use std::path::{Path, PathBuf};
-use std::process::Command;
+use std::{
+    collections::{BTreeMap, BTreeSet},
+    fs,
+    path::{Path, PathBuf},
+    process::Command,
+};
 
 use dialoguer::MultiSelect;
 use serde_json::Value;
 use toml::Value as TomlValue;
 
-use crate::registry::fetch_crate_latest;
-use crate::version::{cargo_version_req, is_upgrade_available};
-use crate::Result;
+use crate::{
+    Result,
+    registry::fetch_crate_latest,
+    version::{cargo_version_req, is_upgrade_available},
+};
 
-const DEP_TABLES: [&str; 4] = [
-    "dependencies",
-    "dev-dependencies",
-    "build-dependencies",
-    "workspace.dependencies",
-];
+const DEP_TABLES: [&str; 4] = ["dependencies", "dev-dependencies", "build-dependencies", "workspace.dependencies"];
 
 /// One planned cargo dependency bump from registry lookup.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -55,19 +54,12 @@ pub fn plan_cargo_upgrades(root: &Path) -> Result<Vec<CargoUpgrade>> {
         }
         let manifests = manifest_hits
             .iter()
-            .filter_map(|((dep, source), paths)| {
-                (dep == &name && source == "registry").then(|| paths.clone())
-            })
+            .filter_map(|((dep, source), paths)| (dep == &name && source == "registry").then(|| paths.clone()))
             .flatten()
             .collect::<BTreeSet<_>>()
             .into_iter()
             .collect();
-        upgrades.push(CargoUpgrade {
-            crate_name: name,
-            from_version,
-            to_version,
-            manifests,
-        });
+        upgrades.push(CargoUpgrade { crate_name: name, from_version, to_version, manifests });
     }
 
     upgrades.sort_by(|a, b| a.crate_name.cmp(&b.crate_name));
@@ -75,10 +67,8 @@ pub fn plan_cargo_upgrades(root: &Path) -> Result<Vec<CargoUpgrade>> {
 }
 
 pub fn select_upgrades(upgrades: &[CargoUpgrade]) -> Result<Vec<CargoUpgrade>> {
-    let labels: Vec<String> = upgrades
-        .iter()
-        .map(|item| format!("{} {} -> {}", item.crate_name, item.from_version, item.to_version))
-        .collect();
+    let labels: Vec<String> =
+        upgrades.iter().map(|item| format!("{} {} -> {}", item.crate_name, item.from_version, item.to_version)).collect();
 
     let defaults = vec![true; labels.len()];
     let picked = MultiSelect::new()
@@ -112,10 +102,7 @@ fn apply_one_cargo_upgrade(root: &Path, upgrade: &CargoUpgrade) -> Result<()> {
         }
     }
     if !touched {
-        return Err(format!(
-            "cargo: could not patch manifests for `{}`",
-            upgrade.crate_name
-        ));
+        return Err(format!("cargo: could not patch manifests for `{}`", upgrade.crate_name));
     }
 
     let status = Command::new("cargo")
@@ -126,20 +113,13 @@ fn apply_one_cargo_upgrade(root: &Path, upgrade: &CargoUpgrade) -> Result<()> {
     if !status.success() {
         return Err(format!("cargo update -p {} failed", upgrade.crate_name));
     }
-    println!(
-        "cargo: upgraded {} {} -> {}",
-        upgrade.crate_name,
-        upgrade.from_version,
-        upgrade.to_version
-    );
+    println!("cargo: upgraded {} {} -> {}", upgrade.crate_name, upgrade.from_version, upgrade.to_version);
     Ok(())
 }
 
 fn patch_manifest_dep(manifest: &Path, crate_name: &str, new_req: &str) -> Result<bool> {
     let raw = fs::read_to_string(manifest).map_err(|err| format!("{}: {err}", manifest.display()))?;
-    let mut doc = raw
-        .parse::<TomlValue>()
-        .map_err(|err| format!("{}: {err}", manifest.display()))?;
+    let mut doc = raw.parse::<TomlValue>().map_err(|err| format!("{}: {err}", manifest.display()))?;
     let mut changed = false;
     for table in DEP_TABLES {
         if set_dep_version(&mut doc, table, crate_name, new_req) {
@@ -219,10 +199,7 @@ fn registry_dependency_manifests(metadata: &Value) -> BTreeMap<(String, String),
     let mut out: BTreeMap<(String, String), BTreeSet<PathBuf>> = BTreeMap::new();
     let packages = metadata.get("packages").and_then(Value::as_array);
     for pkg in packages.into_iter().flatten() {
-        let manifest = pkg
-            .get("manifest_path")
-            .and_then(Value::as_str)
-            .map(PathBuf::from);
+        let manifest = pkg.get("manifest_path").and_then(Value::as_str).map(PathBuf::from);
         let deps = pkg.get("dependencies").and_then(Value::as_array);
         for dep in deps.into_iter().flatten() {
             let name = dep.get("name").and_then(Value::as_str);
@@ -235,9 +212,7 @@ fn registry_dependency_manifests(metadata: &Value) -> BTreeMap<(String, String),
                 continue;
             }
             if let (Some(name), Some(manifest)) = (name, manifest.clone()) {
-                out.entry((name.to_string(), source.to_string()))
-                    .or_default()
-                    .insert(manifest);
+                out.entry((name.to_string(), source.to_string())).or_default().insert(manifest);
             }
         }
     }

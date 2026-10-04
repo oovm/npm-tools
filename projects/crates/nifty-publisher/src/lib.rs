@@ -11,17 +11,17 @@ mod trust;
 pub mod trust_expect;
 mod workspace;
 
-use std::collections::{BTreeMap, BTreeSet};
-use std::fs;
-use std::path::{Path, PathBuf};
+use std::{
+    collections::{BTreeMap, BTreeSet},
+    fs,
+    path::{Path, PathBuf},
+};
 
-pub use cache::{PlaceholderCache, CACHE_DIR_NAME, CACHE_FILE_NAME};
+pub use cache::{CACHE_DIR_NAME, CACHE_FILE_NAME, PlaceholderCache};
 pub use graph::plan_publish_order;
 pub use otp::{OtpAuth, OtpOverrides};
-pub use trust::{TrustOptions, TrustReport, TRUST_ENV, TRUST_FILE, TRUST_REPO};
-pub use workspace::{
-    NpmPackage, PackageManifest, find_workspace_root, list_workspace_packages, registry_name,
-};
+pub use trust::{TRUST_ENV, TRUST_FILE, TRUST_REPO, TrustOptions, TrustReport};
+pub use workspace::{NpmPackage, PackageManifest, find_workspace_root, list_workspace_packages, registry_name};
 
 pub type Result<T> = std::result::Result<T, String>;
 
@@ -58,10 +58,7 @@ pub struct PublishReport {
 
 /// Discover workspace npm packages, sort them with `petgraph`, and run `npm publish`.
 pub fn publish_workspace(options: PublishOptions) -> Result<PublishReport> {
-    let cwd = options
-        .cwd
-        .clone()
-        .unwrap_or_else(|| std::env::current_dir().expect("current dir"));
+    let cwd = options.cwd.clone().unwrap_or_else(|| std::env::current_dir().expect("current dir"));
     let root = find_workspace_root(&cwd)?;
     let publish_targets = resolve_publish_targets(&options)?;
     let auth = OtpAuth::load(&root, options.otp);
@@ -69,10 +66,7 @@ pub fn publish_workspace(options: PublishOptions) -> Result<PublishReport> {
     let mut cache = cache::PlaceholderCache::load(&root, &trust_expect);
     let runner = npm::NpmRunner::new(options.npm.as_deref(), auth.clone());
     let packages = list_workspace_packages(&root)?;
-    let by_name = packages
-        .iter()
-        .map(|package| (package.name.clone(), package.clone()))
-        .collect::<BTreeMap<_, _>>();
+    let by_name = packages.iter().map(|package| (package.name.clone(), package.clone())).collect::<BTreeMap<_, _>>();
     let (candidates, skipped) = resolve_candidate_packages(&packages, &by_name, &publish_targets)?;
     let order = graph::sort_packages_for_publish(&candidates, &by_name)?;
 
@@ -84,9 +78,7 @@ pub fn publish_workspace(options: PublishOptions) -> Result<PublishReport> {
     let mut placeholder_names = BTreeSet::new();
     if options.placeholder {
         for name in &order {
-            let package = by_name
-                .get(name)
-                .ok_or_else(|| format!("missing workspace package {name}"))?;
+            let package = by_name.get(name).ok_or_else(|| format!("missing workspace package {name}"))?;
             let registry = registry_name(package);
             let live = runner.view_version(registry)?;
             if live.is_some() {
@@ -102,35 +94,19 @@ pub fn publish_workspace(options: PublishOptions) -> Result<PublishReport> {
         if options.placeholder && !placeholder_names.contains(name) {
             continue;
         }
-        let package = by_name
-            .get(name)
-            .ok_or_else(|| format!("missing workspace package {name}"))?;
+        let package = by_name.get(name).ok_or_else(|| format!("missing workspace package {name}"))?;
         let registry = registry_name(package);
-        let publish_version = if options.placeholder {
-            PLACEHOLDER_VERSION
-        } else {
-            package.version.as_str()
-        };
+        let publish_version = if options.placeholder { PLACEHOLDER_VERSION } else { package.version.as_str() };
         if !options.placeholder {
             let live = runner.view_version(registry)?;
             let resolved = cache::resolve_published_version(&mut cache, name, live);
-            if cache::should_skip_publish(
-                &cache,
-                name,
-                &package.version,
-                &resolved,
-                options.refresh,
-                options.dry_run,
-            ) {
+            if cache::should_skip_publish(&cache, name, &package.version, &resolved, options.refresh, options.dry_run) {
                 println!("skip publish {registry}@{} (already on registry)", package.version);
                 skipped_versions.push(name.clone());
                 continue;
             }
         }
-        if is_native_binary_package(package)
-            && !has_staged_native_binary(package)
-            && !options.placeholder
-        {
+        if is_native_binary_package(package) && !has_staged_native_binary(package) && !options.placeholder {
             println!("skip publish {name} (no staged native binary)");
             continue;
         }
@@ -143,16 +119,8 @@ pub fn publish_workspace(options: PublishOptions) -> Result<PublishReport> {
             access,
             options.npm.as_deref(),
             &auth,
-            if options.placeholder {
-                Some(PLACEHOLDER_VERSION)
-            } else {
-                None
-            },
-            if options.placeholder {
-                Some(&placeholder_names)
-            } else {
-                None
-            },
+            if options.placeholder { Some(PLACEHOLDER_VERSION) } else { None },
+            if options.placeholder { Some(&placeholder_names) } else { None },
         );
         match result {
             Ok(()) => {
@@ -174,26 +142,12 @@ pub fn publish_workspace(options: PublishOptions) -> Result<PublishReport> {
 
     cache.save(&root)?;
 
-    Ok(PublishReport {
-        root,
-        order,
-        published,
-        skipped,
-        skipped_versions,
-    })
+    Ok(PublishReport { root, order, published, skipped, skipped_versions })
 }
 
 fn is_native_binary_package(package: &NpmPackage) -> bool {
-    package
-        .manifest
-        .os
-        .as_ref()
-        .is_some_and(|os| !os.is_empty())
-        && package
-            .manifest
-            .cpu
-            .as_ref()
-            .is_some_and(|cpu| !cpu.is_empty())
+    package.manifest.os.as_ref().is_some_and(|os| !os.is_empty())
+        && package.manifest.cpu.as_ref().is_some_and(|cpu| !cpu.is_empty())
 }
 
 fn has_staged_native_binary(package: &NpmPackage) -> bool {
@@ -203,9 +157,7 @@ fn has_staged_native_binary(package: &NpmPackage) -> bool {
     }
     fs::read_dir(&lib_dir)
         .map(|entries| {
-            entries
-                .filter_map(|entry| entry.ok())
-                .any(|entry| entry.path().extension().is_some_and(|ext| ext == "node"))
+            entries.filter_map(|entry| entry.ok()).any(|entry| entry.path().extension().is_some_and(|ext| ext == "node"))
         })
         .unwrap_or(false)
 }
@@ -241,18 +193,15 @@ fn resolve_candidate_packages(
             .filter(|package| blocked.contains(&package.name))
             .map(|package| package.name.clone())
             .collect::<Vec<_>>();
-        let candidates = packages
-            .iter()
-            .filter(|package| !blocked.contains(&package.name))
-            .cloned()
-            .collect::<Vec<_>>();
+        let candidates = packages.iter().filter(|package| !blocked.contains(&package.name)).cloned().collect::<Vec<_>>();
         return Ok((candidates, skipped));
     }
 
     let mut candidates = Vec::new();
     let mut seen = BTreeSet::new();
     for target in targets {
-        let Some(package) = find_package_by_target(by_name, target) else {
+        let Some(package) = find_package_by_target(by_name, target)
+        else {
             return Err(format!("workspace package not found: {target}"));
         };
         if blocked.contains(&package.name) {
@@ -265,10 +214,7 @@ fn resolve_candidate_packages(
             candidates.push(package.clone());
         }
     }
-    let candidate_names = candidates
-        .iter()
-        .map(|package| package.name.clone())
-        .collect::<BTreeSet<_>>();
+    let candidate_names = candidates.iter().map(|package| package.name.clone()).collect::<BTreeSet<_>>();
     let skipped = packages
         .iter()
         .filter(|package| blocked.contains(&package.name) && !candidate_names.contains(&package.name))
@@ -292,8 +238,7 @@ fn resolve_publish_targets(options: &PublishOptions) -> Result<Vec<String>> {
 
 #[cfg(test)]
 mod native_binary_tests {
-    use std::collections::BTreeMap;
-    use std::path::PathBuf;
+    use std::{collections::BTreeMap, path::PathBuf};
 
     use super::is_native_binary_package;
     use crate::workspace::{NpmPackage, PackageManifest};
@@ -338,8 +283,7 @@ mod native_binary_tests {
 
 #[cfg(test)]
 mod publish_filter_tests {
-    use std::collections::BTreeMap;
-    use std::path::PathBuf;
+    use std::{collections::BTreeMap, path::PathBuf};
 
     use super::resolve_candidate_packages;
     use crate::workspace::{NpmPackage, PackageManifest, PublishConfig};
@@ -377,20 +321,14 @@ mod publish_filter_tests {
 
     fn package_with_publish_name(workspace_name: &str, registry_name: &str, private: bool) -> NpmPackage {
         let mut package = package(workspace_name, private);
-        package.manifest.publish_config = Some(PublishConfig {
-            name: Some(registry_name.to_string()),
-            access: None,
-        });
+        package.manifest.publish_config = Some(PublishConfig { name: Some(registry_name.to_string()), access: None });
         package
     }
 
     #[test]
     fn default_skips_private_packages() {
         let packages = vec![package("@scope/main", false), package("@scope/native", true)];
-        let by_name = packages
-            .iter()
-            .map(|package| (package.name.clone(), package.clone()))
-            .collect::<BTreeMap<_, _>>();
+        let by_name = packages.iter().map(|package| (package.name.clone(), package.clone())).collect::<BTreeMap<_, _>>();
         let (candidates, skipped) = resolve_candidate_packages(&packages, &by_name, &[]).expect("resolve");
         assert_eq!(candidates.iter().map(|p| p.name.as_str()).collect::<Vec<_>>(), vec!["@scope/main"]);
         assert_eq!(skipped, vec!["@scope/native".to_string()]);
@@ -399,10 +337,7 @@ mod publish_filter_tests {
     #[test]
     fn explicit_targets_skip_private_packages() {
         let packages = vec![package("@scope/main", false), package("@scope/native", true)];
-        let by_name = packages
-            .iter()
-            .map(|package| (package.name.clone(), package.clone()))
-            .collect::<BTreeMap<_, _>>();
+        let by_name = packages.iter().map(|package| (package.name.clone(), package.clone())).collect::<BTreeMap<_, _>>();
         let (candidates, skipped) =
             resolve_candidate_packages(&packages, &by_name, &["@scope/native".to_string()]).expect("resolve");
         assert!(candidates.is_empty());
@@ -414,10 +349,7 @@ mod publish_filter_tests {
         let private = package("@scope/private", true);
         let main = package_with_deps("@scope/main", false, &[("@scope/private", "workspace:*")]);
         let packages = vec![main, private];
-        let by_name = packages
-            .iter()
-            .map(|package| (package.name.clone(), package.clone()))
-            .collect::<BTreeMap<_, _>>();
+        let by_name = packages.iter().map(|package| (package.name.clone(), package.clone())).collect::<BTreeMap<_, _>>();
         let (candidates, skipped) = resolve_candidate_packages(&packages, &by_name, &[]).expect("resolve");
         assert!(candidates.is_empty());
         assert_eq!(skipped.len(), 2);
@@ -426,12 +358,8 @@ mod publish_filter_tests {
     #[test]
     fn explicit_targets_resolve_publish_config_name() {
         let packages = vec![package_with_publish_name("vmz", "@vmz/vmz", false)];
-        let by_name = packages
-            .iter()
-            .map(|package| (package.name.clone(), package.clone()))
-            .collect::<BTreeMap<_, _>>();
-        let (candidates, _) =
-            resolve_candidate_packages(&packages, &by_name, &["@vmz/vmz".to_string()]).expect("resolve");
+        let by_name = packages.iter().map(|package| (package.name.clone(), package.clone())).collect::<BTreeMap<_, _>>();
+        let (candidates, _) = resolve_candidate_packages(&packages, &by_name, &["@vmz/vmz".to_string()]).expect("resolve");
         assert_eq!(candidates.iter().map(|p| p.name.as_str()).collect::<Vec<_>>(), vec!["vmz"]);
     }
 }
@@ -452,10 +380,7 @@ fn publish_package(
         &original,
         package,
         by_name,
-        manifest::PatchPublishOptions {
-            publish_version,
-            placeholder_dep_names,
-        },
+        manifest::PatchPublishOptions { publish_version, placeholder_dep_names },
     )?;
 
     let mut restored = false;

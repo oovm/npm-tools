@@ -2,7 +2,7 @@
 
 use std::collections::HashMap;
 
-use nifty_types::{all_sections, section_meta, GithubAuthor, Section};
+use nifty_types::{GithubAuthor, Section, all_sections, section_meta};
 
 use crate::render::render_section_bullets;
 
@@ -38,13 +38,7 @@ pub fn format_release_notes(commits: &[ReleaseCommit<'_>], map: &HashMap<String,
             let grouped: Vec<(String, String, String)> = commits
                 .iter()
                 .filter(|commit| commit.section == section)
-                .map(|commit| {
-                    (
-                        commit.body.to_string(),
-                        commit.email.to_string(),
-                        commit.author.to_string(),
-                    )
-                })
+                .map(|commit| (commit.body.to_string(), commit.email.to_string(), commit.author.to_string()))
                 .collect();
             format_release_section(section, &grouped, map)
         })
@@ -58,16 +52,12 @@ mod tests {
 
     use nifty_types::Section;
 
-    use super::{format_release_notes, ReleaseCommit};
+    use super::{ReleaseCommit, format_release_notes};
 
     #[test]
     fn formats_grouped_release_notes() {
-        let commits = [ReleaseCommit {
-            body: "Add feature",
-            email: "dev@example.com",
-            author: "Dev",
-            section: Section::Features,
-        }];
+        let commits =
+            [ReleaseCommit { body: "Add feature", email: "dev@example.com", author: "Dev", section: Section::Features }];
         let notes = format_release_notes(&commits, &HashMap::new());
         assert!(notes.contains("## ✨ Features"));
         assert!(notes.contains("- Add feature (@Dev)"));

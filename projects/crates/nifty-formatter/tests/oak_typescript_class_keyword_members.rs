@@ -6,7 +6,9 @@ use oak_typescript::{
 
 #[test]
 fn class_keyword_members_preserve_names_and_initializers() {
-    let source = SourceText::new("export default class Button { public type: string = 'button'; public default = false; public delete = null; variant = 'primary'; }");
+    let source = SourceText::new(
+        "export default class Button { public type: string = 'button'; public default = false; public delete = null; variant = 'primary'; }",
+    );
     let language = TypeScriptLanguage::default();
     let mut session = ParseSession::default();
     let built = TypeScriptBuilder::new(&language).build(&source, &[], &mut session);

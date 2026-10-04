@@ -1,4 +1,4 @@
-use nifty_types::{parse_subject, validate_subject, Section};
+use nifty_types::{Section, parse_subject, validate_subject};
 
 #[test]
 fn parse_and_validate_gitmoji_subject() {

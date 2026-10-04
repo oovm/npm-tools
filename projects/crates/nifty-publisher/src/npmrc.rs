@@ -1,6 +1,8 @@
-use std::collections::BTreeMap;
-use std::fs;
-use std::path::{Path, PathBuf};
+use std::{
+    collections::BTreeMap,
+    fs,
+    path::{Path, PathBuf},
+};
 
 use crate::Result;
 
@@ -73,17 +75,14 @@ impl NpmRc {
             if line.is_empty() || line.starts_with('#') || line.starts_with(';') {
                 continue;
             }
-            let Some((key, value)) = split_kv(line) else {
+            let Some((key, value)) = split_kv(line)
+            else {
                 continue;
             };
             if key.starts_with("//") && key.ends_with(":_authToken") {
-                let host = key
-                    .trim_start_matches("//")
-                    .trim_end_matches(":_authToken")
-                    .trim_end_matches('/');
+                let host = key.trim_start_matches("//").trim_end_matches(":_authToken").trim_end_matches('/');
                 if !host.is_empty() && !value.is_empty() {
-                    self.auth_tokens
-                        .insert(normalize_registry_host(host), value.to_string());
+                    self.auth_tokens.insert(normalize_registry_host(host), value.to_string());
                 }
                 continue;
             }
@@ -93,17 +92,14 @@ impl NpmRc {
             }
             if key.starts_with('@') && key.ends_with(":registry") && !value.is_empty() {
                 let scope = key.trim_end_matches(":registry");
-                self.scoped_registries
-                    .insert(scope.to_string(), normalize_registry_url(value));
+                self.scoped_registries.insert(scope.to_string(), normalize_registry_url(value));
             }
         }
     }
 }
 
 pub fn user_npmrc_path() -> Option<PathBuf> {
-    let home = std::env::var("USERPROFILE")
-        .or_else(|_| std::env::var("HOME"))
-        .ok()?;
+    let home = std::env::var("USERPROFILE").or_else(|_| std::env::var("HOME")).ok()?;
     Some(Path::new(&home).join(".npmrc"))
 }
 
@@ -129,19 +125,16 @@ fn split_kv(line: &str) -> Option<(&str, &str)> {
     if key.starts_with("export ") {
         key = key.trim_start_matches("export ").trim_start();
     }
-    let Some((key, value)) = key.split_once('=') else {
+    let Some((key, value)) = key.split_once('=')
+    else {
         return None;
     };
     Some((key.trim(), unquote(value.trim())))
 }
 
 fn unquote(value: &str) -> &str {
-    if (value.starts_with('"') && value.ends_with('"'))
-        || (value.starts_with('\'') && value.ends_with('\''))
-    {
-        return value
-            .get(1..value.len().saturating_sub(1))
-            .unwrap_or(value);
+    if (value.starts_with('"') && value.ends_with('"')) || (value.starts_with('\'') && value.ends_with('\'')) {
+        return value.get(1..value.len().saturating_sub(1)).unwrap_or(value);
     }
     value
 }
@@ -160,17 +153,15 @@ pub fn normalize_registry_url(value: &str) -> String {
     }
     if trimmed.starts_with("http://") || trimmed.starts_with("https://") {
         trimmed.trim_end_matches('/').to_string()
-    } else {
+    }
+    else {
         format!("https://{}", trimmed.trim_end_matches('/'))
     }
 }
 
 pub fn normalize_registry_host(value: &str) -> String {
     let url = normalize_registry_url(value);
-    url.trim_start_matches("https://")
-        .trim_start_matches("http://")
-        .trim_end_matches('/')
-        .to_string()
+    url.trim_start_matches("https://").trim_start_matches("http://").trim_end_matches('/').to_string()
 }
 
 #[cfg(test)]
@@ -179,33 +170,22 @@ mod tests {
 
     #[test]
     fn parses_user_npmrc_auth_and_registry() {
-        let config = NpmRc::from_text(
-            "registry=https://registry.npmjs.org/\n//registry.npmjs.org/:_authToken=npm_test_token\n",
-        );
+        let config =
+            NpmRc::from_text("registry=https://registry.npmjs.org/\n//registry.npmjs.org/:_authToken=npm_test_token\n");
         assert_eq!(config.default_registry, "https://registry.npmjs.org");
-        assert_eq!(
-            config.token_for_package("@doki-land/nifty"),
-            Some("npm_test_token".to_string())
-        );
+        assert_eq!(config.token_for_package("@doki-land/nifty"), Some("npm_test_token".to_string()));
     }
 
     #[test]
     fn resolves_scoped_registry_and_auth() {
-        let config = NpmRc::from_text(
-            "@my:registry=https://npm.pkg.github.com/\n//npm.pkg.github.com/:_authToken=ghp_test\n",
-        );
-        assert_eq!(
-            config.registry_for_package("@my/pkg"),
-            "https://npm.pkg.github.com"
-        );
+        let config = NpmRc::from_text("@my:registry=https://npm.pkg.github.com/\n//npm.pkg.github.com/:_authToken=ghp_test\n");
+        assert_eq!(config.registry_for_package("@my/pkg"), "https://npm.pkg.github.com");
         assert_eq!(config.token_for_package("@my/pkg"), Some("ghp_test".to_string()));
     }
 
     #[test]
     fn project_npmrc_overrides_user_default_registry() {
-        let mut merged = NpmRc::from_text(
-            "registry=https://registry.npmjs.org/\n//registry.npmjs.org/:_authToken=npm_user\n",
-        );
+        let mut merged = NpmRc::from_text("registry=https://registry.npmjs.org/\n//registry.npmjs.org/:_authToken=npm_user\n");
         merged.merge(NpmRc::from_text("registry=https://registry.example.com/\n"));
         assert_eq!(merged.default_registry, "https://registry.example.com");
         assert_eq!(merged.default_token(), None);

@@ -17,10 +17,7 @@ impl GitHubClient {
         if token.is_empty() {
             return Err("GitHub token must not be empty".to_string());
         }
-        Ok(Self {
-            agent: Agent::new(),
-            token: token.to_string(),
-        })
+        Ok(Self { agent: Agent::new(), token: token.to_string() })
     }
 
     pub fn get_json(&self, url: &str) -> Result<Value> {
@@ -84,9 +81,7 @@ pub fn release_asset_already_exists(message: &str) -> bool {
 
 pub fn split_repo(repo: &str) -> Result<(String, String)> {
     let repo = repo.trim().trim_end_matches(".git");
-    let (owner, name) = repo
-        .split_once('/')
-        .ok_or_else(|| format!("invalid repo `{repo}`, expected owner/name"))?;
+    let (owner, name) = repo.split_once('/').ok_or_else(|| format!("invalid repo `{repo}`, expected owner/name"))?;
     Ok((owner.to_string(), name.to_string()))
 }
 
@@ -145,10 +140,7 @@ fn urlencoding_encode(value: &str) -> String {
 }
 
 pub fn release_id(value: &Value) -> Result<u64> {
-    value
-        .get("id")
-        .and_then(Value::as_u64)
-        .ok_or_else(|| "GitHub release response missing id".to_string())
+    value.get("id").and_then(Value::as_u64).ok_or_else(|| "GitHub release response missing id".to_string())
 }
 
 #[cfg(test)]

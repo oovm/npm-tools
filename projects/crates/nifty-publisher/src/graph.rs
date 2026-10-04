@@ -1,10 +1,14 @@
 use std::collections::{BTreeMap, HashMap};
 
-use petgraph::algo::{is_cyclic_directed, tarjan_scc, toposort};
-use petgraph::{Directed, Graph};
+use petgraph::{
+    Directed, Graph,
+    algo::{is_cyclic_directed, tarjan_scc, toposort},
+};
 
-use crate::workspace::{NpmPackage, collect_internal_dependency_names, unpublishable_package_names};
-use crate::Result;
+use crate::{
+    Result,
+    workspace::{NpmPackage, collect_internal_dependency_names, unpublishable_package_names},
+};
 
 /// Topological publish order: dependencies before dependents.
 pub fn sort_packages_for_publish(packages: &[NpmPackage], by_name: &BTreeMap<String, NpmPackage>) -> Result<Vec<String>> {
@@ -32,16 +36,11 @@ pub fn sort_packages_for_publish(packages: &[NpmPackage], by_name: &BTreeMap<Str
                 let cycles = tarjan_scc(&graph)
                     .into_iter()
                     .filter(|component| component.len() > 1)
-                    .map(|component| {
-                        component
-                            .into_iter()
-                            .map(|index| graph[index].clone())
-                            .collect::<Vec<_>>()
-                            .join(" -> ")
-                    })
+                    .map(|component| component.into_iter().map(|index| graph[index].clone()).collect::<Vec<_>>().join(" -> "))
                     .collect::<Vec<_>>();
                 Err(format!("cyclic workspace dependency among npm packages: {}", cycles.join(", ")))
-            } else {
+            }
+            else {
                 Err("topological sort failed".into())
             }
         }
@@ -50,23 +49,16 @@ pub fn sort_packages_for_publish(packages: &[NpmPackage], by_name: &BTreeMap<Str
 
 /// Names of publishable (non-private) packages in dependency order.
 pub fn plan_publish_order(all_packages: &[NpmPackage]) -> Result<Vec<String>> {
-    let by_name = all_packages
-        .iter()
-        .map(|package| (package.name.clone(), package.clone()))
-        .collect::<BTreeMap<_, _>>();
+    let by_name = all_packages.iter().map(|package| (package.name.clone(), package.clone())).collect::<BTreeMap<_, _>>();
     let blocked = unpublishable_package_names(all_packages, &by_name);
-    let publishable: Vec<NpmPackage> = all_packages
-        .iter()
-        .filter(|package| !blocked.contains(&package.name))
-        .cloned()
-        .collect();
+    let publishable: Vec<NpmPackage> =
+        all_packages.iter().filter(|package| !blocked.contains(&package.name)).cloned().collect();
     sort_packages_for_publish(&publishable, &by_name)
 }
 
 #[cfg(test)]
 mod tests {
-    use std::collections::BTreeMap;
-    use std::path::PathBuf;
+    use std::{collections::BTreeMap, path::PathBuf};
 
     use super::plan_publish_order;
     use crate::workspace::{NpmPackage, PackageManifest};
@@ -100,10 +92,7 @@ mod tests {
 
     #[test]
     fn orders_dependencies_before_dependents() {
-        let packages = vec![
-            package("@scope/main", &[("@scope/platform", "0.0.0")]),
-            package("@scope/platform", &[]),
-        ];
+        let packages = vec![package("@scope/main", &[("@scope/platform", "0.0.0")]), package("@scope/platform", &[])];
         let order = plan_publish_order(&packages).expect("order");
         assert_eq!(order, vec!["@scope/platform".to_string(), "@scope/main".to_string()]);
     }

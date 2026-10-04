@@ -2,8 +2,7 @@
 
 use std::path::Path;
 
-use gix::bstr::ByteSlice;
-use gix::{Commit, ObjectId, Repository};
+use gix::{Commit, ObjectId, Repository, bstr::ByteSlice};
 
 use nifty_types::{parse_subject, section_name};
 
@@ -69,12 +68,7 @@ fn read_commit(repo: &Repository, oid: ObjectId) -> Result<Commit<'_>> {
 
 fn to_record(oid: ObjectId, commit: &Commit<'_>) -> CommitRecord {
     let message = normalize_commit_message(commit.message_raw_sloppy());
-    let subject = message
-        .lines()
-        .next()
-        .unwrap_or("")
-        .trim()
-        .to_string();
+    let subject = message.lines().next().unwrap_or("").trim().to_string();
     let parsed = parse_subject(&subject);
     let email = commit.author().map(|author| author.email.to_string()).unwrap_or_default();
     let author = commit.author().map(|author| author.name.to_string()).unwrap_or_default();
@@ -92,8 +86,5 @@ fn to_record(oid: ObjectId, commit: &Commit<'_>) -> CommitRecord {
 
 /// Strip UTF-8 BOM that breaks gitmoji-leading-subject detection.
 fn normalize_commit_message(raw: &gix::bstr::BStr) -> String {
-    raw.to_str()
-        .unwrap_or("")
-        .trim_start_matches('\u{feff}')
-        .to_string()
+    raw.to_str().unwrap_or("").trim_start_matches('\u{feff}').to_string()
 }

@@ -1,8 +1,6 @@
 //! 组合本地 author 映射与 GitHub API 查询。
 
-use nifty_types::{
-    GithubAuthor, github_from_noreply_email, load_author_map_from_json, merge_authors, resolve_github_author,
-};
+use nifty_types::{GithubAuthor, github_from_noreply_email, load_author_map_from_json, merge_authors, resolve_github_author};
 
 use crate::client::{Result, search_user_by_email, user_by_login};
 

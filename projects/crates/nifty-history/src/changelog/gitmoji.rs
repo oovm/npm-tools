@@ -1,7 +1,6 @@
 //! gitmoji 前缀解析与 release 分组。
 
-use std::collections::HashMap;
-use std::sync::LazyLock;
+use std::{collections::HashMap, sync::LazyLock};
 
 /// release 参考稿分组键。
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -47,8 +46,8 @@ static GITMOJI_SECTION: LazyLock<HashMap<&'static str, Section>> = LazyLock::new
 });
 
 static KNOWN_GITMOJIS: [&str; 25] = [
-    "✨", "🎨", "🚀", "🐛", "🚑", "🔥", "💥", "♻️", "🔧", "📝", "👷", "🧹", "⬆️", "🧪", "🔨", "📦", "🎂", "🎉",
-    "🚧", "🚫", "💄", "🎀", "⚡", "🔒", "📌",
+    "✨", "🎨", "🚀", "🐛", "🚑", "🔥", "💥", "♻️", "🔧", "📝", "👷", "🧹", "⬆️", "🧪", "🔨", "📦", "🎂", "🎉", "🚧", "🚫",
+    "💄", "🎀", "⚡", "🔒", "📌",
 ];
 
 /// 返回 subject 行首 gitmoji（若有）。

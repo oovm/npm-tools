@@ -1,9 +1,9 @@
-use std::path::{Path, PathBuf};
-use std::process::{Command, Stdio};
+use std::{
+    path::{Path, PathBuf},
+    process::{Command, Stdio},
+};
 
-use crate::npmrc;
-use crate::otp::OtpAuth;
-use crate::Result;
+use crate::{Result, npmrc, otp::OtpAuth};
 
 pub struct NpmOutput {
     pub status: i32,
@@ -18,10 +18,7 @@ pub struct NpmRunner {
 
 impl NpmRunner {
     pub fn new(program: Option<&Path>, auth: OtpAuth) -> Self {
-        Self {
-            program: resolve_npm_executable(program),
-            auth,
-        }
+        Self { program: resolve_npm_executable(program), auth }
     }
 
     pub fn run(&self, args: &[&str], cwd: Option<&Path>) -> Result<NpmOutput> {
@@ -50,11 +47,7 @@ impl NpmRunner {
             return Ok(None);
         }
         let version = output.stdout.trim();
-        if version.is_empty() {
-            Ok(None)
-        } else {
-            Ok(Some(version.to_string()))
-        }
+        if version.is_empty() { Ok(None) } else { Ok(Some(version.to_string())) }
     }
 }
 
@@ -111,11 +104,7 @@ fn try_run(program: &Path, args: &[String], cwd: Option<&Path>, inherit: bool, a
         command.stdout(Stdio::inherit()).stderr(Stdio::inherit());
         let status = command.status().map_err(|err| err.to_string())?;
         cleanup_temp_npmrc(user_config);
-        return Ok(NpmOutput {
-            status: status.code().unwrap_or(1),
-            stdout: String::new(),
-            stderr: String::new(),
-        });
+        return Ok(NpmOutput { status: status.code().unwrap_or(1), stdout: String::new(), stderr: String::new() });
     }
 
     let output = command.output().map_err(|err| err.to_string())?;
@@ -141,11 +130,7 @@ fn try_run_via_cmd(program: &Path, args: &[String], cwd: Option<&Path>, inherit:
         command.stdout(Stdio::inherit()).stderr(Stdio::inherit());
         let status = command.status().map_err(|err| err.to_string())?;
         cleanup_temp_npmrc(user_config);
-        return Ok(NpmOutput {
-            status: status.code().unwrap_or(1),
-            stdout: String::new(),
-            stderr: String::new(),
-        });
+        return Ok(NpmOutput { status: status.code().unwrap_or(1), stdout: String::new(), stderr: String::new() });
     }
     let output = command.output().map_err(|err| err.to_string())?;
     cleanup_temp_npmrc(user_config);
@@ -157,7 +142,13 @@ fn try_run_via_cmd(program: &Path, args: &[String], cwd: Option<&Path>, inherit:
 }
 
 #[cfg(not(windows))]
-fn try_run_via_cmd(_program: &Path, _args: &[String], _cwd: Option<&Path>, _inherit: bool, _auth: &OtpAuth) -> Result<NpmOutput> {
+fn try_run_via_cmd(
+    _program: &Path,
+    _args: &[String],
+    _cwd: Option<&Path>,
+    _inherit: bool,
+    _auth: &OtpAuth,
+) -> Result<NpmOutput> {
     Err("cmd fallback only on Windows".into())
 }
 
@@ -171,9 +162,7 @@ fn apply_auth_env(command: &mut Command, auth: &OtpAuth, user_config: Option<&Pa
 }
 
 fn npm_user_config(auth: &OtpAuth, cwd: Option<&Path>) -> Result<Option<PathBuf>> {
-    let root = cwd
-        .map(Path::to_path_buf)
-        .unwrap_or_else(|| std::env::current_dir().expect("current dir"));
+    let root = cwd.map(Path::to_path_buf).unwrap_or_else(|| std::env::current_dir().expect("current dir"));
     if let Some(path) = npmrc::npm_config_path(&root) {
         return Ok(Some(path));
     }
@@ -185,8 +174,7 @@ fn npm_user_config(auth: &OtpAuth, cwd: Option<&Path>) -> Result<Option<PathBuf>
 
 fn write_temp_npmrc(token: &str) -> Result<Option<PathBuf>> {
     let path = std::env::temp_dir().join(format!("nifty-npmrc-{}", std::process::id()));
-    std::fs::write(&path, format!("//registry.npmjs.org/:_authToken={token}\n"))
-        .map_err(|err| err.to_string())?;
+    std::fs::write(&path, format!("//registry.npmjs.org/:_authToken={token}\n")).map_err(|err| err.to_string())?;
     Ok(Some(path))
 }
 
@@ -239,19 +227,11 @@ fn resolve_npm_executable(explicit: Option<&Path>) -> PathBuf {
             return sibling;
         }
     }
-    if cfg!(windows) {
-        PathBuf::from("npm.cmd")
-    } else {
-        PathBuf::from("npm")
-    }
+    if cfg!(windows) { PathBuf::from("npm.cmd") } else { PathBuf::from("npm") }
 }
 
 fn npm_next_to_node(node: &str) -> PathBuf {
     let node_path = PathBuf::from(node);
     let dir = node_path.parent().unwrap_or_else(|| Path::new("."));
-    if cfg!(windows) {
-        dir.join("npm.cmd")
-    } else {
-        dir.join("npm")
-    }
+    if cfg!(windows) { dir.join("npm.cmd") } else { dir.join("npm") }
 }

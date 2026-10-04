@@ -1,4 +1,4 @@
-use nifty_formatter::{author_mention, format_release_notes, format_subject, ReleaseCommit};
+use nifty_formatter::{ReleaseCommit, author_mention, format_release_notes, format_subject};
 use nifty_types::Section;
 
 #[test]
@@ -9,12 +9,7 @@ fn format_subject_round_trip() {
 
 #[test]
 fn release_notes_include_section_heading() {
-    let commits = [ReleaseCommit {
-        body: "Add feature",
-        email: "dev@example.com",
-        author: "Dev",
-        section: Section::Features,
-    }];
+    let commits = [ReleaseCommit { body: "Add feature", email: "dev@example.com", author: "Dev", section: Section::Features }];
     let notes = format_release_notes(&commits, &Default::default());
     assert!(notes.contains("## ✨ Features"));
     assert!(notes.contains("- Add feature (@Dev)"));

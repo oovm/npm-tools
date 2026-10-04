@@ -31,9 +31,7 @@ pub fn npm_spec_version(spec: &str) -> &str {
 pub fn npm_upgrade_needed(spec: &str, latest: &str) -> Result<bool> {
     if VersionReq::parse(spec).is_ok() {
         let latest_ver = Version::parse(latest).map_err(|err| err.to_string())?;
-        return Ok(!VersionReq::parse(spec)
-            .map_err(|err| err.to_string())?
-            .matches(&latest_ver));
+        return Ok(!VersionReq::parse(spec).map_err(|err| err.to_string())?.matches(&latest_ver));
     }
     let current = npm_spec_version(spec);
     Ok(is_upgrade_available(current, latest))

@@ -1,9 +1,11 @@
-use std::fs;
-use std::path::{Path, PathBuf};
+use std::{
+    fs,
+    path::{Path, PathBuf},
+};
 
-use nifty_formatter::{format_release_notes, ReleaseCommit};
+use nifty_formatter::{ReleaseCommit, format_release_notes};
 use nifty_git::{collect_commits, resolve_range};
-use nifty_types::{section_from_name, GithubAuthor};
+use nifty_types::{GithubAuthor, section_from_name};
 
 use crate::{Result, UploadOptions};
 
@@ -23,12 +25,8 @@ pub fn resolve_notes(options: &UploadOptions, repo_root: &Path, tag: &str) -> Re
 fn generate_release_notes(repo_root: &Path, tag: &str) -> Result<String> {
     let version = tag.trim_start_matches('v');
     let range = resolve_range(repo_root, Some(version), None, None).map_err(|err| err.to_string())?;
-    let commits = collect_commits(
-        repo_root,
-        range.from_ref.as_deref(),
-        range.to_ref.as_str(),
-    )
-    .map_err(|err| err.to_string())?;
+    let commits =
+        collect_commits(repo_root, range.from_ref.as_deref(), range.to_ref.as_str()).map_err(|err| err.to_string())?;
 
     let author_map: std::collections::HashMap<String, GithubAuthor> = std::collections::HashMap::new();
     let release_commits: Vec<ReleaseCommit<'_>> = commits
@@ -66,10 +64,5 @@ pub fn asset_name(base_dir: &Path, file: &Path) -> String {
         .ok()
         .and_then(|relative| relative.to_str())
         .map(|path| path.replace('\\', "/"))
-        .unwrap_or_else(|| {
-            file.file_name()
-                .and_then(|name| name.to_str())
-                .unwrap_or("asset")
-                .to_string()
-        })
+        .unwrap_or_else(|| file.file_name().and_then(|name| name.to_str()).unwrap_or("asset").to_string())
 }

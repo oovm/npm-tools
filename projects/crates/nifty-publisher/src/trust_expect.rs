@@ -2,8 +2,10 @@ use std::path::Path;
 
 use nifty_git::detect_github_repo;
 
-use crate::cache::TrustExpect;
-use crate::trust::{TRUST_ENV, TRUST_FILE, TRUST_REPO};
+use crate::{
+    cache::TrustExpect,
+    trust::{TRUST_ENV, TRUST_FILE, TRUST_REPO},
+};
 
 #[derive(Debug, Clone, Default)]
 pub struct TrustExpectInput {
@@ -46,10 +48,7 @@ pub fn resolve_trust_expect(root: &Path, input: Option<&TrustExpectInput>) -> Tr
 }
 
 fn non_empty(value: Option<&str>) -> Option<String> {
-    value
-        .map(str::trim)
-        .filter(|value| !value.is_empty())
-        .map(str::to_string)
+    value.map(str::trim).filter(|value| !value.is_empty()).map(str::to_string)
 }
 
 fn env_or_default(key: &str, default: &str) -> String {

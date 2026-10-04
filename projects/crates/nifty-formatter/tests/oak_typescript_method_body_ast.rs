@@ -95,7 +95,8 @@ export default class Card {
     assert!(names.contains(&"onClick"), "names={names:?}");
     assert!(names.contains(&"#load"), "names={names:?}");
 
-    let on_click = methods.iter().find(|m| matches!(m, ClassMember::Method { name, .. } if name == "onClick")).expect("onClick");
+    let on_click =
+        methods.iter().find(|m| matches!(m, ClassMember::Method { name, .. } if name == "onClick")).expect("onClick");
     let ClassMember::Method { body, .. } = on_click
     else {
         unreachable!()

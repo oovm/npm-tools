@@ -1,5 +1,4 @@
-use std::fs;
-use std::path::Path;
+use std::{fs, path::Path};
 
 use hmac::{Hmac, Mac};
 use sha1::Sha1;
@@ -26,8 +25,7 @@ pub struct OtpOverrides {
 }
 
 fn oidc_ci_publish() -> bool {
-    std::env::var("GITHUB_ACTIONS").ok().as_deref() == Some("true")
-        && std::env::var("CI").ok().as_deref() == Some("true")
+    std::env::var("GITHUB_ACTIONS").ok().as_deref() == Some("true") && std::env::var("CI").ok().as_deref() == Some("true")
 }
 
 impl OtpAuth {
@@ -97,10 +95,8 @@ pub fn totp_code(secret: &str, at_ms: u128) -> String {
 }
 
 fn current_totp_code(secret: &str) -> String {
-    let at_ms = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .map(|duration| duration.as_millis())
-        .unwrap_or(0);
+    let at_ms =
+        std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|duration| duration.as_millis()).unwrap_or(0);
     totp_code(secret, at_ms)
 }
 
@@ -118,8 +114,7 @@ fn decode_base32(secret: &str) -> Result<Vec<u8>> {
         if chunk.len() < 8 {
             break;
         }
-        let value = u8::from_str_radix(std::str::from_utf8(chunk).unwrap_or("0"), 2)
-            .map_err(|err| err.to_string())?;
+        let value = u8::from_str_radix(std::str::from_utf8(chunk).unwrap_or("0"), 2).map_err(|err| err.to_string())?;
         bytes.push(value);
     }
     if bytes.is_empty() {
@@ -136,7 +131,8 @@ fn load_local_env(path: &Path) -> std::collections::BTreeMap<String, String> {
         if line.is_empty() || line.starts_with('#') {
             continue;
         }
-        let Some((key, value)) = line.split_once('=') else {
+        let Some((key, value)) = line.split_once('=')
+        else {
             continue;
         };
         let key = key.trim().trim_start_matches("export ").trim();

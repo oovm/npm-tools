@@ -7,10 +7,10 @@ mod version;
 
 use std::path::{Path, PathBuf};
 
-use nifty_config::{detect_project_layout, ProjectKind, ProjectLayout};
+use nifty_config::{ProjectKind, ProjectLayout, detect_project_layout};
 
 pub use cargo::CargoUpgrade;
-pub use npm::{discover_package_dirs, NpmOutdated};
+pub use npm::{NpmOutdated, discover_package_dirs};
 
 pub type Result<T> = std::result::Result<T, String>;
 
@@ -25,18 +25,12 @@ pub struct UpdateOptions {
 
 /// Update dependencies for the detected cargo/npm/hybrid project.
 pub fn run_update(options: UpdateOptions) -> Result<()> {
-    let cwd = options
-        .cwd
-        .clone()
-        .unwrap_or_else(|| std::env::current_dir().expect("current dir"));
+    let cwd = options.cwd.clone().unwrap_or_else(|| std::env::current_dir().expect("current dir"));
     let layout = detect_project_layout(&cwd);
 
     match layout.kind {
         ProjectKind::Unknown => {
-            return Err(format!(
-                "no Cargo.toml or package.json found from {}",
-                cwd.display()
-            ));
+            return Err(format!("no Cargo.toml or package.json found from {}", cwd.display()));
         }
         ProjectKind::Cargo => update_cargo(&layout, options.interactive)?,
         ProjectKind::Npm => update_npm(&layout, options.interactive)?,
@@ -69,7 +63,8 @@ fn update_cargo(layout: &ProjectLayout, interactive: bool) -> Result<()> {
             return Ok(());
         }
         cargo::apply_cargo_upgrades(&root, &selected)?;
-    } else {
+    }
+    else {
         cargo::apply_cargo_upgrades_all(&root)?;
     }
 
@@ -111,7 +106,8 @@ fn update_npm_dir(package_dir: &Path, interactive: bool) -> Result<Option<PathBu
             return Ok(None);
         }
         npm::apply_npm_upgrades(package_dir, &selected, false)?;
-    } else {
+    }
+    else {
         npm::apply_npm_upgrades(package_dir, &outdated, false)?;
     }
 

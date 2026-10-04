@@ -71,10 +71,7 @@ pub fn run_upload(mut options: UploadOptions) -> Result<UploadReport> {
         .or_else(|| std::env::var("GITHUB_TOKEN").ok())
         .ok_or_else(|| "GitHub token is required (set --token or GITHUB_TOKEN)".to_string())?;
 
-    let cwd = options
-        .cwd
-        .clone()
-        .unwrap_or_else(|| std::env::current_dir().expect("current dir"));
+    let cwd = options.cwd.clone().unwrap_or_else(|| std::env::current_dir().expect("current dir"));
     let layout = nifty_config::detect_project_layout(&cwd);
     let repo_root = layout.root.clone();
 
@@ -95,8 +92,7 @@ pub fn run_upload(mut options: UploadOptions) -> Result<UploadReport> {
 
     match options.target {
         UploadTarget::Release | UploadTarget::Both => {
-            report.release_assets =
-                release::upload_release_assets(&repo, &token, &tag, &options, &notes)?;
+            report.release_assets = release::upload_release_assets(&repo, &token, &tag, &options, &notes)?;
         }
         UploadTarget::Pages => {}
     }

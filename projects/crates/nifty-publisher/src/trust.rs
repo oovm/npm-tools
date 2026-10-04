@@ -1,12 +1,13 @@
-use crate::cache::PlaceholderCache;
-use crate::otp::{OtpAuth, OtpOverrides};
-use crate::registry_trust::{RegistryTrustClient, TrustCreateOutcome};
-use crate::trust_expect::{resolve_trust_expect, TrustExpectInput};
-use crate::workspace::{
-    find_package_by_target, find_workspace_root, list_workspace_packages, registry_name,
-    unpublishable_package_names,
+use crate::{
+    Result,
+    cache::PlaceholderCache,
+    otp::{OtpAuth, OtpOverrides},
+    registry_trust::{RegistryTrustClient, TrustCreateOutcome},
+    trust_expect::{TrustExpectInput, resolve_trust_expect},
+    workspace::{
+        find_package_by_target, find_workspace_root, list_workspace_packages, registry_name, unpublishable_package_names,
+    },
 };
-use crate::Result;
 
 pub const TRUST_REPO: &str = "oovm/npm-tools";
 pub const TRUST_FILE: &str = "publish-npm.yml";
@@ -33,10 +34,7 @@ pub struct TrustReport {
 }
 
 pub fn trust_workspace(options: TrustOptions) -> Result<TrustReport> {
-    let cwd = options
-        .cwd
-        .clone()
-        .unwrap_or_else(|| std::env::current_dir().expect("current dir"));
+    let cwd = options.cwd.clone().unwrap_or_else(|| std::env::current_dir().expect("current dir"));
     let root = find_workspace_root(&cwd)?;
     let expect = resolve_trust_expect(&root, options.trust.as_ref());
     let names = resolve_trust_package_names(&root, &options)?;
@@ -44,12 +42,7 @@ pub fn trust_workspace(options: TrustOptions) -> Result<TrustReport> {
     let client = RegistryTrustClient::from_workspace(&auth, &root)?;
     let mut cache = PlaceholderCache::load(&root, &expect);
 
-    let mut report = TrustReport {
-        root: root.clone(),
-        configured: Vec::new(),
-        skipped: Vec::new(),
-        failed: Vec::new(),
-    };
+    let mut report = TrustReport { root: root.clone(), configured: Vec::new(), skipped: Vec::new(), failed: Vec::new() };
 
     for name in names {
         match configure_trust(&client, &mut cache, &expect, &name, options.dry_run, options.refresh) {
@@ -72,10 +65,8 @@ pub fn trust_workspace(options: TrustOptions) -> Result<TrustReport> {
 
 fn resolve_trust_package_names(root: &std::path::Path, options: &TrustOptions) -> Result<Vec<String>> {
     let workspace = list_workspace_packages(root)?;
-    let by_name = workspace
-        .iter()
-        .map(|package| (package.name.clone(), package.clone()))
-        .collect::<std::collections::BTreeMap<_, _>>();
+    let by_name =
+        workspace.iter().map(|package| (package.name.clone(), package.clone())).collect::<std::collections::BTreeMap<_, _>>();
     let blocked = unpublishable_package_names(&workspace, &by_name);
 
     let mut names: Vec<String> = if let Some(list) = &options.packages {
@@ -83,9 +74,7 @@ fn resolve_trust_package_names(root: &std::path::Path, options: &TrustOptions) -
             .filter(|target| {
                 if let Some(package) = find_package_by_target(&by_name, target) {
                     if blocked.contains(&package.name) {
-                        println!(
-                            "skip trust target {target} (private workspace package or depends on one)"
-                        );
+                        println!("skip trust target {target} (private workspace package or depends on one)");
                         return false;
                     }
                 }
@@ -93,7 +82,8 @@ fn resolve_trust_package_names(root: &std::path::Path, options: &TrustOptions) -
             })
             .cloned()
             .collect()
-    } else {
+    }
+    else {
         workspace
             .iter()
             .filter(|package| !blocked.contains(&package.name))

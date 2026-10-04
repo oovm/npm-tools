@@ -4,10 +4,7 @@ use oak_typescript::formatter::{FormatOptions, format_source};
 
 #[test]
 fn variable_declaration_rule_normalizes_spacing() {
-    assert_eq!(
-        format_source("const  x=1", &FormatOptions::default()).expect("format"),
-        "const x = 1"
-    );
+    assert_eq!(format_source("const  x=1", &FormatOptions::default()).expect("format"), "const x = 1");
 }
 
 #[test]

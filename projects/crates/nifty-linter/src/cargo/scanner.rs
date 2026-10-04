@@ -50,11 +50,7 @@ pub struct CargoFinding {
 /// 在 `root` 下发现全部 `Cargo.toml` 包目录（跳过 `target/`）。
 pub fn discover_packages(root: &Path) -> Vec<PathBuf> {
     let mut packages = Vec::new();
-    for entry in WalkDir::new(root)
-        .into_iter()
-        .filter_entry(should_walk_entry)
-        .filter_map(Result::ok)
-    {
+    for entry in WalkDir::new(root).into_iter().filter_entry(should_walk_entry).filter_map(Result::ok) {
         if entry.file_type().is_file() && entry.file_name() == "Cargo.toml" {
             packages.push(entry.path().parent().expect("Cargo.toml parent").to_path_buf());
         }
@@ -139,11 +135,7 @@ pub fn scan_misplaced(root: &Path) -> Vec<CargoFinding> {
 /// 超过 `1000` 行的 Rust 源文件。
 pub fn scan_large_files(root: &Path) -> Vec<CargoFinding> {
     let mut findings = Vec::new();
-    for entry in WalkDir::new(root)
-        .into_iter()
-        .filter_entry(should_walk_entry)
-        .filter_map(Result::ok)
-    {
+    for entry in WalkDir::new(root).into_iter().filter_entry(should_walk_entry).filter_map(Result::ok) {
         if !entry.file_type().is_file() {
             continue;
         }
@@ -166,11 +158,7 @@ pub fn scan_large_files(root: &Path) -> Vec<CargoFinding> {
 
 fn scan_readme_case(root: &Path) -> Vec<CargoFinding> {
     let mut findings = Vec::new();
-    for entry in WalkDir::new(root)
-        .into_iter()
-        .filter_entry(should_walk_entry)
-        .filter_map(Result::ok)
-    {
+    for entry in WalkDir::new(root).into_iter().filter_entry(should_walk_entry).filter_map(Result::ok) {
         if !entry.file_type().is_file() {
             continue;
         }
@@ -215,12 +203,7 @@ fn scan_package_integrity(package: &Path) -> Vec<CargoFinding> {
     if lib_rs.is_file() {
         let lib = fs::read_to_string(&lib_rs).unwrap_or_default();
         if let Some(message) = missing_docs_finding(&value, &lib) {
-            findings.push(CargoFinding {
-                kind: CargoFindingKind::MissingDocs,
-                path: lib_rs,
-                line: None,
-                message,
-            });
+            findings.push(CargoFinding { kind: CargoFindingKind::MissingDocs, path: lib_rs, line: None, message });
         }
     }
 
@@ -255,7 +238,8 @@ fn scan_workspace_member_manifest(manifest_path: &Path, package: &Value, workspa
                         message: format!("package.{field} 应当使用 workspace = true (以便在根目录统一管理)"),
                     });
                 }
-            } else if (field == "authors" || field == "license") && !pkg.contains_key(field) {
+            }
+            else if (field == "authors" || field == "license") && !pkg.contains_key(field) {
                 findings.push(CargoFinding {
                     kind: CargoFindingKind::WorkspaceInherit,
                     path: manifest_path.to_path_buf(),
@@ -275,9 +259,7 @@ fn scan_workspace_member_manifest(manifest_path: &Path, package: &Value, workspa
                             kind: CargoFindingKind::WorkspaceDep,
                             path: manifest_path.to_path_buf(),
                             line: None,
-                            message: format!(
-                                "依赖 '{name}' 应当使用 workspace = true (以便在根目录统一管理依赖)"
-                            ),
+                            message: format!("依赖 '{name}' 应当使用 workspace = true (以便在根目录统一管理依赖)"),
                         });
                     }
                 }
@@ -397,7 +379,8 @@ fn scan_misplaced_root_files(package: &Path) -> Vec<CargoFinding> {
     let allowed_dirs: HashSet<&str> =
         HashSet::from(["src", "tests", "benches", "examples", "target", ".git", ".github", "scripts", "documentation", "bin"]);
 
-    let Ok(entries) = fs::read_dir(package) else {
+    let Ok(entries) = fs::read_dir(package)
+    else {
         return findings;
     };
 

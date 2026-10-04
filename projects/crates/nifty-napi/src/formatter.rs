@@ -2,9 +2,7 @@
 
 use napi::bindgen_prelude::*;
 use napi_derive::napi;
-use nifty_formatter::{
-    run_format, FormatReport as CoreFormatReport, FormatStyleOptions, RunFormatOptions,
-};
+use nifty_formatter::{FormatReport as CoreFormatReport, FormatStyleOptions, RunFormatOptions, run_format};
 
 #[napi(object)]
 pub struct FormatStyleOptionsNapi {
@@ -60,9 +58,5 @@ pub fn formatter_run(options: FormatRunOptions) -> Result<FormatReportNapi> {
 }
 
 fn to_napi_report(report: CoreFormatReport) -> FormatReportNapi {
-    FormatReportNapi {
-        formatted: report.formatted as u32,
-        unchanged: report.unchanged as u32,
-        errors: report.errors,
-    }
+    FormatReportNapi { formatted: report.formatted as u32, unchanged: report.unchanged as u32, errors: report.errors }
 }

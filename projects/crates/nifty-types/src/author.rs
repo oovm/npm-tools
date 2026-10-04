@@ -22,7 +22,8 @@ pub fn load_author_map_from_json(text: &str) -> HashMap<String, GithubAuthor> {
         Ok(value) => value,
         Err(_) => return HashMap::new(),
     };
-    let Some(object) = raw.as_object() else {
+    let Some(object) = raw.as_object()
+    else {
         return HashMap::new();
     };
     let mut out = HashMap::new();
@@ -39,21 +40,13 @@ pub fn parse_author_entry(value: &Value) -> Option<GithubAuthor> {
     match value {
         Value::String(login) => {
             let login = login.trim();
-            if login.is_empty() {
-                None
-            } else {
-                Some(GithubAuthor { id: None, login: Some(login.to_string()) })
-            }
+            if login.is_empty() { None } else { Some(GithubAuthor { id: None, login: Some(login.to_string()) }) }
         }
         Value::Number(number) => number.as_u64().map(|id| GithubAuthor { id: Some(id), login: None }),
         Value::Object(object) => {
             let login = object.get("login").and_then(Value::as_str).map(str::trim).filter(|s| !s.is_empty());
             let id = object.get("id").and_then(Value::as_u64);
-            if login.is_some() || id.is_some() {
-                Some(GithubAuthor { id, login: login.map(str::to_string) })
-            } else {
-                None
-            }
+            if login.is_some() || id.is_some() { Some(GithubAuthor { id, login: login.map(str::to_string) }) } else { None }
         }
         _ => None,
     }
@@ -97,10 +90,7 @@ fn parse_noreply_login_only(email: &str) -> Option<GithubAuthor> {
 
 /// 合并两位贡献者信息（补全缺失的 id / login）。
 pub fn merge_authors(existing: &GithubAuthor, incoming: &GithubAuthor) -> GithubAuthor {
-    GithubAuthor {
-        id: existing.id.or(incoming.id),
-        login: existing.login.clone().or_else(|| incoming.login.clone()),
-    }
+    GithubAuthor { id: existing.id.or(incoming.id), login: existing.login.clone().or_else(|| incoming.login.clone()) }
 }
 
 /// 合并 noreply 解析与本地映射。

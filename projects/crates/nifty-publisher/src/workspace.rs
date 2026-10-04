@@ -1,6 +1,8 @@
-use std::collections::{BTreeMap, HashSet};
-use std::fs;
-use std::path::{Path, PathBuf};
+use std::{
+    collections::{BTreeMap, HashSet},
+    fs,
+    path::{Path, PathBuf},
+};
 
 use nifty_config::detect_project_layout;
 use serde::Deserialize;
@@ -8,12 +10,7 @@ use serde_json::Value;
 
 use crate::Result;
 
-const DEPENDENCY_FIELDS: [&str; 4] = [
-    "dependencies",
-    "devDependencies",
-    "optionalDependencies",
-    "peerDependencies",
-];
+const DEPENDENCY_FIELDS: [&str; 4] = ["dependencies", "devDependencies", "optionalDependencies", "peerDependencies"];
 
 /// Parsed `package.json` fields used for publishing.
 #[derive(Debug, Clone, Deserialize)]
@@ -153,11 +150,7 @@ fn parse_pnpm_workspace_patterns(text: &str) -> Vec<String> {
             }
             break;
         }
-        let value = trimmed
-            .trim_start_matches('-')
-            .trim()
-            .trim_matches('\'')
-            .trim_matches('"');
+        let value = trimmed.trim_start_matches('-').trim().trim_matches('\'').trim_matches('"');
         if !value.is_empty() {
             patterns.push(value.to_string());
         }
@@ -216,10 +209,7 @@ pub fn registry_name(package: &NpmPackage) -> &str {
 }
 
 /// Resolve a publish/trust target against workspace `name` or `publishConfig.name`.
-pub fn find_package_by_target<'a>(
-    by_name: &'a BTreeMap<String, NpmPackage>,
-    target: &str,
-) -> Option<&'a NpmPackage> {
+pub fn find_package_by_target<'a>(by_name: &'a BTreeMap<String, NpmPackage>, target: &str) -> Option<&'a NpmPackage> {
     if let Some(package) = by_name.get(target) {
         return Some(package);
     }
@@ -250,15 +240,9 @@ pub fn collect_required_internal_dependency_names(
 }
 
 /// Workspace packages that must not publish: `private: true` plus dependents blocked by a required private dep.
-pub fn unpublishable_package_names(
-    packages: &[NpmPackage],
-    by_name: &BTreeMap<String, NpmPackage>,
-) -> HashSet<String> {
-    let mut blocked: HashSet<String> = packages
-        .iter()
-        .filter(|package| package.private)
-        .map(|package| package.name.clone())
-        .collect();
+pub fn unpublishable_package_names(packages: &[NpmPackage], by_name: &BTreeMap<String, NpmPackage>) -> HashSet<String> {
+    let mut blocked: HashSet<String> =
+        packages.iter().filter(|package| package.private).map(|package| package.name.clone()).collect();
     let mut changed = true;
     while changed {
         changed = false;
@@ -278,10 +262,7 @@ pub fn unpublishable_package_names(
     blocked
 }
 
-pub fn collect_internal_dependency_names(
-    package: &NpmPackage,
-    by_name: &BTreeMap<String, NpmPackage>,
-) -> HashSet<String> {
+pub fn collect_internal_dependency_names(package: &NpmPackage, by_name: &BTreeMap<String, NpmPackage>) -> HashSet<String> {
     let mut deps = HashSet::new();
     for field in DEPENDENCY_FIELDS {
         let entries = dependency_entries(package, field);
@@ -309,11 +290,7 @@ fn dependency_entries(package: &NpmPackage, field: &str) -> Vec<(String, String)
     map.iter().map(|(name, spec)| (name.clone(), spec.clone())).collect()
 }
 
-fn resolve_workspace_dependency_name(
-    spec: &str,
-    package_dir: &Path,
-    by_name: &BTreeMap<String, NpmPackage>,
-) -> Option<String> {
+fn resolve_workspace_dependency_name(spec: &str, package_dir: &Path, by_name: &BTreeMap<String, NpmPackage>) -> Option<String> {
     if spec.starts_with("workspace:") {
         return None;
     }

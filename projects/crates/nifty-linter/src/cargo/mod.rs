@@ -2,6 +2,4 @@
 
 mod scanner;
 
-pub use scanner::{
-    scan_doc_spec, scan_integrity, scan_large_files, scan_misplaced, CargoFindingKind,
-};
+pub use scanner::{CargoFindingKind, scan_doc_spec, scan_integrity, scan_large_files, scan_misplaced};

@@ -1,5 +1,7 @@
-use std::fs;
-use std::path::{Path, PathBuf};
+use std::{
+    fs,
+    path::{Path, PathBuf},
+};
 
 /// Detected project ecosystem.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -50,12 +52,8 @@ pub fn detect_project_layout(start: &Path) -> ProjectLayout {
     let start = start.canonicalize().unwrap_or_else(|_| start.to_path_buf());
     let cargo_manifest = find_cargo_manifest(&start);
     let package_manifest = find_package_manifest(&start);
-    let cargo_workspace_root = cargo_manifest
-        .as_deref()
-        .and_then(|manifest| find_cargo_workspace_root(manifest));
-    let npm_workspace_root = package_manifest
-        .as_deref()
-        .and_then(|manifest| find_npm_workspace_root(manifest));
+    let cargo_workspace_root = cargo_manifest.as_deref().and_then(|manifest| find_cargo_workspace_root(manifest));
+    let npm_workspace_root = package_manifest.as_deref().and_then(|manifest| find_npm_workspace_root(manifest));
     let kind = classify_project(cargo_manifest.is_some(), package_manifest.is_some());
     let root = find_git_root(&start)
         .or(cargo_workspace_root.clone())
@@ -64,14 +62,7 @@ pub fn detect_project_layout(start: &Path) -> ProjectLayout {
         .or_else(|| package_manifest.as_ref().and_then(|path| path.parent().map(Path::to_path_buf)))
         .unwrap_or(start);
 
-    ProjectLayout {
-        root,
-        kind,
-        cargo_manifest,
-        package_manifest,
-        cargo_workspace_root,
-        npm_workspace_root,
-    }
+    ProjectLayout { root, kind, cargo_manifest, package_manifest, cargo_workspace_root, npm_workspace_root }
 }
 
 fn classify_project(has_cargo: bool, has_npm: bool) -> ProjectKind {
@@ -137,9 +128,7 @@ fn find_npm_workspace_root(manifest: &Path) -> Option<PathBuf> {
 }
 
 fn manifest_has_cargo_workspace(manifest: &Path) -> bool {
-    fs::read_to_string(manifest)
-        .ok()
-        .is_some_and(|content| content.lines().any(|line| line.trim() == "[workspace]"))
+    fs::read_to_string(manifest).ok().is_some_and(|content| content.lines().any(|line| line.trim() == "[workspace]"))
 }
 
 fn manifest_has_npm_workspaces(manifest: &Path) -> bool {
@@ -154,14 +143,11 @@ fn manifest_has_npm_workspaces(manifest: &Path) -> bool {
 mod tests {
     use std::path::{Path, PathBuf};
 
-    use super::{detect_project_layout, find_cargo_manifest, find_package_manifest, ProjectKind};
+    use super::{ProjectKind, detect_project_layout, find_cargo_manifest, find_package_manifest};
 
     #[test]
     fn detects_hybrid_repo_from_nested_package() {
-        let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-            .join("../../..")
-            .canonicalize()
-            .expect("repo root");
+        let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../..").canonicalize().expect("repo root");
         let layout = detect_project_layout(&root.join("projects/packages/nifty"));
         assert_eq!(layout.kind, ProjectKind::Hybrid);
         assert!(layout.cargo_manifest.is_some());
@@ -172,20 +158,15 @@ mod tests {
 
     #[test]
     fn finds_nearest_cargo_manifest_in_crate_dir() {
-        let crate_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-            .join("../nifty-types")
-            .canonicalize()
-            .expect("nifty-types dir");
+        let crate_dir =
+            PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../nifty-types").canonicalize().expect("nifty-types dir");
         let manifest = find_cargo_manifest(&crate_dir).expect("crate manifest");
         assert!(manifest.ends_with("nifty-types/Cargo.toml"));
     }
 
     #[test]
     fn finds_repo_package_json_from_crate_dir() {
-        let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-            .join("../../..")
-            .canonicalize()
-            .expect("repo root");
+        let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../..").canonicalize().expect("repo root");
         let crate_dir = root.join("projects/crates/nifty-types");
         let manifest = find_package_manifest(&crate_dir).expect("root package.json");
         assert_eq!(manifest, root.join("package.json"));

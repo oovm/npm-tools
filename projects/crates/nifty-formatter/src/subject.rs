@@ -3,11 +3,7 @@
 /// Format a commit subject as `<gitmoji> <body>` (Nifty default convention).
 pub fn format_subject(gitmoji: &str, body: &str) -> String {
     let body = body.trim();
-    if body.is_empty() {
-        gitmoji.to_string()
-    } else {
-        format!("{gitmoji} {body}")
-    }
+    if body.is_empty() { gitmoji.to_string() } else { format!("{gitmoji} {body}") }
 }
 
 #[cfg(test)]

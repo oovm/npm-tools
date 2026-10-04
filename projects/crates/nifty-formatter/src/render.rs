@@ -2,7 +2,7 @@
 
 use std::collections::HashMap;
 
-use nifty_types::{display_login, profile_url, resolve_github_author, section_meta, GithubAuthor, Section};
+use nifty_types::{GithubAuthor, Section, display_login, profile_url, resolve_github_author, section_meta};
 
 /// Markdown author mention.
 pub fn author_mention(email: &str, author_name: &str, map: &HashMap<String, GithubAuthor>) -> String {
@@ -35,11 +35,7 @@ pub fn render_section_bullets(
     if commits.is_empty() {
         return empty.to_string();
     }
-    commits
-        .iter()
-        .map(|(body, email, author)| commit_bullet(body, email, author, map))
-        .collect::<Vec<_>>()
-        .join("\n")
+    commits.iter().map(|(body, email, author)| commit_bullet(body, email, author, map)).collect::<Vec<_>>().join("\n")
 }
 
 #[cfg(test)]

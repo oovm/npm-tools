@@ -13,7 +13,8 @@ pub struct DiscoverOptions {
 pub fn discover_format_targets(root: &Path, options: &DiscoverOptions) -> Result<Vec<PathBuf>, String> {
     let mut paths = if let Some(includes) = options.includes.as_ref().filter(|items| !items.is_empty()) {
         expand_includes(root, includes)?
-    } else {
+    }
+    else {
         discover_default_targets(root)?
     };
 
@@ -50,12 +51,7 @@ fn expand_includes(root: &Path, includes: &[String]) -> Result<Vec<PathBuf>, Str
 fn discover_default_targets(root: &Path) -> Result<Vec<PathBuf>, String> {
     let mut paths = Vec::new();
 
-    for segment in [
-        "scripts",
-        "projects/packages",
-        "projects/conformance",
-        "projects/dashboard",
-    ] {
+    for segment in ["scripts", "projects/packages", "projects/conformance", "projects/dashboard"] {
         let dir = root.join(segment);
         if dir.is_dir() {
             collect_tree(&dir, &mut paths);
@@ -101,7 +97,8 @@ fn collect_problem_metadata(root: &Path, out: &mut Vec<PathBuf>) {
 }
 
 fn collect_root_sources(root: &Path, out: &mut Vec<PathBuf>) {
-    let Ok(entries) = std::fs::read_dir(root) else {
+    let Ok(entries) = std::fs::read_dir(root)
+    else {
         return;
     };
     for entry in entries.filter_map(Result::ok) {
@@ -155,17 +152,11 @@ fn is_format_target(path: &Path) -> bool {
 }
 
 pub fn layout_has_js_targets(root: &Path) -> bool {
-    discover_format_targets(root, &DiscoverOptions::default())
-        .map(|paths| !paths.is_empty())
-        .unwrap_or(false)
+    discover_format_targets(root, &DiscoverOptions::default()).map(|paths| !paths.is_empty()).unwrap_or(false)
 }
 
 fn is_excluded(root: &Path, path: &Path, excludes: &[String]) -> bool {
-    let relative = path
-        .strip_prefix(root)
-        .unwrap_or(path)
-        .to_string_lossy()
-        .replace('\\', "/");
+    let relative = path.strip_prefix(root).unwrap_or(path).to_string_lossy().replace('\\', "/");
     excludes.iter().any(|pattern| glob_matches(&relative, pattern))
 }
 

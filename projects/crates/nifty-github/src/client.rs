@@ -33,11 +33,13 @@ pub fn search_user_by_email(email: &str, token: &str) -> Result<Option<GithubAut
     let url = format!("https://api.github.com/search/users?q={}", urlencoding::encode(&query));
     let body = get_json(&url, Some(token))?;
     let items = body.get("items").and_then(Value::as_array);
-    let Some(items) = items else {
+    let Some(items) = items
+    else {
         return Ok(None);
     };
     let first = items.first().and_then(Value::as_object);
-    let Some(first) = first else {
+    let Some(first) = first
+    else {
         return Ok(None);
     };
     let id = first.get("id").and_then(Value::as_u64);
@@ -50,11 +52,7 @@ pub fn search_user_by_email(email: &str, token: &str) -> Result<Option<GithubAut
 
 pub fn parse_user_json(body: &Value, fallback_login: Option<&str>) -> Result<GithubAuthor> {
     let id = body.get("id").and_then(Value::as_u64);
-    let login = body
-        .get("login")
-        .and_then(Value::as_str)
-        .map(str::to_string)
-        .or_else(|| fallback_login.map(str::to_string));
+    let login = body.get("login").and_then(Value::as_str).map(str::to_string).or_else(|| fallback_login.map(str::to_string));
     if id.is_none() && login.is_none() {
         return Err("GitHub user response missing id and login".to_string());
     }
@@ -77,9 +75,7 @@ fn get_json(url: &str, token: Option<&str>) -> Result<Value> {
     if !(200..300).contains(&status) {
         return Err(format!("GitHub API error: {} {}", status, response.status_text()));
     }
-    response
-        .into_json()
-        .map_err(|err| format!("parse GitHub API JSON: {err}"))
+    response.into_json().map_err(|err| format!("parse GitHub API JSON: {err}"))
 }
 
 #[cfg(test)]

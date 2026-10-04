@@ -2,7 +2,7 @@
 
 use napi::bindgen_prelude::*;
 use napi_derive::napi;
-use nifty_linter::{run_lint, LintOptions as CoreLintOptions, LintReport as CoreLintReport, RuleConfig, RuleSeverity};
+use nifty_linter::{LintOptions as CoreLintOptions, LintReport as CoreLintReport, RuleConfig, RuleSeverity, run_lint};
 
 #[napi(object)]
 pub struct LintRuleConfig {

@@ -11,10 +11,7 @@ fn discover_npm_tools_repo() {
 
 #[test]
 fn parse_github_origin_url() {
-    assert_eq!(
-        parse_github_remote_repo("https://github.com/oovm/npm-tools.git"),
-        Some("oovm/npm-tools".to_string())
-    );
+    assert_eq!(parse_github_remote_repo("https://github.com/oovm/npm-tools.git"), Some("oovm/npm-tools".to_string()));
 }
 
 #[test]

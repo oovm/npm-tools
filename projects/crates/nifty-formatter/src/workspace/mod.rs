@@ -4,10 +4,12 @@ mod oak;
 mod style;
 mod walk;
 
-use std::fs;
-use std::path::{Path, PathBuf};
+use std::{
+    fs,
+    path::{Path, PathBuf},
+};
 
-use nifty_config::{detect_project_layout, ProjectKind};
+use nifty_config::{ProjectKind, detect_project_layout};
 
 pub use engine::{format_source, format_source_with_options};
 pub use style::{FormatStyleOptions, default_format_options, resolve_format_options};
@@ -42,10 +44,7 @@ pub type Result<T> = std::result::Result<T, String>;
 
 /// Format JS/TS/JSX/TSX via Oak and Rust via cargo fmt.
 pub fn run_format(options: RunFormatOptions) -> Result<FormatReport> {
-    let cwd = options
-        .cwd
-        .clone()
-        .unwrap_or_else(|| std::env::current_dir().expect("current dir"));
+    let cwd = options.cwd.clone().unwrap_or_else(|| std::env::current_dir().expect("current dir"));
     let layout = detect_project_layout(&cwd);
     let mut report = FormatReport::default();
 
@@ -61,13 +60,9 @@ pub fn run_format(options: RunFormatOptions) -> Result<FormatReport> {
 
     let javascript_enabled = options.javascript.unwrap_or(true);
     if javascript_enabled
-        && (matches!(layout.kind, ProjectKind::Npm | ProjectKind::Hybrid)
-            || walk::layout_has_js_targets(&layout.root))
+        && (matches!(layout.kind, ProjectKind::Npm | ProjectKind::Hybrid) || walk::layout_has_js_targets(&layout.root))
     {
-        let discover = walk::DiscoverOptions {
-            includes: options.includes.clone(),
-            excludes: options.excludes.clone(),
-        };
+        let discover = walk::DiscoverOptions { includes: options.includes.clone(), excludes: options.excludes.clone() };
         let format_options = resolve_format_options(options.style.as_ref())?;
         for path in walk::discover_format_targets(&layout.root, &discover)? {
             format_path(&path, options.check, &mut report, &format_options)?;

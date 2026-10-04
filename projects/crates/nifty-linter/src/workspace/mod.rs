@@ -2,4 +2,4 @@
 
 mod scanner;
 
-pub use scanner::{scan_large_typescript_files, WorkspaceFindingKind};
+pub use scanner::{WorkspaceFindingKind, scan_large_typescript_files};

@@ -1,5 +1,4 @@
-use std::fs;
-use std::process::Command;
+use std::{fs, process::Command};
 
 use nifty_publisher::{OtpOverrides, PublishOptions, plan_publish_order, publish_workspace};
 use tempfile::tempdir;
@@ -31,13 +30,7 @@ fn plans_dependency_order_from_manifests() {
     let root = tempdir().expect("tempdir");
     write_workspace_skeleton(root.path());
     write_package(root.path(), "platform", "@scope/platform", false, "{}");
-    write_package(
-        root.path(),
-        "main",
-        "@scope/main",
-        false,
-        r#"{ "@scope/platform": "file:../platform" }"#,
-    );
+    write_package(root.path(), "main", "@scope/main", false, r#"{ "@scope/platform": "file:../platform" }"#);
 
     let packages = nifty_publisher::list_workspace_packages(root.path()).expect("packages");
     let order = plan_publish_order(&packages).expect("order");
@@ -45,11 +38,7 @@ fn plans_dependency_order_from_manifests() {
 }
 
 fn npm_available() -> bool {
-    Command::new("npm")
-        .arg("--version")
-        .status()
-        .map(|status| status.success())
-        .unwrap_or(false)
+    Command::new("npm").arg("--version").status().map(|status| status.success()).unwrap_or(false)
 }
 
 #[test]
@@ -61,13 +50,7 @@ fn publish_workspace_dry_run_restores_manifest() {
     let root = tempdir().expect("tempdir");
     write_workspace_skeleton(root.path());
     write_package(root.path(), "platform", "@scope/platform", false, "{}");
-    write_package(
-        root.path(),
-        "main",
-        "@scope/main",
-        false,
-        r#"{ "@scope/platform": "file:../platform" }"#,
-    );
+    write_package(root.path(), "main", "@scope/main", false, r#"{ "@scope/platform": "file:../platform" }"#);
 
     let main_manifest = root.path().join("projects/packages/main/package.json");
     let before = fs::read_to_string(&main_manifest).expect("read manifest");

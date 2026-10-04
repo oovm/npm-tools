@@ -22,8 +22,8 @@ fn parse_expr_snippet(trimmed: &str) -> Option<oak_typescript::ast::Expression> 
 
 #[test]
 fn prints_binary_with_spacing_via_formatter() {
-    let out = oak_typescript::formatter::format_source("a+b", &oak_typescript::formatter::FormatOptions::default())
-        .expect("format");
+    let out =
+        oak_typescript::formatter::format_source("a+b", &oak_typescript::formatter::FormatOptions::default()).expect("format");
     assert_eq!(out, "a + b");
 }
 

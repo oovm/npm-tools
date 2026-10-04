@@ -47,11 +47,7 @@ pub fn format_tag_list(repo_root: &Path) -> Result<String> {
     if tags.is_empty() {
         return Ok("(no v* tags)".to_string());
     }
-    Ok(tags
-        .into_iter()
-        .map(|tag| format!("{}\t{}", tag.name, tag.short_hash))
-        .collect::<Vec<_>>()
-        .join("\n"))
+    Ok(tags.into_iter().map(|tag| format!("{}\t{}", tag.name, tag.short_hash)).collect::<Vec<_>>().join("\n"))
 }
 
 fn compare_version_tags(left: &str, right: &str) -> std::cmp::Ordering {

@@ -2,7 +2,7 @@
 
 use napi::bindgen_prelude::*;
 use napi_derive::napi;
-use nifty_updater::{run_update, UpdateOptions as CoreUpdateOptions};
+use nifty_updater::{UpdateOptions as CoreUpdateOptions, run_update};
 
 #[napi(object)]
 pub struct UpdateRunOptions {

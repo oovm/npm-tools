@@ -20,10 +20,7 @@ pub fn fetch_crate_latest(name: &str) -> Result<String> {
 pub fn fetch_npm_latest(name: &str) -> Result<String> {
     let url = format!("{NPM_REGISTRY}/{}/latest", urlencoding::encode(name));
     let value = fetch_json(&url)?;
-    let version = value
-        .get("version")
-        .and_then(Value::as_str)
-        .ok_or_else(|| format!("npm: missing version for `{name}`"))?;
+    let version = value.get("version").and_then(Value::as_str).ok_or_else(|| format!("npm: missing version for `{name}`"))?;
     Ok(version.to_string())
 }
 

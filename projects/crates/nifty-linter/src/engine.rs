@@ -1,7 +1,9 @@
-use crate::context::{CommitInput, LintContext};
-use crate::rule::{default_rules, LintDiagnostic, RuleConfig, RuleSeverity};
-use crate::rules::{lint_cargo_workspace, lint_commit, lint_typescript_workspace};
-use nifty_config::{detect_project_layout, ProjectKind};
+use crate::{
+    context::{CommitInput, LintContext},
+    rule::{LintDiagnostic, RuleConfig, RuleSeverity, default_rules},
+    rules::{lint_cargo_workspace, lint_commit, lint_typescript_workspace},
+};
+use nifty_config::{ProjectKind, detect_project_layout};
 
 pub type Result<T> = std::result::Result<T, String>;
 
@@ -11,11 +13,7 @@ pub fn run_lint(options: LintOptions) -> Result<LintReport> {
     let rules = merge_rules(options.rules.clone(), options.commit_only.unwrap_or(false));
     let commits = load_commits(&options, subject_only)?;
     let ctx = LintContext::new(commits, rules);
-    let mut diagnostics = ctx
-        .commits
-        .iter()
-        .flat_map(|commit| lint_commit(&ctx, commit))
-        .collect::<Vec<_>>();
+    let mut diagnostics = ctx.commits.iter().flat_map(|commit| lint_commit(&ctx, commit)).collect::<Vec<_>>();
 
     if should_scan_workspace(&options, subject_only) {
         if let Some(root) = resolve_workspace_scan_root(&options) {
@@ -42,12 +40,9 @@ pub fn run_check(options: LintOptions) -> Result<LintReport> {
 }
 
 fn merge_rules(custom: Option<Vec<RuleConfig>>, commit_only: bool) -> Vec<RuleConfig> {
-    let base = if commit_only {
-        crate::rule::default_commit_rules()
-    } else {
-        default_rules()
-    };
-    let Some(custom) = custom else {
+    let base = if commit_only { crate::rule::default_commit_rules() } else { default_rules() };
+    let Some(custom) = custom
+    else {
         return base;
     };
 
@@ -55,7 +50,8 @@ fn merge_rules(custom: Option<Vec<RuleConfig>>, commit_only: bool) -> Vec<RuleCo
     for override_rule in custom {
         if let Some(existing) = merged.iter_mut().find(|rule| rule.id == override_rule.id) {
             *existing = override_rule;
-        } else {
+        }
+        else {
             merged.push(override_rule);
         }
     }
@@ -70,22 +66,12 @@ fn load_commits(options: &LintOptions, subject_only: bool) -> Result<Vec<CommitI
     }
 
     if options.repo_root.is_some() || options.from_ref.is_some() || options.to_ref.is_some() {
-        let repo_root = options
-            .repo_root
-            .clone()
-            .unwrap_or_else(|| std::env::current_dir().expect("current dir"));
-        commits.extend(crate::git::load_commits(
-            &repo_root,
-            options.from_ref.as_deref(),
-            options.to_ref.as_deref(),
-        )?);
+        let repo_root = options.repo_root.clone().unwrap_or_else(|| std::env::current_dir().expect("current dir"));
+        commits.extend(crate::git::load_commits(&repo_root, options.from_ref.as_deref(), options.to_ref.as_deref())?);
     }
 
     if commits.is_empty() {
-        let start = options
-            .repo_root
-            .clone()
-            .unwrap_or_else(|| std::env::current_dir().unwrap_or_default());
+        let start = options.repo_root.clone().unwrap_or_else(|| std::env::current_dir().unwrap_or_default());
         if let Ok(root) = nifty_git::discover_root(&start) {
             commits.extend(crate::git::load_commits(&root, None, Some("HEAD"))?);
         }
@@ -95,10 +81,7 @@ fn load_commits(options: &LintOptions, subject_only: bool) -> Result<Vec<CommitI
 }
 
 fn is_subject_only(options: &LintOptions) -> bool {
-    !options.subjects.is_empty()
-        && options.from_ref.is_none()
-        && options.to_ref.is_none()
-        && options.repo_root.is_none()
+    !options.subjects.is_empty() && options.from_ref.is_none() && options.to_ref.is_none() && options.repo_root.is_none()
 }
 
 fn should_scan_workspace(options: &LintOptions, subject_only: bool) -> bool {
@@ -113,11 +96,7 @@ fn should_scan_cargo(options: &LintOptions, subject_only: bool) -> bool {
 }
 
 fn resolve_workspace_scan_root(options: &LintOptions) -> Option<std::path::PathBuf> {
-    let start = options
-        .repo_root
-        .clone()
-        .or_else(|| options.cwd.clone())
-        .or_else(|| std::env::current_dir().ok())?;
+    let start = options.repo_root.clone().or_else(|| options.cwd.clone()).or_else(|| std::env::current_dir().ok())?;
     let layout = detect_project_layout(&start);
     match layout.kind {
         ProjectKind::Cargo | ProjectKind::Hybrid | ProjectKind::Npm => Some(layout.root),
@@ -126,11 +105,7 @@ fn resolve_workspace_scan_root(options: &LintOptions) -> Option<std::path::PathB
 }
 
 fn resolve_cargo_scan_root(options: &LintOptions) -> Option<std::path::PathBuf> {
-    let start = options
-        .repo_root
-        .clone()
-        .or_else(|| options.cwd.clone())
-        .or_else(|| std::env::current_dir().ok())?;
+    let start = options.repo_root.clone().or_else(|| options.cwd.clone()).or_else(|| std::env::current_dir().ok())?;
     let layout = detect_project_layout(&start);
     match layout.kind {
         ProjectKind::Cargo | ProjectKind::Hybrid => layout.cargo_workspace_root.or(Some(layout.root)),
@@ -169,10 +144,7 @@ impl LintReport {
     }
 
     pub fn warning_count(&self) -> usize {
-        self.diagnostics
-            .iter()
-            .filter(|item| item.severity == RuleSeverity::Warning)
-            .count()
+        self.diagnostics.iter().filter(|item| item.severity == RuleSeverity::Warning).count()
     }
 
     pub fn print_human(&self) {
@@ -189,20 +161,14 @@ impl LintReport {
             let hash = item.hash.as_deref().unwrap_or("-");
             let subject = item.subject.as_deref().unwrap_or("-");
             if item.subject.is_some() {
-                println!(
-                    "[{:?}] {} ({}) {}",
-                    item.severity, item.rule, hash, subject
-                );
-            } else {
+                println!("[{:?}] {} ({}) {}", item.severity, item.rule, hash, subject);
+            }
+            else {
                 println!("[{:?}] {} {}", item.severity, item.rule, location);
             }
             println!("  {}", item.message);
         }
-        println!(
-            "lint: {} error(s), {} warning(s)",
-            self.error_count(),
-            self.warning_count()
-        );
+        println!("lint: {} error(s), {} warning(s)", self.error_count(), self.warning_count());
     }
 }
 

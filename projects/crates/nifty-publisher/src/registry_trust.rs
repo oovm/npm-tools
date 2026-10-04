@@ -1,11 +1,13 @@
 use std::path::Path;
 
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
-use crate::cache::{classify_configs, TrustExpect};
-use crate::npmrc::NpmRc;
-use crate::otp::OtpAuth;
-use crate::Result;
+use crate::{
+    Result,
+    cache::{TrustExpect, classify_configs},
+    npmrc::NpmRc,
+    otp::OtpAuth,
+};
 
 const USER_AGENT: &str = "nifty-publisher (https://github.com/oovm/npm-tools)";
 
@@ -16,24 +18,14 @@ pub struct RegistryTrustClient {
 
 impl RegistryTrustClient {
     pub fn from_workspace(auth: &OtpAuth, workspace_root: &Path) -> Result<Self> {
-        Ok(Self {
-            npmrc: NpmRc::load_merged(workspace_root),
-            auth: auth.clone(),
-        })
+        Ok(Self { npmrc: NpmRc::load_merged(workspace_root), auth: auth.clone() })
     }
 
     pub fn list(&self, package: &str) -> Result<Vec<Value>> {
         let registry = self.npmrc.registry_for_package(package);
         let token = resolve_registry_token(&self.auth, &self.npmrc, package)?;
         let path = trust_path(package);
-        let (status, body) = registry_request(
-            &registry,
-            "GET",
-            &path,
-            &token,
-            self.auth.current_otp().as_deref(),
-            None,
-        )?;
+        let (status, body) = registry_request(&registry, "GET", &path, &token, self.auth.current_otp().as_deref(), None)?;
         if status == 404 {
             return Ok(Vec::new());
         }
@@ -48,20 +40,12 @@ impl RegistryTrustClient {
         let token = resolve_registry_token(&self.auth, &self.npmrc, package)?;
         let path = trust_path(package);
         let body = trust_create_body(expect);
-        let (status, response_body) = registry_request(
-            &registry,
-            "POST",
-            &path,
-            &token,
-            self.auth.current_otp().as_deref(),
-            Some(&body),
-        )?;
+        let (status, response_body) =
+            registry_request(&registry, "POST", &path, &token, self.auth.current_otp().as_deref(), Some(&body))?;
         match status {
             200 | 201 => Ok(TrustCreateOutcome::Created),
             409 => Ok(TrustCreateOutcome::AlreadyExists),
-            _ => Err(format!(
-                "registry trust create failed for {package} ({status}): {response_body}"
-            )),
+            _ => Err(format!("registry trust create failed for {package} ({status}): {response_body}")),
         }
     }
 }
@@ -156,10 +140,9 @@ fn registry_request(
         request = request.set("npm-otp", code);
     }
     let response = if let Some(bytes) = &payload {
-        request
-            .set("Content-Type", "application/json")
-            .send_bytes(bytes)
-    } else {
+        request.set("Content-Type", "application/json").send_bytes(bytes)
+    }
+    else {
         request.call()
     }
     .map_err(|err| format!("registry request failed ({method} {url}): {err}"))?;
@@ -187,10 +170,7 @@ mod tests {
         });
         let entry = body.as_array().and_then(|items| items.first()).expect("array");
         assert_eq!(entry.get("type").and_then(Value::as_str), Some("github"));
-        assert_eq!(
-            entry.pointer("/claims/repository").and_then(Value::as_str),
-            Some("yy-database/yydb")
-        );
+        assert_eq!(entry.pointer("/claims/repository").and_then(Value::as_str), Some("yy-database/yydb"));
     }
 
     #[test]

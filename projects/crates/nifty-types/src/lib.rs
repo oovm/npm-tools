@@ -8,6 +8,6 @@ pub use author::{
     parse_author_entry, profile_url, resolve_github_author,
 };
 pub use gitmoji::{
-    ParsedSubject, Section, all_sections, known_gitmojis, leading_gitmoji, parse_subject,
-    section_for_gitmoji, section_from_name, section_meta, section_name, strip_gitmoji, validate_subject,
+    ParsedSubject, Section, all_sections, known_gitmojis, leading_gitmoji, parse_subject, section_for_gitmoji,
+    section_from_name, section_meta, section_name, strip_gitmoji, validate_subject,
 };

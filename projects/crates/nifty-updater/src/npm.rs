@@ -1,22 +1,21 @@
-use std::collections::BTreeSet;
-use std::fs;
-use std::path::{Path, PathBuf};
-use std::process::Command;
+use std::{
+    collections::BTreeSet,
+    fs,
+    path::{Path, PathBuf},
+    process::Command,
+};
 
 use dialoguer::MultiSelect;
 use nifty_config::ProjectLayout;
 use serde_json::{Map, Value};
 
-use crate::registry::fetch_npm_latest;
-use crate::version::{npm_spec_version, npm_upgrade_needed, npm_version_spec};
-use crate::Result;
+use crate::{
+    Result,
+    registry::fetch_npm_latest,
+    version::{npm_spec_version, npm_upgrade_needed, npm_version_spec},
+};
 
-const DEPENDENCY_FIELDS: [&str; 4] = [
-    "dependencies",
-    "devDependencies",
-    "optionalDependencies",
-    "peerDependencies",
-];
+const DEPENDENCY_FIELDS: [&str; 4] = ["dependencies", "devDependencies", "optionalDependencies", "peerDependencies"];
 
 /// One outdated JavaScript dependency from npm registry lookup.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -52,14 +51,13 @@ pub fn list_outdated(package_dir: &Path) -> Result<Vec<NpmOutdated>> {
     }
     let raw = fs::read_to_string(&manifest_path).map_err(|err| err.to_string())?;
     let value: Value = serde_json::from_str(&raw).map_err(|err| err.to_string())?;
-    let object = value
-        .as_object()
-        .ok_or_else(|| format!("{}: root must be an object", manifest_path.display()))?;
+    let object = value.as_object().ok_or_else(|| format!("{}: root must be an object", manifest_path.display()))?;
 
     let mut seen = BTreeSet::new();
     let mut out = Vec::new();
     for field in DEPENDENCY_FIELDS {
-        let Some(entries) = object.get(field).and_then(Value::as_object) else {
+        let Some(entries) = object.get(field).and_then(Value::as_object)
+        else {
             continue;
         };
         for (name, spec_value) in entries {
@@ -95,12 +93,8 @@ pub fn select_outdated(outdated: &[NpmOutdated], package_dir: &Path) -> Result<V
         .collect();
     let defaults = vec![true; labels.len()];
     let prompt = format!("Select JavaScript upgrades ({})", package_dir.display());
-    let picked = MultiSelect::new()
-        .with_prompt(prompt)
-        .items(&labels)
-        .defaults(&defaults)
-        .interact()
-        .map_err(|err| err.to_string())?;
+    let picked =
+        MultiSelect::new().with_prompt(prompt).items(&labels).defaults(&defaults).interact().map_err(|err| err.to_string())?;
 
     Ok(picked.into_iter().map(|index| outdated[index].clone()).collect())
 }
@@ -112,25 +106,15 @@ pub fn apply_npm_upgrades(package_dir: &Path, selected: &[NpmOutdated], sync_loc
     let manifest_path = package_dir.join("package.json");
     let raw = fs::read_to_string(&manifest_path).map_err(|err| err.to_string())?;
     let mut value: Value = serde_json::from_str(&raw).map_err(|err| err.to_string())?;
-    let object = value
-        .as_object_mut()
-        .ok_or_else(|| format!("{}: root must be an object", manifest_path.display()))?;
+    let object = value.as_object_mut().ok_or_else(|| format!("{}: root must be an object", manifest_path.display()))?;
 
     for item in selected {
         patch_package_json_dep(object, &item.name, &npm_version_spec(&item.latest))?;
-        println!(
-            "js ({}): upgraded {} -> {}",
-            package_dir.display(),
-            item.name,
-            item.latest
-        );
+        println!("js ({}): upgraded {} -> {}", package_dir.display(), item.name, item.latest);
     }
 
-    fs::write(
-        &manifest_path,
-        format!("{}\n", serde_json::to_string_pretty(&value).map_err(|err| err.to_string())?),
-    )
-    .map_err(|err| err.to_string())?;
+    fs::write(&manifest_path, format!("{}\n", serde_json::to_string_pretty(&value).map_err(|err| err.to_string())?))
+        .map_err(|err| err.to_string())?;
     if sync_lock {
         sync_lockfile(package_dir)?;
     }
@@ -152,7 +136,8 @@ pub fn sync_lockfile_at(root: &Path) -> Result<()> {
 
 fn patch_package_json_dep(object: &mut Map<String, Value>, name: &str, new_spec: &str) -> Result<()> {
     for field in DEPENDENCY_FIELDS {
-        let Some(entries) = object.get_mut(field).and_then(Value::as_object_mut) else {
+        let Some(entries) = object.get_mut(field).and_then(Value::as_object_mut)
+        else {
             continue;
         };
         if entries.contains_key(name) {
@@ -244,7 +229,8 @@ fn discover_pnpm_workspace_packages(root: &Path) -> Result<Vec<PathBuf>> {
                         }
                     }
                 }
-            } else if root.join(pattern).join("package.json").is_file() {
+            }
+            else if root.join(pattern).join("package.json").is_file() {
                 packages.push(root.join(pattern));
             }
         }

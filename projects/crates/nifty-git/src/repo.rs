@@ -9,9 +9,7 @@ pub type Result<T> = std::result::Result<T, String>;
 /// 向上发现 git 工作区根目录。
 pub fn discover_root(start: &Path) -> Result<PathBuf> {
     let repo = gix::discover(start).map_err(|err| err.to_string())?;
-    repo.work_dir()
-        .map(Path::to_path_buf)
-        .ok_or_else(|| "bare repository has no working directory".to_string())
+    repo.work_dir().map(Path::to_path_buf).ok_or_else(|| "bare repository has no working directory".to_string())
 }
 
 /// 打开仓库（从路径向上 discover）。

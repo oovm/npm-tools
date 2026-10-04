@@ -146,9 +146,7 @@ pub fn fetch_github_user_by_login(login: &str, token: Option<&str>) -> Result<Gi
             format!("{} {}", response.status(), response.status_text()),
         ));
     }
-    let body: Value = response
-        .into_json()
-        .map_err(|err| validation(format!("parse GitHub API JSON: {err}")))?;
+    let body: Value = response.into_json().map_err(|err| validation(format!("parse GitHub API JSON: {err}")))?;
     let id = body.get("id").and_then(Value::as_u64);
     let api_login = body.get("login").and_then(Value::as_str).map(str::to_string);
     Ok(GithubAuthor { id, login: api_login.or_else(|| Some(login.to_string())) })
@@ -170,9 +168,7 @@ pub fn search_github_user_by_email(email: &str, token: &str) -> Result<Option<Gi
             format!("{} {}", response.status(), response.status_text()),
         ));
     }
-    let body: Value = response
-        .into_json()
-        .map_err(|err| validation(format!("parse GitHub search JSON: {err}")))?;
+    let body: Value = response.into_json().map_err(|err| validation(format!("parse GitHub search JSON: {err}")))?;
     let items = body.get("items").and_then(Value::as_array);
     let Some(items) = items
     else {

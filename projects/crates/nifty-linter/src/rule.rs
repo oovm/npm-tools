@@ -67,126 +67,34 @@ fn default_severity() -> RuleSeverity {
 
 pub fn default_rules() -> Vec<RuleConfig> {
     vec![
-        RuleConfig {
-            id: RULE_GITMOJI_SUBJECT.to_string(),
-            enabled: true,
-            severity: RuleSeverity::Error,
-        },
-        RuleConfig {
-            id: RULE_GITMOJI_KNOWN.to_string(),
-            enabled: true,
-            severity: RuleSeverity::Error,
-        },
-        RuleConfig {
-            id: RULE_GITMOJI_BODY.to_string(),
-            enabled: true,
-            severity: RuleSeverity::Warning,
-        },
-        RuleConfig {
-            id: RULE_GITMOJI_FORMAT.to_string(),
-            enabled: true,
-            severity: RuleSeverity::Warning,
-        },
-        RuleConfig {
-            id: RULE_CARGO_README_CASE.to_string(),
-            enabled: true,
-            severity: RuleSeverity::Error,
-        },
-        RuleConfig {
-            id: RULE_CARGO_PACKAGE_SECTION.to_string(),
-            enabled: true,
-            severity: RuleSeverity::Error,
-        },
-        RuleConfig {
-            id: RULE_CARGO_README_MISSING.to_string(),
-            enabled: true,
-            severity: RuleSeverity::Error,
-        },
-        RuleConfig {
-            id: RULE_CARGO_MISSING_DOCS.to_string(),
-            enabled: true,
-            severity: RuleSeverity::Error,
-        },
-        RuleConfig {
-            id: RULE_CARGO_WORKSPACE_INHERIT.to_string(),
-            enabled: true,
-            severity: RuleSeverity::Error,
-        },
-        RuleConfig {
-            id: RULE_CARGO_WORKSPACE_DEP.to_string(),
-            enabled: true,
-            severity: RuleSeverity::Error,
-        },
-        RuleConfig {
-            id: RULE_CARGO_DOC_INCLUDE_STR.to_string(),
-            enabled: true,
-            severity: RuleSeverity::Error,
-        },
-        RuleConfig {
-            id: RULE_CARGO_MISPLACED_TEST.to_string(),
-            enabled: true,
-            severity: RuleSeverity::Error,
-        },
-        RuleConfig {
-            id: RULE_CARGO_MISPLACED_ROOT_RS.to_string(),
-            enabled: true,
-            severity: RuleSeverity::Error,
-        },
-        RuleConfig {
-            id: RULE_CARGO_LARGE_FILE.to_string(),
-            enabled: true,
-            severity: RuleSeverity::Warning,
-        },
-        RuleConfig {
-            id: RULE_TYPESCRIPT_LARGE_FILE.to_string(),
-            enabled: true,
-            severity: RuleSeverity::Warning,
-        },
+        RuleConfig { id: RULE_GITMOJI_SUBJECT.to_string(), enabled: true, severity: RuleSeverity::Error },
+        RuleConfig { id: RULE_GITMOJI_KNOWN.to_string(), enabled: true, severity: RuleSeverity::Error },
+        RuleConfig { id: RULE_GITMOJI_BODY.to_string(), enabled: true, severity: RuleSeverity::Warning },
+        RuleConfig { id: RULE_GITMOJI_FORMAT.to_string(), enabled: true, severity: RuleSeverity::Warning },
+        RuleConfig { id: RULE_CARGO_README_CASE.to_string(), enabled: true, severity: RuleSeverity::Error },
+        RuleConfig { id: RULE_CARGO_PACKAGE_SECTION.to_string(), enabled: true, severity: RuleSeverity::Error },
+        RuleConfig { id: RULE_CARGO_README_MISSING.to_string(), enabled: true, severity: RuleSeverity::Error },
+        RuleConfig { id: RULE_CARGO_MISSING_DOCS.to_string(), enabled: true, severity: RuleSeverity::Error },
+        RuleConfig { id: RULE_CARGO_WORKSPACE_INHERIT.to_string(), enabled: true, severity: RuleSeverity::Error },
+        RuleConfig { id: RULE_CARGO_WORKSPACE_DEP.to_string(), enabled: true, severity: RuleSeverity::Error },
+        RuleConfig { id: RULE_CARGO_DOC_INCLUDE_STR.to_string(), enabled: true, severity: RuleSeverity::Error },
+        RuleConfig { id: RULE_CARGO_MISPLACED_TEST.to_string(), enabled: true, severity: RuleSeverity::Error },
+        RuleConfig { id: RULE_CARGO_MISPLACED_ROOT_RS.to_string(), enabled: true, severity: RuleSeverity::Error },
+        RuleConfig { id: RULE_CARGO_LARGE_FILE.to_string(), enabled: true, severity: RuleSeverity::Warning },
+        RuleConfig { id: RULE_TYPESCRIPT_LARGE_FILE.to_string(), enabled: true, severity: RuleSeverity::Warning },
     ]
 }
 
 pub fn default_commit_rules() -> Vec<RuleConfig> {
     vec![
-        RuleConfig {
-            id: RULE_GITMOJI_SUBJECT.to_string(),
-            enabled: true,
-            severity: RuleSeverity::Error,
-        },
-        RuleConfig {
-            id: RULE_GITMOJI_KNOWN.to_string(),
-            enabled: true,
-            severity: RuleSeverity::Error,
-        },
-        RuleConfig {
-            id: RULE_GITMOJI_BODY.to_string(),
-            enabled: true,
-            severity: RuleSeverity::Warning,
-        },
-        RuleConfig {
-            id: RULE_GITMOJI_FORMAT.to_string(),
-            enabled: true,
-            severity: RuleSeverity::Warning,
-        },
-        RuleConfig {
-            id: RULE_COMMIT_SEMVER.to_string(),
-            enabled: true,
-            severity: RuleSeverity::Error,
-        },
-        RuleConfig {
-            id: RULE_COMMIT_SEMICOLON.to_string(),
-            enabled: true,
-            severity: RuleSeverity::Error,
-        },
-        RuleConfig {
-            id: RULE_COMMIT_BARE_PACKAGE.to_string(),
-            enabled: true,
-            severity: RuleSeverity::Error,
-        },
-        RuleConfig {
-            id: RULE_COMMIT_BARE_SYMBOL.to_string(),
-            enabled: true,
-            severity: RuleSeverity::Warning,
-        },
+        RuleConfig { id: RULE_GITMOJI_SUBJECT.to_string(), enabled: true, severity: RuleSeverity::Error },
+        RuleConfig { id: RULE_GITMOJI_KNOWN.to_string(), enabled: true, severity: RuleSeverity::Error },
+        RuleConfig { id: RULE_GITMOJI_BODY.to_string(), enabled: true, severity: RuleSeverity::Warning },
+        RuleConfig { id: RULE_GITMOJI_FORMAT.to_string(), enabled: true, severity: RuleSeverity::Warning },
+        RuleConfig { id: RULE_COMMIT_SEMVER.to_string(), enabled: true, severity: RuleSeverity::Error },
+        RuleConfig { id: RULE_COMMIT_SEMICOLON.to_string(), enabled: true, severity: RuleSeverity::Error },
+        RuleConfig { id: RULE_COMMIT_BARE_PACKAGE.to_string(), enabled: true, severity: RuleSeverity::Error },
+        RuleConfig { id: RULE_COMMIT_BARE_SYMBOL.to_string(), enabled: true, severity: RuleSeverity::Warning },
     ]
 }
 

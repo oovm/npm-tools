@@ -1,6 +1,6 @@
 use std::{env::current_dir, fs::File, io::Write};
 
-use nifty_config::{find_config_file, find_directory, find_directory_or_create, CONFIG_FILE_NAMES};
+use nifty_config::{CONFIG_FILE_NAMES, find_config_file, find_directory, find_directory_or_create};
 
 #[test]
 fn config_file_names_include_ts_and_js() {

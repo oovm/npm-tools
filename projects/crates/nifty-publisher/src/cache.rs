@@ -1,6 +1,8 @@
-use std::collections::BTreeMap;
-use std::fs;
-use std::path::{Path, PathBuf};
+use std::{
+    collections::BTreeMap,
+    fs,
+    path::{Path, PathBuf},
+};
 
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -41,11 +43,7 @@ pub struct PlaceholderCache {
 
 impl PlaceholderCache {
     pub fn empty(expect: TrustExpect) -> Self {
-        Self {
-            version: 1,
-            trust_expect: expect,
-            packages: BTreeMap::new(),
-        }
+        Self { version: 1, trust_expect: expect, packages: BTreeMap::new() }
     }
 }
 
@@ -59,9 +57,7 @@ impl PlaceholderCache {
         if let Ok(cache) = read_cache_file(&path, expect) {
             return cache;
         }
-        let legacy = workspace_root
-            .join(CACHE_DIR_NAME)
-            .join("placeholder-npm-cache.json");
+        let legacy = workspace_root.join(CACHE_DIR_NAME).join("placeholder-npm-cache.json");
         if legacy != path {
             if let Ok(cache) = read_cache_file(&legacy, expect) {
                 let _ = save_cache(workspace_root, &cache);
@@ -111,9 +107,7 @@ impl PlaceholderCache {
     }
 
     pub fn cached_version(&self, name: &str) -> Option<&str> {
-        self.packages
-            .get(name)
-            .and_then(|entry| entry.version.as_deref())
+        self.packages.get(name).and_then(|entry| entry.version.as_deref())
     }
 }
 
@@ -131,31 +125,15 @@ pub struct ResolvedVersion {
     pub live_miss: bool,
 }
 
-pub fn resolve_published_version(
-    cache: &mut PlaceholderCache,
-    name: &str,
-    live_version: Option<String>,
-) -> ResolvedVersion {
+pub fn resolve_published_version(cache: &mut PlaceholderCache, name: &str, live_version: Option<String>) -> ResolvedVersion {
     if let Some(version) = live_version {
         cache.record_version(name, &version);
-        return ResolvedVersion {
-            version: Some(version),
-            source: VersionSource::Live,
-            live_miss: false,
-        };
+        return ResolvedVersion { version: Some(version), source: VersionSource::Live, live_miss: false };
     }
     if let Some(version) = cache.cached_version(name).map(str::to_string) {
-        return ResolvedVersion {
-            version: Some(version),
-            source: VersionSource::Cache,
-            live_miss: true,
-        };
+        return ResolvedVersion { version: Some(version), source: VersionSource::Cache, live_miss: true };
     }
-    ResolvedVersion {
-        version: None,
-        source: VersionSource::None,
-        live_miss: true,
-    }
+    ResolvedVersion { version: None, source: VersionSource::None, live_miss: true }
 }
 
 pub fn should_skip_publish(
@@ -203,27 +181,15 @@ pub struct TrustClassification {
 
 pub fn classify_configs(configs: &[Value], expect: &TrustExpect) -> TrustClassification {
     if configs.iter().any(|config| trust_exact(config, expect)) {
-        return TrustClassification {
-            matches: true,
-            match_kind: "exact".to_string(),
-        };
+        return TrustClassification { matches: true, match_kind: "exact".to_string() };
     }
     if configs.iter().any(|config| trust_matches(config, expect)) {
-        return TrustClassification {
-            matches: true,
-            match_kind: "loose".to_string(),
-        };
+        return TrustClassification { matches: true, match_kind: "loose".to_string() };
     }
     if configs.is_empty() {
-        return TrustClassification {
-            matches: false,
-            match_kind: "none".to_string(),
-        };
+        return TrustClassification { matches: false, match_kind: "none".to_string() };
     }
-    TrustClassification {
-        matches: false,
-        match_kind: "mismatch".to_string(),
-    }
+    TrustClassification { matches: false, match_kind: "mismatch".to_string() }
 }
 
 fn trust_exact(config: &Value, expect: &TrustExpect) -> bool {
@@ -273,16 +239,13 @@ fn pick_string(config: &Value, claims: &Value, keys: &[&str]) -> String {
 fn now_iso() -> String {
     // ISO-like timestamp without chrono dependency.
     use std::time::{SystemTime, UNIX_EPOCH};
-    let seconds = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .map(|duration| duration.as_secs())
-        .unwrap_or(0);
+    let seconds = SystemTime::now().duration_since(UNIX_EPOCH).map(|duration| duration.as_secs()).unwrap_or(0);
     format!("{seconds}")
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{PlaceholderCache, TrustExpect, resolve_published_version, should_skip_publish, VersionSource};
+    use super::{PlaceholderCache, TrustExpect, VersionSource, resolve_published_version, should_skip_publish};
     use tempfile::TempDir;
 
     #[test]
