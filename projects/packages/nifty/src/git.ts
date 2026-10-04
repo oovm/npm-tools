@@ -11,7 +11,7 @@ export type ResolveRangeOptions = {
  * Read-only git repository helpers (gix via Node-API, no `git` subprocess).
  */
 export class Git {
-    constructor(private readonly wasm: GitExports) {}
+    constructor(private readonly wasm: GitExports) { }
 
     static open(): Git {
         const native = loadNiftyNative();
@@ -36,7 +36,7 @@ export class Git {
         return this.wasm["format-tag-list"](repoRoot);
     }
 
-    resolveRange(repoRoot: string, options: ResolveRangeOptions = {}): RangeInfo {
+    resolveRange(repoRoot: string, options: ResolveRangeOptions = { }): RangeInfo {
         return mapRangeInfo(
             this.wasm["resolve-range"](repoRoot, options.version, options.fromRef, options.toRef),
         );

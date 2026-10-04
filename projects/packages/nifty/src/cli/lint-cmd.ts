@@ -15,10 +15,10 @@ function registerLintLike(cli: Cli, name: string, helpId: string, check: boolean
         .option("--to <ref>", "cli.opt.to")
         .option("-s, --subject <text>...", "cli.opt.subject")
         .option("--no-cargo", "cli.opt.no-cargo")
-        .action(async (options) => cmdLint(options, check));
+        .action(async(options) => cmdLint(options, check));
 }
 
-export async function cmdLint(options: ParsedOptions, check: boolean): Promise<number> {
+export async function cmdLint(options: ParsedOptions, check: boolean): Promise < number> {
     await bootstrapFromOptions(options);
     const lintOptions: LintOptions = {
         subjects: strList(options, "subject"),

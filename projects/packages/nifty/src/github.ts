@@ -3,7 +3,7 @@ import type { GithubAuthor } from "./types.js";
 const USER_AGENT = "nifty-github";
 const ACCEPT = "application/vnd.github+json";
 
-function parseUserJson(body: Record<string, unknown>, fallbackLogin?: string): GithubAuthor {
+function parseUserJson(body: Record < string, unknown > , fallbackLogin?: string) : GithubAuthor {
     const id = typeof body.id === "number" ? BigInt(body.id) : undefined;
     const login = typeof body.login === "string" ? body.login : fallbackLogin;
     if (id === undefined && login === undefined) {
@@ -12,8 +12,8 @@ function parseUserJson(body: Record<string, unknown>, fallbackLogin?: string): G
     return { id, login };
 }
 
-async function getJson(url: string, token?: string): Promise<Record<string, unknown>> {
-    const headers: Record<string, string> = {
+async function getJson(url: string, token?: string) : Promise < Record < string, unknown>> {
+    const headers: Record < string, string > = {
         Accept: ACCEPT,
         "User-Agent": USER_AGENT,
     };
@@ -27,7 +27,7 @@ async function getJson(url: string, token?: string): Promise<Record<string, unkn
     if (!response.ok) {
         throw new Error(`GitHub API error: ${response.status} ${response.statusText}`);
     }
-    return (await response.json()) as Record<string, unknown>;
+    return(await response.json())as Record < string, unknown > ;
 }
 
 function parseNoreplyEmail(email: string): GithubAuthor | undefined {
@@ -37,7 +37,7 @@ function parseNoreplyEmail(email: string): GithubAuthor | undefined {
     if (!lower.endsWith(suffix)) {
         return undefined;
     }
-    const local = trimmed.slice(0, -suffix.length);
+    const local = trimmed.slice(0, - suffix.length);
     const plus = local.indexOf("+");
     if (plus >= 0) {
         const idPart = local.slice(0, plus);
@@ -53,21 +53,21 @@ function parseNoreplyEmail(email: string): GithubAuthor | undefined {
     return { login: local };
 }
 
-function loadAuthorMap(json: string): Map<string, GithubAuthor> {
-    const map = new Map<string, GithubAuthor>();
+function loadAuthorMap(json: string): Map < string, GithubAuthor > {
+    const map = new Map < string, GithubAuthor > ();
     if (!json.trim()) {
         return map;
     }
-    const parsed = JSON.parse(json) as Record<string, { id?: number; login?: string }>;
-    for (const [email, entry] of Object.entries(parsed)) {
-        const author: GithubAuthor = {};
+    const parsed = JSON.parse(json)as Record < string, { id?: number; login?: string }>;
+    for (const[email, entry]of Object.entries(parsed)) {
+        const author: GithubAuthor = { };
         if (typeof entry.id === "number") {
             author.id = BigInt(entry.id);
         }
         if (typeof entry.login === "string" && entry.login.trim()) {
             author.login = entry.login.trim();
         }
-        if (author.id !== undefined || author.login !== undefined) {
+        if (author.id!== undefined || author.login!== undefined) {
             map.set(email.trim().toLowerCase(), author);
         }
     }
@@ -81,11 +81,11 @@ function mergeAuthors(existing: GithubAuthor, incoming: GithubAuthor): GithubAut
     };
 }
 
-async function enrichAuthor(author: GithubAuthor, token?: string, fetch = false): Promise<GithubAuthor> {
-    if (!fetch && author.id !== undefined && author.login !== undefined) {
+async function enrichAuthor(author: GithubAuthor, token?: string, fetch = false) : Promise < GithubAuthor> {
+    if (!fetch && author.id!== undefined && author.login!== undefined) {
         return author;
     }
-    if (!fetch && author.id !== undefined) {
+    if (!fetch && author.id!== undefined) {
         return author;
     }
     if (author.login && (author.id === undefined || fetch)) {
@@ -95,7 +95,7 @@ async function enrichAuthor(author: GithubAuthor, token?: string, fetch = false)
     return author;
 }
 
-async function userByLoginFetch(login: string, token?: string): Promise<GithubAuthor> {
+async function userByLoginFetch(login: string, token?: string) : Promise < GithubAuthor> {
     const trimmed = login.trim();
     if (!trimmed) {
         throw new Error("login must not be empty");
@@ -104,7 +104,7 @@ async function userByLoginFetch(login: string, token?: string): Promise<GithubAu
     return parseUserJson(body, trimmed);
 }
 
-async function searchUserByEmailFetch(email: string, token: string): Promise<GithubAuthor | undefined> {
+async function searchUserByEmailFetch(email: string, token: string): Promise < GithubAuthor | undefined > {
     const trimmed = email.trim();
     const auth = token.trim();
     if (!trimmed) {
@@ -119,7 +119,7 @@ async function searchUserByEmailFetch(email: string, token: string): Promise<Git
     if (!Array.isArray(items) || items.length === 0) {
         return undefined;
     }
-    const first = items[0] as Record<string, unknown>;
+    const first = items[0]as Record < string, unknown > ;
     return parseUserJson(first);
 }
 
@@ -134,17 +134,17 @@ export type LookupUserOptions = {
  * Rust equivalent: `nifty-github` crate.
  */
 export class Github {
-    constructor(private readonly token?: string) {}
+    constructor(private readonly token?: string) { }
 
-    static open(token?: string): Github {
+    static open(token?: string) : Github {
         return new Github(token);
     }
 
-    async userByLogin(login: string, token?: string): Promise<GithubAuthor> {
+    async userByLogin(login: string, token?: string) : Promise < GithubAuthor> {
         return userByLoginFetch(login, token ?? this.token);
     }
 
-    async searchUserByEmail(email: string, token?: string): Promise<GithubAuthor | undefined> {
+    async searchUserByEmail(email: string, token?: string) : Promise < GithubAuthor | undefined > {
         const auth = token ?? this.token;
         if (!auth) {
             throw new Error("GitHub token is required for email search");
@@ -152,7 +152,7 @@ export class Github {
         return searchUserByEmailFetch(email, auth);
     }
 
-    async lookupUserByEmail(email: string, options: LookupUserOptions = {}): Promise<GithubAuthor | undefined> {
+    async lookupUserByEmail(email: string, options: LookupUserOptions = { }): Promise < GithubAuthor | undefined > {
         const token = options.token ?? this.token;
         const fetch = options.fetch ?? false;
         const mapJson = options.authorMapJson ?? "{}";
@@ -179,6 +179,6 @@ export class Github {
     }
 }
 
-export function createGithub(token?: string): Github {
+export function createGithub(token?: string) : Github {
     return Github.open(token);
 }

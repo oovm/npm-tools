@@ -27,12 +27,12 @@ export function registerChangeLogsCommand(cli: Cli): void {
         .option("--map <path>", "cli.opt.author-map")
         .option("--github-token <token>", "cli.opt.github-token")
         .option("--fetch", "cli.opt.fetch")
-        .action(async (options) => cmdChangeLogsLookup(options));
+        .action(async(options) => cmdChangeLogsLookup(options));
 
-    changeLogs.action(async (options) => cmdChangeLogsRender(options));
+    changeLogs.action(async(options) => cmdChangeLogsRender(options));
 }
 
-export async function cmdChangeLogsRender(options: ParsedOptions): Promise<number> {
+export async function cmdChangeLogsRender(options: ParsedOptions): Promise < number> {
     await bootstrapFromOptions(options);
     const cwd = cwdFrom(options) ?? process.cwd();
     const { config } = await loadConfig({ cwd, createIfMissing: false });
@@ -66,7 +66,7 @@ export async function cmdChangeLogsRender(options: ParsedOptions): Promise<numbe
     return 0;
 }
 
-export async function cmdChangeLogsLookup(options: ParsedOptions): Promise<number> {
+export async function cmdChangeLogsLookup(options: ParsedOptions): Promise < number> {
     await bootstrapFromOptions(options);
     const cwd = cwdFrom(options) ?? process.cwd();
     const { config } = await loadConfig({ cwd, createIfMissing: false });
@@ -86,8 +86,8 @@ export async function cmdChangeLogsLookup(options: ParsedOptions): Promise<numbe
         githubToken: str(options, "github-token") ?? config.githubToken ?? process.env.GITHUB_TOKEN,
         fetch: flag(options, "fetch"),
     });
-    const json: Record<string, unknown> = {};
-    if (author.id !== undefined) {
+    const json: Record < string, unknown > = { };
+    if (author.id!== undefined) {
         json.id = author.id;
     }
     if (author.login) {

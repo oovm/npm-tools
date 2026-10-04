@@ -28,7 +28,7 @@ export type GitmojiExports = {
 export type GitExports = {
     "discover-root": (startPath: string) => string;
     "list-version-tags": (repoRoot: string) => string[];
-    "list-tag-infos": (repoRoot: string) => Array<{ name: string; "short-hash": string }>;
+    "list-tag-infos": (repoRoot: string) => Array < { name: string; "short-hash": string }>;
     "format-tag-list": (repoRoot: string) => string;
     "resolve-range": (
         repoRoot: string,
@@ -45,7 +45,7 @@ export type GitExports = {
     "parse-github-remote": (url: string) => string | undefined;
 };
 
-type NativeCommitRecord = Omit<CommitRecord, "section"> & { section: string };
+type NativeCommitRecord = Omit < CommitRecord, "section"> & { section: string };
 
 export type PublishReport = {
     root: string;
@@ -167,7 +167,7 @@ export type LintRunOptions = {
     fromRef?: string;
     toRef?: string;
     subjects?: string[];
-    rules?: Array<{ id: string; enabled?: boolean; severity?: "error" | "warning" | "info" }>;
+    rules?: Array < { id: string; enabled?: boolean; severity?: "error" | "warning" | "info" }>;
     scanCargo?: boolean;
     commitOnly?: boolean;
 };
@@ -275,7 +275,7 @@ type NativeBinding = {
     gitmojiCommitBullet: (body: string, email: string, authorName: string, authorMapJson: string) => string;
     gitDiscoverRoot: (startPath: string) => string;
     gitListVersionTags: (repoRoot: string) => string[];
-    gitListTagInfos: (repoRoot: string) => Array<{ name: string; shortHash: string }>;
+    gitListTagInfos: (repoRoot: string) => Array < { name: string; shortHash: string }>;
     gitFormatTagList: (repoRoot: string) => string;
     gitResolveRange: (
         repoRoot: string,
@@ -328,7 +328,7 @@ type NativeBinding = {
         path: string;
         dryRun?: boolean | null;
     }) => {
-        changes: Array<{
+        changes: Array < {
             oldOid: string;
             oldSubject: string;
             newSubject: string;
@@ -353,7 +353,7 @@ type NativeBinding = {
         path: string;
         dryRun?: boolean | null;
     }) => {
-        changes: Array<{
+        changes: Array < {
             oldOid: string;
             oldSubject: string;
             newSubject: string;
@@ -413,12 +413,12 @@ type NativeBinding = {
         fromRef?: string | null;
         toRef?: string | null;
         subjects?: string[] | null;
-        rules?: Array<{ id: string; enabled?: boolean | null; severity?: string | null }> | null;
+        rules?: Array < { id: string; enabled?: boolean | null; severity?: string | null }> | null;
         scanCargo?: boolean | null;
         commitOnly?: boolean | null;
         check?: boolean | null;
     }) => {
-        diagnostics: Array<{
+        diagnostics: Array < {
             rule: string;
             severity: string;
             message: string;
@@ -435,12 +435,12 @@ type NativeBinding = {
         fromRef?: string | null;
         toRef?: string | null;
         subjects?: string[] | null;
-        rules?: Array<{ id: string; enabled?: boolean | null; severity?: string | null }> | null;
+        rules?: Array < { id: string; enabled?: boolean | null; severity?: string | null }> | null;
         scanCargo?: boolean | null;
         commitOnly?: boolean | null;
         check?: boolean | null;
     }) => {
-        diagnostics: Array<{
+        diagnostics: Array < {
             rule: string;
             severity: string;
             message: string;
@@ -468,7 +468,7 @@ type NativeBinding = {
     };
 };
 
-const PLATFORM_PACKAGES: Record<string, string> = {
+const PLATFORM_PACKAGES: Record < string, string > = {
     "win32-x64": "@doki-land/nifty-win32-x64",
     "linux-x64": "@doki-land/nifty-linux-x64",
     "linux-arm64": "@doki-land/nifty-linux-arm64",
@@ -481,25 +481,25 @@ function mapAuthor(raw: GithubAuthor | null | undefined): GithubAuthor | undefin
         return undefined;
     }
     return {
-        id: raw.id !== undefined && raw.id !== null ? BigInt(raw.id) : undefined,
-        login: raw.login ?? undefined,
+        id: raw.id!== undefined && raw.id!== null ? BigInt(raw.id) : undefined,
+        login : raw.login ?? undefined,
     };
 }
 
 function mapLintOptions(options: LintRunOptions) {
     return {
-        ...(options.cwd !== undefined ? { cwd: options.cwd } : {}),
-        ...(options.fromRef !== undefined ? { fromRef: options.fromRef } : {}),
-        ...(options.toRef !== undefined ? { toRef: options.toRef } : {}),
-        ...(options.subjects !== undefined ? { subjects: options.subjects } : {}),
-        ...(options.rules !== undefined ? { rules: options.rules } : {}),
-        ...(options.scanCargo !== undefined ? { scanCargo: options.scanCargo } : {}),
-        ...(options.commitOnly !== undefined ? { commitOnly: options.commitOnly } : {}),
+        ...(options.cwd!== undefined ? { cwd: options.cwd }: { }),
+        ...(options.fromRef!== undefined ? { fromRef: options.fromRef }: { }),
+        ...(options.toRef!== undefined ? { toRef: options.toRef }: { }),
+        ...(options.subjects!== undefined ? { subjects: options.subjects }: { }),
+        ...(options.rules!== undefined ? { rules: options.rules }: { }),
+        ...(options.scanCargo!== undefined ? { scanCargo: options.scanCargo }: { }),
+        ...(options.commitOnly!== undefined ? { commitOnly: options.commitOnly }: { }),
     };
 }
 
 function mapLintReport(raw: {
-    diagnostics: Array<{
+    diagnostics: Array < {
         rule: string;
         severity: string;
         message: string;
@@ -535,7 +535,7 @@ function wrapBinding(binding: NativeBinding): NiftyNative {
             "format-subject": (gitmoji, body) => binding.gitmojiFormatSubject(gitmoji, body),
             "strip-gitmoji": (subject) => binding.gitmojiStripGitmoji(subject),
             "leading-gitmoji": (subject) => binding.gitmojiLeadingGitmoji(subject) ?? undefined,
-            "section-for-gitmoji": (gitmoji) => binding.gitmojiSectionForGitmoji(gitmoji) as ReleaseSection,
+            "section-for-gitmoji": (gitmoji) => binding.gitmojiSectionForGitmoji(gitmoji)as ReleaseSection,
             "parse-noreply-email": (email) => mapAuthor(binding.gitmojiParseNoreplyEmail(email)),
             "resolve-github-author": (email, authorMapJson) =>
                 mapAuthor(binding.gitmojiResolveGithubAuthor(email, authorMapJson)),
@@ -571,18 +571,18 @@ function wrapBinding(binding: NativeBinding): NiftyNative {
         history: {
             "commit-export": (options) =>
                 binding.gitToolsCommitExport({
-                    ...(options.cwd !== undefined ? { cwd: options.cwd } : {}),
+                    ...(options.cwd!== undefined ? { cwd: options.cwd }: { }),
                     base: options.base,
-                    ...(options.ref !== undefined ? { ref: options.ref } : {}),
+                    ...(options.ref!== undefined ? { ref: options.ref }: { }),
                     path: options.path,
                 }),
             "commit-apply": (options) => {
                 const report = binding.gitToolsCommitApply({
-                    ...(options.cwd !== undefined ? { cwd: options.cwd } : {}),
+                    ...(options.cwd!== undefined ? { cwd: options.cwd }: { }),
                     base: options.base,
-                    ...(options.ref !== undefined ? { ref: options.ref } : {}),
+                    ...(options.ref!== undefined ? { ref: options.ref }: { }),
                     path: options.path,
-                    ...(options.dryRun !== undefined ? { dryRun: options.dryRun } : {}),
+                    ...(options.dryRun!== undefined ? { dryRun: options.dryRun }: { }),
                 });
                 return {
                     changes: report.changes,
@@ -594,18 +594,18 @@ function wrapBinding(binding: NativeBinding): NiftyNative {
             },
             "reword-export": (options) =>
                 binding.gitToolsRewordExport({
-                    ...(options.cwd !== undefined ? { cwd: options.cwd } : {}),
+                    ...(options.cwd!== undefined ? { cwd: options.cwd }: { }),
                     base: options.base,
-                    ...(options.ref !== undefined ? { ref: options.ref } : {}),
+                    ...(options.ref!== undefined ? { ref: options.ref }: { }),
                     path: options.path,
                 }),
             "reword-rewrite": (options) => {
                 const report = binding.gitToolsRewordRewrite({
-                    ...(options.cwd !== undefined ? { cwd: options.cwd } : {}),
+                    ...(options.cwd!== undefined ? { cwd: options.cwd }: { }),
                     base: options.base,
-                    ...(options.ref !== undefined ? { ref: options.ref } : {}),
+                    ...(options.ref!== undefined ? { ref: options.ref }: { }),
                     path: options.path,
-                    ...(options.dryRun !== undefined ? { dryRun: options.dryRun } : {}),
+                    ...(options.dryRun!== undefined ? { dryRun: options.dryRun }: { }),
                 });
                 return {
                     changes: report.changes,
@@ -617,33 +617,33 @@ function wrapBinding(binding: NativeBinding): NiftyNative {
             },
             "retime-range": (options) =>
                 binding.gitToolsRetimeRange({
-                    ...(options.cwd !== undefined ? { cwd: options.cwd } : {}),
+                    ...(options.cwd!== undefined ? { cwd: options.cwd }: { }),
                     commit: options.commit,
-                    ...(options.startDate !== undefined ? { startDate: options.startDate } : {}),
-                    ...(options.endDate !== undefined ? { endDate: options.endDate } : {}),
-                    ...(options.branch !== undefined ? { branch: options.branch } : {}),
-                    ...(options.tip !== undefined ? { tip: options.tip } : {}),
+                    ...(options.startDate!== undefined ? { startDate: options.startDate }: { }),
+                    ...(options.endDate!== undefined ? { endDate: options.endDate }: { }),
+                    ...(options.branch!== undefined ? { branch: options.branch }: { }),
+                    ...(options.tip!== undefined ? { tip: options.tip }: { }),
                 }),
             "retime-root": (options) =>
                 binding.gitToolsRetimeRoot({
-                    ...(options.cwd !== undefined ? { cwd: options.cwd } : {}),
-                    ...(options.startDate !== undefined ? { startDate: options.startDate } : {}),
-                    ...(options.endDate !== undefined ? { endDate: options.endDate } : {}),
-                    ...(options.branch !== undefined ? { branch: options.branch } : {}),
-                    ...(options.tip !== undefined ? { tip: options.tip } : {}),
-                    ...(options.message !== undefined ? { message: options.message } : {}),
+                    ...(options.cwd!== undefined ? { cwd: options.cwd }: { }),
+                    ...(options.startDate!== undefined ? { startDate: options.startDate }: { }),
+                    ...(options.endDate!== undefined ? { endDate: options.endDate }: { }),
+                    ...(options.branch!== undefined ? { branch: options.branch }: { }),
+                    ...(options.tip!== undefined ? { tip: options.tip }: { }),
+                    ...(options.message!== undefined ? { message: options.message }: { }),
                 }),
             "changelog-render": (options) => {
                 const report = binding.gitToolsChangelogRender({
-                    ...(options.cwd !== undefined ? { cwd: options.cwd } : {}),
-                    ...(options.version !== undefined ? { version: options.version } : {}),
-                    ...(options.fromRef !== undefined ? { fromRef: options.fromRef } : {}),
-                    ...(options.toRef !== undefined ? { toRef: options.toRef } : {}),
-                    ...(options.write !== undefined ? { write: options.write } : {}),
-                    ...(options.tags !== undefined ? { tags: options.tags } : {}),
-                    ...(options.repo !== undefined ? { repo: options.repo } : {}),
-                    ...(options.authorMap !== undefined ? { authorMap: options.authorMap } : {}),
-                    ...(options.releasesDir !== undefined ? { releasesDir: options.releasesDir } : {}),
+                    ...(options.cwd!== undefined ? { cwd: options.cwd }: { }),
+                    ...(options.version!== undefined ? { version: options.version }: { }),
+                    ...(options.fromRef!== undefined ? { fromRef: options.fromRef }: { }),
+                    ...(options.toRef!== undefined ? { toRef: options.toRef }: { }),
+                    ...(options.write!== undefined ? { write: options.write }: { }),
+                    ...(options.tags!== undefined ? { tags: options.tags }: { }),
+                    ...(options.repo!== undefined ? { repo: options.repo }: { }),
+                    ...(options.authorMap!== undefined ? { authorMap: options.authorMap }: { }),
+                    ...(options.releasesDir!== undefined ? { releasesDir: options.releasesDir }: { }),
                 });
                 return {
                     notes: report.notes,
@@ -657,14 +657,14 @@ function wrapBinding(binding: NativeBinding): NiftyNative {
             },
             "changelog-lookup": (options) => {
                 const author = binding.gitToolsChangelogLookup({
-                    ...(options.cwd !== undefined ? { cwd: options.cwd } : {}),
-                    ...(options.email !== undefined ? { email: options.email } : {}),
-                    ...(options.login !== undefined ? { login: options.login } : {}),
-                    ...(options.map !== undefined ? { map: options.map } : {}),
-                    ...(options.githubToken !== undefined ? { githubToken: options.githubToken } : {}),
-                    ...(options.fetch !== undefined ? { fetch: options.fetch } : {}),
+                    ...(options.cwd!== undefined ? { cwd: options.cwd }: { }),
+                    ...(options.email!== undefined ? { email: options.email }: { }),
+                    ...(options.login!== undefined ? { login: options.login }: { }),
+                    ...(options.map!== undefined ? { map: options.map }: { }),
+                    ...(options.githubToken!== undefined ? { githubToken: options.githubToken }: { }),
+                    ...(options.fetch!== undefined ? { fetch: options.fetch }: { }),
                 });
-                return mapAuthor(author) ?? {};
+                return mapAuthor(author) ?? { };
             },
         },
         lint: {
@@ -674,60 +674,56 @@ function wrapBinding(binding: NativeBinding): NiftyNative {
         updater: {
             run: (options) => {
                 binding.updaterRun({
-                    ...(options.cwd !== undefined ? { cwd: options.cwd } : {}),
-                    ...(options.interactive !== undefined ? { interactive: options.interactive } : {}),
+                    ...(options.cwd!== undefined ? { cwd: options.cwd }: { }),
+                    ...(options.interactive!== undefined ? { interactive: options.interactive }: { }),
                 });
             },
         },
         formatter: {
             run: (options) =>
                 binding.formatterRun({
-                    ...(options.cwd !== undefined ? { cwd: options.cwd } : {}),
-                    ...(options.check !== undefined ? { check: options.check } : {}),
-                    ...(options.includes !== undefined ? { includes: options.includes } : {}),
-                    ...(options.excludes !== undefined ? { excludes: options.excludes } : {}),
-                    ...(options.rust !== undefined ? { rust: options.rust } : {}),
-                    ...(options.javascript !== undefined ? { javascript: options.javascript } : {}),
-                    ...(options.style !== undefined ? { style: options.style } : {}),
+                    ...(options.cwd!== undefined ? { cwd: options.cwd }: { }),
+                    ...(options.check!== undefined ? { check: options.check }: { }),
+                    ...(options.includes!== undefined ? { includes: options.includes }: { }),
+                    ...(options.excludes!== undefined ? { excludes: options.excludes }: { }),
+                    ...(options.rust!== undefined ? { rust: options.rust }: { }),
+                    ...(options.javascript!== undefined ? { javascript: options.javascript }: { }),
+                    ...(options.style!== undefined ? { style: options.style }: { }),
                 }),
         },
         publisher: {
             "publish-workspace": (options) =>
                 binding.publisherPublishWorkspace({
-                    ...(options.cwd !== undefined ? { cwd: options.cwd } : {}),
-                    ...(options.dryRun !== undefined ? { dryRun: options.dryRun } : {}),
-                    ...(options.refresh !== undefined ? { refresh: options.refresh } : {}),
-                    ...(options.placeholder !== undefined ? { placeholder: options.placeholder } : {}),
-                    ...(options.only !== undefined ? { only: options.only } : {}),
-                    ...(options.packages !== undefined ? { packages: options.packages } : {}),
-                    ...(options.tag !== undefined ? { tag: options.tag } : {}),
-                    ...(options.access !== undefined ? { access: options.access } : {}),
-                    ...(options.npm !== undefined ? { npm: options.npm } : {}),
-                    ...(options.otp !== undefined ? { otp: options.otp } : {}),
-                    ...(options.totpSecret !== undefined ? { totpSecret: options.totpSecret } : {}),
-                    ...(options.token !== undefined ? { token: options.token } : {}),
-                    ...(options.trustRepo !== undefined ? { trustRepo: options.trustRepo } : {}),
-                    ...(options.trustFile !== undefined ? { trustFile: options.trustFile } : {}),
-                    ...(options.trustEnvironment !== undefined
-                        ? { trustEnvironment: options.trustEnvironment }
-                        : {}),
+                    ...(options.cwd!== undefined ? { cwd: options.cwd }: { }),
+                    ...(options.dryRun!== undefined ? { dryRun: options.dryRun }: { }),
+                    ...(options.refresh!== undefined ? { refresh: options.refresh }: { }),
+                    ...(options.placeholder!== undefined ? { placeholder: options.placeholder }: { }),
+                    ...(options.only!== undefined ? { only: options.only }: { }),
+                    ...(options.packages!== undefined ? { packages: options.packages }: { }),
+                    ...(options.tag!== undefined ? { tag: options.tag }: { }),
+                    ...(options.access!== undefined ? { access: options.access }: { }),
+                    ...(options.npm!== undefined ? { npm: options.npm }: { }),
+                    ...(options.otp!== undefined ? { otp: options.otp }: { }),
+                    ...(options.totpSecret!== undefined ? { totpSecret: options.totpSecret }: { }),
+                    ...(options.token!== undefined ? { token: options.token }: { }),
+                    ...(options.trustRepo!== undefined ? { trustRepo: options.trustRepo }: { }),
+                    ...(options.trustFile!== undefined ? { trustFile: options.trustFile }: { }),
+                    ...(options.trustEnvironment!== undefined ? { trustEnvironment: options.trustEnvironment }: { }),
                 }),
             "trust-workspace": (options) =>
                 binding.publisherTrustWorkspace({
-                    ...(options.cwd !== undefined ? { cwd: options.cwd } : {}),
-                    ...(options.dryRun !== undefined ? { dryRun: options.dryRun } : {}),
-                    ...(options.refresh !== undefined ? { refresh: options.refresh } : {}),
-                    ...(options.only !== undefined ? { only: options.only } : {}),
-                    ...(options.packages !== undefined ? { packages: options.packages } : {}),
-                    ...(options.npm !== undefined ? { npm: options.npm } : {}),
-                    ...(options.otp !== undefined ? { otp: options.otp } : {}),
-                    ...(options.totpSecret !== undefined ? { totpSecret: options.totpSecret } : {}),
-                    ...(options.token !== undefined ? { token: options.token } : {}),
-                    ...(options.trustRepo !== undefined ? { trustRepo: options.trustRepo } : {}),
-                    ...(options.trustFile !== undefined ? { trustFile: options.trustFile } : {}),
-                    ...(options.trustEnvironment !== undefined
-                        ? { trustEnvironment: options.trustEnvironment }
-                        : {}),
+                    ...(options.cwd!== undefined ? { cwd: options.cwd }: { }),
+                    ...(options.dryRun!== undefined ? { dryRun: options.dryRun }: { }),
+                    ...(options.refresh!== undefined ? { refresh: options.refresh }: { }),
+                    ...(options.only!== undefined ? { only: options.only }: { }),
+                    ...(options.packages!== undefined ? { packages: options.packages }: { }),
+                    ...(options.npm!== undefined ? { npm: options.npm }: { }),
+                    ...(options.otp!== undefined ? { otp: options.otp }: { }),
+                    ...(options.totpSecret!== undefined ? { totpSecret: options.totpSecret }: { }),
+                    ...(options.token!== undefined ? { token: options.token }: { }),
+                    ...(options.trustRepo!== undefined ? { trustRepo: options.trustRepo }: { }),
+                    ...(options.trustFile!== undefined ? { trustFile: options.trustFile }: { }),
+                    ...(options.trustEnvironment!== undefined ? { trustEnvironment: options.trustEnvironment }: { }),
                 }),
         },
     };

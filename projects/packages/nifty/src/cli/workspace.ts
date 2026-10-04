@@ -16,10 +16,10 @@ export type PackageManifest = {
     name: string;
     version: string;
     private?: boolean;
-    dependencies?: Record<string, string>;
-    devDependencies?: Record<string, string>;
-    optionalDependencies?: Record<string, string>;
-    peerDependencies?: Record<string, string>;
+    dependencies?: Record < string, string > ;
+    devDependencies?: Record < string, string > ;
+    optionalDependencies?: Record < string, string > ;
+    peerDependencies?: Record < string, string > ;
 };
 
 const DEPENDENCY_FIELDS = [
@@ -27,7 +27,7 @@ const DEPENDENCY_FIELDS = [
     "devDependencies",
     "optionalDependencies",
     "peerDependencies",
-] as const;
+]as const;
 
 export function findWorkspaceRoot(cwd: string): string {
     const layout = detectProjectLayout(cwd);
@@ -45,7 +45,7 @@ export function findWorkspaceRoot(cwd: string): string {
 export function listWorkspacePackages(root: string): WorkspacePackage[] {
     const packagesDir = join(root, "projects", "packages");
     if (!existsSync(packagesDir)) {
-        return [];
+        return[];
     }
 
     const packages: WorkspacePackage[] = [];
@@ -57,7 +57,7 @@ export function listWorkspacePackages(root: string): WorkspacePackage[] {
         if (!existsSync(manifestPath)) {
             continue;
         }
-        const manifest = JSON.parse(readFileSync(manifestPath, "utf8")) as PackageManifest;
+        const manifest = JSON.parse(readFileSync(manifestPath, "utf8"))as PackageManifest;
         if (!manifest.name || !manifest.version) {
             throw new Error(`package.json missing name or version: ${manifestPath}`);
         }
@@ -76,15 +76,15 @@ export function listWorkspacePackages(root: string): WorkspacePackage[] {
 
 export function collectInternalDependencyNames(
     pkg: WorkspacePackage,
-    byName: Map<string, WorkspacePackage>,
-): Set<string> {
-    const deps = new Set<string>();
+    byName: Map < string, WorkspacePackage > ,
+): Set < string> {
+    const deps = new Set < string> ();
     for (const field of DEPENDENCY_FIELDS) {
         const entries = pkg.manifest[field];
         if (!entries) {
             continue;
         }
-        for (const [depName, spec] of Object.entries(entries)) {
+        for (const[depName, spec]of Object.entries(entries)) {
             if (byName.has(depName)) {
                 deps.add(depName);
                 continue;
@@ -101,7 +101,7 @@ export function collectInternalDependencyNames(
 function resolveWorkspaceDependencyName(
     spec: string,
     packageDir: string,
-    byName: Map<string, WorkspacePackage>,
+    byName: Map < string, WorkspacePackage > ,
 ): string | undefined {
     if (spec.startsWith("workspace:")) {
         return undefined;
@@ -119,6 +119,6 @@ function resolveWorkspaceDependencyName(
     if (!existsSync(manifestPath)) {
         return undefined;
     }
-    const manifest = JSON.parse(readFileSync(manifestPath, "utf8")) as PackageManifest;
+    const manifest = JSON.parse(readFileSync(manifestPath, "utf8"))as PackageManifest;
     return manifest.name;
 }

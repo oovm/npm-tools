@@ -4,7 +4,7 @@ import { basename, dirname, join, relative, resolve } from "node:path";
 import { detectProjectLayout } from "../config/detectProject.js";
 
 /** Basename of a built .node file → platform package directory under projects/packages/. */
-const PACKAGE_BY_ASSET: Record<string, string> = {
+const PACKAGE_BY_ASSET: Record < string, string > = {
     "nifty-win32-x64-msvc.node": "nifty-win32-x64",
     "nifty-linux-x64-gnu.node": "nifty-linux-x64",
     "nifty-linux-arm64-gnu.node": "nifty-linux-arm64",

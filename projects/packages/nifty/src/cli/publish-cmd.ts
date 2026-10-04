@@ -19,10 +19,10 @@ export function registerPublishCommand(cli: Cli): void {
         .option("--otp <code>", "cli.opt.otp")
         .option("--totp-secret <secret>", "cli.opt.totp-secret")
         .option("--npm-token <token>", "cli.opt.npm-token")
-        .action(async (options) => cmdPublish(options));
+        .action(async(options) => cmdPublish(options));
 }
 
-export async function cmdPublish(options: ParsedOptions): Promise<number> {
+export async function cmdPublish(options: ParsedOptions): Promise < number> {
     await bootstrapFromOptions(options);
     const { config } = await loadConfig({ cwd: cwdFrom(options), createIfMissing: false });
     const packages = strList(options, "package");
@@ -35,13 +35,7 @@ export async function cmdPublish(options: ParsedOptions): Promise<number> {
         placeholder: flag(options, "placeholder"),
         tag: str(options, "tag"),
         access: str(options, "access") ?? "public",
-        ...(packages.length === 1
-            ? { only: packages[0] }
-            : packages.length > 1
-              ? { packages }
-              : fromConfig.length > 0
-                ? { packages: fromConfig }
-                : {}),
+        ...(packages.length === 1 ? { only: packages[0] }: packages.length > 1 ? { packages }: fromConfig.length > 0 ? { packages: fromConfig }: { }),
         ...trustPayloadFromConfig(config),
         ...authPayload(authFromOptions(options)),
     });

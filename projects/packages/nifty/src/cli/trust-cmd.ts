@@ -16,10 +16,10 @@ export function registerTrustCommand(cli: Cli): void {
         .option("--otp <code>", "cli.opt.otp")
         .option("--totp-secret <secret>", "cli.opt.totp-secret")
         .option("--npm-token <token>", "cli.opt.npm-token")
-        .action(async (options) => cmdTrust(options));
+        .action(async(options) => cmdTrust(options));
 }
 
-export async function cmdTrust(options: ParsedOptions): Promise<number> {
+export async function cmdTrust(options: ParsedOptions): Promise < number> {
     await bootstrapFromOptions(options);
     const { config } = await loadConfig({ cwd: cwdFrom(options), createIfMissing: false });
     const native = loadNiftyNative();
@@ -29,7 +29,7 @@ export async function cmdTrust(options: ParsedOptions): Promise<number> {
         dryRun: flag(options, "dry-run"),
         refresh: flag(options, "refresh"),
         only: str(options, "only"),
-        ...(fromConfig.length > 0 ? { packages: fromConfig } : {}),
+        ...(fromConfig.length > 0 ? { packages: fromConfig }: { }),
         ...trustPayloadFromConfig(config),
         ...authPayload(authFromOptions(options)),
     });

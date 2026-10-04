@@ -26,7 +26,7 @@ function resolveRoots(config: NiftyConfig, layout: ProjectLayout): NiftyConfig {
             config.cargoRoot ??
             layout.cargoWorkspaceRoot ??
             (layout.cargoManifest ? layout.cargoManifest.replace(/[/\\]Cargo\.toml$/, "") : undefined),
-        npmRoot:
+        npmRoot :
             config.npmRoot ??
             layout.npmWorkspaceRoot ??
             (layout.packageManifest ? layout.packageManifest.replace(/[/\\]package\.json$/, "") : undefined),
@@ -58,22 +58,20 @@ export class Nifty {
         this.configFile = configFile;
     }
 
-    static async open(options: NiftyOpenOptions = {}): Promise<Nifty> {
+    static async open(options: NiftyOpenOptions = { }): Promise < Nifty> {
         const cwd = options.cwd ?? process.cwd();
         const layout = detectProjectLayout(cwd);
         const { config: skipConfig, configFile, env, githubToken, authorMap, repoRoot, cargoRoot, npmRoot } = options;
         const loaded =
-            skipConfig === false
-                ? { config: {} as NiftyConfig }
-                : await loadConfig({ cwd, configFile, env: { layout, ...env } });
+            skipConfig === false ? { config: { } as NiftyConfig }: await loadConfig({ cwd, configFile, env: { layout, ...env } });
         const merged = resolveRoots(
             {
                 ...loaded.config,
-                ...(githubToken !== undefined ? { githubToken } : {}),
-                ...(authorMap !== undefined ? { authorMap } : {}),
-                ...(repoRoot !== undefined ? { repoRoot } : {}),
-                ...(cargoRoot !== undefined ? { cargoRoot } : {}),
-                ...(npmRoot !== undefined ? { npmRoot } : {}),
+                ...(githubToken!== undefined ? { githubToken }: { }),
+                ...(authorMap!== undefined ? { authorMap }: { }),
+                ...(repoRoot!== undefined ? { repoRoot }: { }),
+                ...(cargoRoot!== undefined ? { cargoRoot }: { }),
+                ...(npmRoot!== undefined ? { npmRoot }: { }),
             },
             layout,
         );
@@ -91,6 +89,6 @@ export class Nifty {
     }
 }
 
-export async function createNifty(options: NiftyOpenOptions = {}): Promise<Nifty> {
+export async function createNifty(options: NiftyOpenOptions = { }): Promise < Nifty> {
     return Nifty.open(options);
 }

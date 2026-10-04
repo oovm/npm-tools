@@ -23,13 +23,13 @@ export function parseCliContext(argv: string[]): { cwd: string; dryRun: boolean 
 }
 
 /** Ensure `nifty.config.*` exists before running a command (skip create on `--dry-run`). */
-export async function bootstrapNiftyConfig(argv: string[]): Promise<void> {
+export async function bootstrapNiftyConfig(argv: string[]): Promise < void> {
     const { cwd, dryRun } = parseCliContext(argv);
     await loadConfig({ cwd, createIfMissing: !dryRun });
 }
 
 /** Commander action hook: load config from parsed global/command flags. */
-export async function bootstrapFromOptions(options: ParsedOptions): Promise<void> {
+export async function bootstrapFromOptions(options: ParsedOptions): Promise < void> {
     const cwd = cwdFrom(options) ?? process.cwd();
     const dryRun = options["dry-run"] === true;
     await loadConfig({ cwd, createIfMissing: !dryRun });

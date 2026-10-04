@@ -23,7 +23,7 @@ const NIFTY_PRESET_INCLUDES = [
     "projects/dashboard/**",
     "package.json",
     "nifty.config.ts",
-] as const;
+]as const;
 
 /** VMZ hybrid monorepo — JS/TS surfaces only, never whole-repo walk. */
 const VMZ_INCLUDES = [
@@ -37,9 +37,9 @@ const VMZ_INCLUDES = [
     "packages/homepage/**",
     "package.json",
     "nifty.config.ts",
-] as const;
+]as const;
 
-const PRESET_INCLUDES: Record<NiftyFormatPreset, readonly string[] | undefined> = {
+const PRESET_INCLUDES: Record < NiftyFormatPreset, readonly string[] | undefined > = {
     default: undefined,
     nifty: NIFTY_PRESET_INCLUDES,
     "npm-tools": NIFTY_PRESET_INCLUDES,
@@ -53,10 +53,10 @@ export function resolveFormatConfig(format: NiftyFormatConfig | undefined): Reso
     return {
         preset,
         includes: format?.includes ?? (presetIncludes ? [...presetIncludes] : undefined),
-        excludes: format?.excludes,
-        rust: format?.rust,
-        javascript: format?.javascript,
-        style: {
+        excludes : format?.excludes,
+        rust : format?.rust,
+        javascript : format?.javascript,
+        style : {
             ...DEFAULT_FORMAT_STYLE,
             ...format?.style,
         },

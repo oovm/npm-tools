@@ -18,12 +18,12 @@ export function registerRetimeCommand(cli: Cli): void {
         .option("-b, --branch <branch>", "cli.opt.branch")
         .option("--tip <ref>", "cli.opt.tip")
         .option("-m, --message <text>", "cli.opt.message")
-        .action(async (options) => cmdRetimeRoot(options));
+        .action(async(options) => cmdRetimeRoot(options));
 
-    retime.action(async (options) => cmdRetimeRange(options));
+    retime.action(async(options) => cmdRetimeRange(options));
 }
 
-export async function cmdRetimeRange(options: ParsedOptions): Promise<number> {
+export async function cmdRetimeRange(options: ParsedOptions): Promise < number> {
     await bootstrapFromOptions(options);
     const commit = options._[0];
     if (!commit) {
@@ -42,7 +42,7 @@ export async function cmdRetimeRange(options: ParsedOptions): Promise<number> {
     return 0;
 }
 
-export async function cmdRetimeRoot(options: ParsedOptions): Promise<number> {
+export async function cmdRetimeRoot(options: ParsedOptions): Promise < number> {
     await bootstrapFromOptions(options);
     const native = loadNiftyNative();
     const report = native.history["retime-root"]({

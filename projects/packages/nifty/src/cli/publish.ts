@@ -18,7 +18,7 @@ export type PublishReport = {
     skippedVersions: string[];
 };
 
-export async function runPublish(argv: string[]): Promise<void> {
+export async function runPublish(argv: string[]): Promise < void> {
     const options = parsePublishArgs(argv);
     const native = loadNiftyNative();
     const report = native.publisher["publish-workspace"]({
@@ -67,7 +67,7 @@ function parsePublishArgs(argv: string[]) {
     return { cwd, dryRun, refresh, placeholder, tag, access, auth };
 }
 
-export function printPublishReport(report: PublishReport, dryRun?: boolean): void {
+export function printPublishReport(report: PublishReport, dryRun?: boolean) : void {
     const prefix = dryRun ? "would publish" : "published";
     console.log(`${prefix} workspace ${report.root}`);
     if (report.skipped.length > 0) {

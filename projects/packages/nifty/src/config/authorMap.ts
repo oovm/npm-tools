@@ -13,12 +13,8 @@ export function resolveAuthorMapPath(config: NiftyConfig, repoRoot: string): str
 }
 
 /** Load author map file contents for native helpers expecting JSON text. */
-export function loadAuthorMapJson(repoRoot: string, authorMapPath?: string): string {
-    const abs = authorMapPath
-        ? isAbsolute(authorMapPath)
-            ? authorMapPath
-            : join(repoRoot, authorMapPath)
-        : resolveAuthorMapPath({}, repoRoot);
+export function loadAuthorMapJson(repoRoot: string, authorMapPath?: string) : string {
+    const abs = authorMapPath ? isAbsolute(authorMapPath) ? authorMapPath : join(repoRoot, authorMapPath) : resolveAuthorMapPath({ }, repoRoot);
     if (!existsSync(abs)) {
         return "{}";
     }

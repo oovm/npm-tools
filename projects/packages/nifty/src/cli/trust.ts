@@ -8,7 +8,7 @@ export type TrustReport = {
     failed: string[];
 };
 
-export async function runTrust(argv: string[]): Promise<void> {
+export async function runTrust(argv: string[]): Promise < void> {
     const options = parseTrustArgs(argv);
     const native = loadNiftyNative();
     const report = native.publisher["trust-workspace"]({

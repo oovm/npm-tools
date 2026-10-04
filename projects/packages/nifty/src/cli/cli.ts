@@ -37,7 +37,7 @@ function buildNiftyCli() {
     return cli;
 }
 
-export async function runCli(argv: string[]): Promise<number> {
+export async function runCli(argv: string[]): Promise < number> {
     try {
         return await buildNiftyCli().parse(argv);
     } catch (error) {

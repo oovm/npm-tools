@@ -11,10 +11,10 @@ export function registerBumpCommand(cli: Cli): void {
         .option("--patch", "cli.opt.patch")
         .option("--minor", "cli.opt.minor")
         .option("--major", "cli.opt.major")
-        .action(async (options) => cmdBump(options));
+        .action(async(options) => cmdBump(options));
 }
 
-export async function cmdBump(options: ParsedOptions): Promise<number> {
+export async function cmdBump(options: ParsedOptions): Promise < number> {
     await bootstrapFromOptions(options);
     const bumpOptions = bumpOptionsFromParsed(options);
     const report = bumpWorkspace(bumpOptions);

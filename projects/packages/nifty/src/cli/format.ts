@@ -6,7 +6,7 @@ export type FormatOptions = {
     cwd?: string;
 };
 
-export async function formatWorkspace(options: FormatOptions): Promise<number> {
+export async function formatWorkspace(options: FormatOptions): Promise < number> {
     const cwd = options.cwd ?? process.cwd();
     const { config } = await loadConfig({ cwd, createIfMissing: false, env: { command: "format" } });
     const resolved = resolveFormatConfig(config.format);

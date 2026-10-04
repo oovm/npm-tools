@@ -17,7 +17,7 @@ export function registerCommitCommand(cli: Cli): void {
         .option("--path <file>", "cli.opt.path")
         .option("--with-lint", "cli.opt.with-lint")
         .option("--errors-only", "cli.opt.errors-only")
-        .action(async (options) => cmdCommitExport(options));
+        .action(async(options) => cmdCommitExport(options));
 
     commit
         .command("apply", "cli.cmd.commit.apply")
@@ -25,7 +25,7 @@ export function registerCommitCommand(cli: Cli): void {
         .option("--ref <ref>", "cli.opt.ref")
         .option("--path <file>", "cli.opt.path")
         .option("--dry-run", "cli.opt.dry-run")
-        .action(async (options) => cmdCommitApply(options));
+        .action(async(options) => cmdCommitApply(options));
 
     commit
         .command("scan", "cli.cmd.commit.scan")
@@ -34,7 +34,7 @@ export function registerCommitCommand(cli: Cli): void {
         .option("-s, --subject <text>...", "cli.opt.subject")
         .option("--json", "cli.opt.json")
         .option("--errors-only", "cli.opt.errors-only")
-        .action(async (options) => cmdCommitScan(options));
+        .action(async(options) => cmdCommitScan(options));
 
     commit
         .command("audit", "cli.cmd.commit.audit")
@@ -43,10 +43,10 @@ export function registerCommitCommand(cli: Cli): void {
         .option("-s, --subject <text>...", "cli.opt.subject")
         .option("--json", "cli.opt.json")
         .option("--errors-only", "cli.opt.errors-only")
-        .action(async (options) => cmdCommitAudit(options));
+        .action(async(options) => cmdCommitAudit(options));
 }
 
-export async function cmdCommitExport(options: ParsedOptions): Promise<number> {
+export async function cmdCommitExport(options: ParsedOptions): Promise < number> {
     await bootstrapFromOptions(options);
     const base = requireStr(options, "base");
     const path = str(options, "path") ?? "commit.pending.json";
@@ -77,7 +77,7 @@ export async function cmdCommitExport(options: ParsedOptions): Promise<number> {
     return 0;
 }
 
-export async function cmdCommitApply(options: ParsedOptions): Promise<number> {
+export async function cmdCommitApply(options: ParsedOptions): Promise < number> {
     await bootstrapFromOptions(options);
     const base = requireStr(options, "base");
     const path = requireStr(options, "path");
@@ -117,13 +117,13 @@ export async function cmdCommitApply(options: ParsedOptions): Promise<number> {
     return 0;
 }
 
-export async function cmdCommitScan(options: ParsedOptions): Promise<number> {
+export async function cmdCommitScan(options: ParsedOptions): Promise < number> {
     await bootstrapFromOptions(options);
     await lintCommits({ ...commitLintOptions(options), reportTitle: "commit scan" }, false, true);
     return 0;
 }
 
-export async function cmdCommitAudit(options: ParsedOptions): Promise<number> {
+export async function cmdCommitAudit(options: ParsedOptions): Promise < number> {
     await bootstrapFromOptions(options);
     const errorCount = await lintCommits(commitLintOptions(options), false, true);
     return errorCount > 0 ? 1 : 0;
@@ -145,10 +145,10 @@ function commitLintOptions(options: ParsedOptions): LintOptions {
 
 type ExportDocument = {
     version: number;
-    entries: Array<{
+    entries: Array < {
         hash: string;
         message: string;
-        violations?: Array<{
+        violations?: Array < {
             rule: string;
             severity: "error" | "warning" | "info";
             message: string;
@@ -164,7 +164,7 @@ async function lintAndAnnotateExport(options: {
     json: boolean;
     errorsOnly: boolean;
     reportTitle: string;
-}): Promise<number> {
+}): Promise < number> {
     const native = loadNiftyNative();
     const report = native.lint.run({
         cwd: options.cwd,
@@ -173,9 +173,7 @@ async function lintAndAnnotateExport(options: {
         commitOnly: true,
         scanCargo: false,
     });
-    const diagnostics = options.errorsOnly
-        ? report.diagnostics.filter((item) => item.severity === "error")
-        : report.diagnostics;
+    const diagnostics = options.errorsOnly ? report.diagnostics.filter((item) => item.severity === "error") : report.diagnostics;
 
     if (options.json) {
         const { printCommitLintReport } = await import("./commit-lint-report.js");
@@ -192,7 +190,7 @@ async function lintAndAnnotateExport(options: {
         });
     }
 
-    const byHash = new Map<string, Array<{ rule: string; severity: "error" | "warning" | "info"; message: string }>>();
+    const byHash = new Map < string, Array < { rule: string; severity: "error" | "warning" | "info"; message: string }>>();
     for (const item of diagnostics) {
         if (!item.hash) {
             continue;
@@ -203,7 +201,7 @@ async function lintAndAnnotateExport(options: {
     }
 
     const text = await readFile(options.path, "utf8");
-    const document = JSON.parse(text) as ExportDocument;
+    const document = JSON.parse(text)as ExportDocument;
     document.entries = document.entries.map((entry) => {
         const violations = byHash.get(entry.hash);
         if (!violations || violations.length === 0) {

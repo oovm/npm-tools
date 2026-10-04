@@ -84,7 +84,7 @@ export type NiftyConfig = {
     };
     /** Rule-based lint configuration. */
     lint?: {
-        rules?: Array<{
+        rules?: Array < {
             id: string;
             enabled?: boolean;
             severity?: "error" | "warning" | "info";
@@ -94,7 +94,7 @@ export type NiftyConfig = {
     format?: NiftyFormatConfig;
 };
 
-export type NiftyConfigExport = NiftyConfig | ((env: NiftyConfigEnv) => NiftyConfig | Promise<NiftyConfig>);
+export type NiftyConfigExport = NiftyConfig | ((env: NiftyConfigEnv) => NiftyConfig | Promise < NiftyConfig> );
 
 export type NiftyConfigEnv = {
     mode: string;
@@ -108,4 +108,4 @@ export const CONFIG_FILE_NAMES = [
     "nifty.config.js",
     "nifty.config.mjs",
     "nifty.config.cjs",
-] as const;
+]as const;

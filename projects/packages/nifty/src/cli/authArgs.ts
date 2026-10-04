@@ -44,9 +44,9 @@ export function authPayload(options: AuthCliOptions): {
     npm: string;
 } {
     return {
-        ...(options.otp !== undefined ? { otp: options.otp } : {}),
-        ...(options.totpSecret !== undefined ? { totpSecret: options.totpSecret } : {}),
-        ...(options.token !== undefined ? { token: options.token } : {}),
+        ...(options.otp!== undefined ? { otp: options.otp }: { }),
+        ...(options.totpSecret!== undefined ? { totpSecret: options.totpSecret }: { }),
+        ...(options.token!== undefined ? { token: options.token }: { }),
         npm: options.npm,
     };
 }

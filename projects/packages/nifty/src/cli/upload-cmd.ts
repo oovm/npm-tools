@@ -19,10 +19,10 @@ export function registerUploadCommand(cli: Cli): void {
         .option("--draft", "cli.opt.draft")
         .option("--no-generate-notes", "cli.opt.no-generate-notes")
         .option("--github-action", "cli.opt.github-action")
-        .action(async (options) => cmdUpload(options));
+        .action(async(options) => cmdUpload(options));
 }
 
-export async function cmdUpload(options: ParsedOptions): Promise<number> {
+export async function cmdUpload(options: ParsedOptions): Promise < number> {
     await bootstrapFromOptions(options);
     await uploadFromOptions({
         release: flag(options, "release"),

@@ -29,11 +29,11 @@ type GithubRelease = {
     id: number;
 };
 
-export async function runUpload(argv: string[]): Promise<void> {
+export async function runUpload(argv: string[]): Promise < void> {
     await uploadFromOptions(parseUploadArgs(argv));
 }
 
-export async function uploadFromOptions(options: UploadOptions): Promise<void> {
+export async function uploadFromOptions(options: UploadOptions): Promise < void> {
     if (options.githubAction) {
         applyGithubActionDefaults(options);
     }
@@ -83,52 +83,52 @@ function parseUploadArgs(argv: string[]): UploadOptions {
 
     for (let i = 0; i < argv.length; i += 1) {
         const arg = argv[i];
-        if (arg === "--release") options.release = true;
-        else if (arg === "--pages") options.pages = true;
-        else if (arg === "--both") options.both = true;
-        else if (arg === "-d" || arg === "--dir") options.dir = argv[++i];
+        if (arg === "--release")options.release = true;
+        else if (arg === "--pages")options.pages = true;
+        else if (arg === "--both")options.both = true;
+        else if (arg === "-d" || arg === "--dir")options.dir = argv[++i];
         else if (arg === "-h" || arg === "--help") {
             printUploadHelp();
             process.exit(0);
         }
-        else if (arg === "-t" || arg === "--tag") options.tag = argv[++i];
-        else if (arg === "--repo") options.repo = argv[++i];
-        else if (arg === "--token") options.token = argv[++i];
-        else if (arg === "--name") options.name = argv[++i];
-        else if (arg === "--notes") options.notes = argv[++i];
-        else if (arg === "--notes-file") options.notesFile = argv[++i];
-        else if (arg === "--draft") options.draft = true;
-        else if (arg === "--no-generate-notes") options.generateNotes = false;
-        else if (arg === "--github-action") options.githubAction = true;
-        else if (arg === "-C" || arg === "--cwd") options.cwd = argv[++i];
+        else if (arg === "-t" || arg === "--tag")options.tag = argv[++i];
+        else if (arg === "--repo")options.repo = argv[++i];
+        else if (arg === "--token")options.token = argv[++i];
+        else if (arg === "--name")options.name = argv[++i];
+        else if (arg === "--notes")options.notes = argv[++i];
+        else if (arg === "--notes-file")options.notesFile = argv[++i];
+        else if (arg === "--draft")options.draft = true;
+        else if (arg === "--no-generate-notes")options.generateNotes = false;
+        else if (arg === "--github-action")options.githubAction = true;
+        else if (arg === "-C" || arg === "--cwd")options.cwd = argv[++i];
     }
 
     return options;
 }
 
 function parseTarget(options: UploadOptions): "release" | "pages" | "both" {
-    if (options.both) return "both";
-    if (options.pages) return "pages";
-    if (options.release) return "release";
+    if (options.both)return "both";
+    if (options.pages)return "pages";
+    if (options.release)return "release";
     throw new Error("specify --release, --pages, or --both");
 }
 
 function applyGithubActionDefaults(options: UploadOptions): void {
-    options.token ??= process.env.GITHUB_TOKEN;
-    options.repo ??= process.env.GITHUB_REPOSITORY;
-    options.tag ??= process.env.GITHUB_REF_NAME;
-    options.cwd ??= process.env.GITHUB_WORKSPACE;
+    options.token??= process.env.GITHUB_TOKEN;
+    options.repo??= process.env.GITHUB_REPOSITORY;
+    options.tag??= process.env.GITHUB_REF_NAME;
+    options.cwd??= process.env.GITHUB_WORKSPACE;
 }
 
 async function resolveNotes(
     options: UploadOptions,
     repoRoot: string,
     tag: string,
-    native: ReturnType<typeof loadNiftyNative>,
-): Promise<string> {
-    if (options.notes) return options.notes;
-    if (options.notesFile) return readFileSync(options.notesFile, "utf8");
-    if (!options.generateNotes) return "";
+    native: ReturnType < typeof loadNiftyNative > ,
+): Promise < string> {
+    if (options.notes)return options.notes;
+    if (options.notesFile)return readFileSync(options.notesFile, "utf8");
+    if (!options.generateNotes)return "";
     try {
         const range = native.git["resolve-range"](repoRoot, tag.replace(/^v/, ""), undefined, tag);
         const commits = native.git["collect-commits"](repoRoot, range["from-ref"], range["to-ref"]);
@@ -144,8 +144,8 @@ async function uploadReleaseAssets(
     tag: string,
     options: UploadOptions,
     notes: string,
-): Promise<void> {
-    const [owner, name] = splitRepo(repo);
+): Promise < void> {
+    const[owner, name] = splitRepo(repo);
     let release = await apiReleaseByTag(owner, name, tag, token);
     if (!release) {
         release = await apiCreateRelease(owner, name, tag, options.name ?? tag, notes, options.draft, token);
@@ -178,8 +178,8 @@ Options:
 `);
 }
 
-async function deployGithubPages(repo: string, token: string, dir: string): Promise<void> {
-    const [owner, name] = splitRepo(repo);
+async function deployGithubPages(repo: string, token: string, dir: string): Promise < void> {
+    const[owner, name] = splitRepo(repo);
     const source = resolve(dir);
     const work = mkdtempSync(join(tmpdir(), "nifty-pages-"));
     cpSync(source, work, { recursive: true });
@@ -223,10 +223,10 @@ function walk(dir: string): string[] {
 
 function splitRepo(repo: string): [string, string] {
     const parts = repo.split("/");
-    if (parts.length !== 2 || !parts[0] || !parts[1]) {
+    if (parts.length!== 2 || !parts[0] || !parts[1]) {
         throw new Error(`invalid repo ${repo}, expected owner/name`);
     }
-    return [parts[0], parts[1]];
+    return[parts[0], parts[1]];
 }
 
 async function apiReleaseByTag(
@@ -234,16 +234,16 @@ async function apiReleaseByTag(
     name: string,
     tag: string,
     token: string,
-): Promise<GithubRelease | null> {
+): Promise < GithubRelease | null > {
     const response = await fetch(
         `https://api.github.com/repos/${owner}/${name}/releases/tags/${encodeURIComponent(tag)}`,
         { headers: githubHeaders(token) },
     );
-    if (response.status === 404) return null;
+    if (response.status === 404)return null;
     if (!response.ok) {
         throw new Error(`GitHub API ${response.status}: ${await response.text()}`);
     }
-    return (await response.json()) as GithubRelease;
+    return(await response.json())as GithubRelease;
 }
 
 async function apiCreateRelease(
@@ -254,7 +254,7 @@ async function apiCreateRelease(
     body: string,
     draft: boolean,
     token: string,
-): Promise<GithubRelease> {
+): Promise < GithubRelease> {
     const response = await fetch(`https://api.github.com/repos/${owner}/${name}/releases`, {
         method: "POST",
         headers: { ...githubHeaders(token), "Content-Type": "application/json" },
@@ -263,7 +263,7 @@ async function apiCreateRelease(
     if (!response.ok) {
         throw new Error(`GitHub API ${response.status}: ${await response.text()}`);
     }
-    return (await response.json()) as GithubRelease;
+    return(await response.json())as GithubRelease;
 }
 
 async function apiUploadAsset(
@@ -273,7 +273,7 @@ async function apiUploadAsset(
     assetName: string,
     filePath: string,
     token: string,
-): Promise<void> {
+): Promise < void> {
     const url = `https://uploads.github.com/repos/${owner}/${name}/releases/${releaseId}/assets?name=${encodeURIComponent(assetName)}`;
     const body = readFileSync(filePath);
     const response = await fetch(url, {
@@ -296,7 +296,7 @@ async function apiUploadAsset(
     throw new Error(`GitHub upload ${response.status}: ${text}`);
 }
 
-function githubHeaders(token: string): Record<string, string> {
+function githubHeaders(token: string): Record < string, string > {
     return {
         Accept: "application/vnd.github+json",
         Authorization: `Bearer ${token}`,
@@ -307,7 +307,7 @@ function githubHeaders(token: string): Record<string, string> {
 
 function git(cwd: string, args: string[]): void {
     const result = spawnSync("git", args, { cwd, stdio: "inherit" });
-    if (result.status !== 0) {
+    if (result.status!== 0) {
         throw new Error(`git ${args.join(" ")} failed`);
     }
 }

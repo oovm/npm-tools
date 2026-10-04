@@ -162,7 +162,7 @@ export function detectProjectLayout(cwd = process.cwd()): ProjectLayout {
 
 /** Discover npm package directories for hybrid monorepos. */
 export function discoverPackageDirs(layout: ProjectLayout): string[] {
-    const roots = new Set<string>();
+    const roots = new Set < string> ();
 
     if (layout.npmWorkspaceRoot) {
         roots.add(layout.npmWorkspaceRoot);
@@ -185,5 +185,5 @@ export function discoverPackageDirs(layout: ProjectLayout): string[] {
         }
     }
 
-    return [...roots];
+    return[...roots];
 }

@@ -8,7 +8,7 @@ export class Gitmoji {
     constructor(
         private readonly wasm: GitmojiExports,
         private readonly defaultAuthorMapJson = "{}",
-    ) {}
+    ) { }
 
     static open(authorMapJson = "{}"): Gitmoji {
         const native = loadNiftyNative();
@@ -39,7 +39,7 @@ export class Gitmoji {
         return this.wasm["leading-gitmoji"](subject);
     }
 
-    sectionForGitmoji(gitmoji?: string): ReleaseSection {
+    sectionForGitmoji(gitmoji?: string) : ReleaseSection {
         return this.wasm["section-for-gitmoji"](gitmoji);
     }
 

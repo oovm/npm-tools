@@ -25,9 +25,9 @@ export function strList(options: ParsedOptions, key: string): string[] {
         return value.filter((entry): entry is string => typeof entry === "string" && entry.length > 0);
     }
     if (typeof value === "string" && value.length > 0) {
-        return [value];
+        return[value];
     }
-    return [];
+    return[];
 }
 
 export function authFromOptions(options: ParsedOptions): AuthCliOptions {

@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/bin /env node
 
 import { createJiti } from "jiti";
 import { dirname, join } from "node:path";

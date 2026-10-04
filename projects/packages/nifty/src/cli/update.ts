@@ -5,11 +5,11 @@ export type UpdateOptions = {
     cwd?: string;
 };
 
-export async function runUpdate(argv: string[]): Promise<void> {
+export async function runUpdate(argv: string[]): Promise < void> {
     await updateWorkspace(parseUpdateArgs(argv));
 }
 
-export async function updateWorkspace(options: UpdateOptions): Promise<void> {
+export async function updateWorkspace(options: UpdateOptions): Promise < void> {
     const native = loadNiftyNative();
     native.updater.run({
         cwd: options.cwd,

@@ -24,7 +24,7 @@ export type BumpReport = {
 
 const DEFAULT_KIND: BumpKind = "patch";
 
-export async function runBump(argv: string[]): Promise<void> {
+export async function runBump(argv: string[]): Promise < void> {
     const options = parseBumpArgs(argv);
     const report = bumpWorkspace(options);
     printBumpReport(report, options.dryRun);
@@ -103,7 +103,7 @@ export function bumpWorkspace(options: BumpOptions): BumpReport {
 }
 
 function readWorkspaceVersion(cargoPaths: string[], npmPaths: string[]): string {
-    const versions = new Set<string>();
+    const versions = new Set < string> ();
     for (const path of cargoPaths) {
         versions.add(readCargoVersion(path));
     }
@@ -116,7 +116,7 @@ function readWorkspaceVersion(cargoPaths: string[], npmPaths: string[]): string 
     if (versions.size > 1) {
         throw new Error(`workspace versions are out of sync: ${[...versions].sort().join(", ")}`);
     }
-    return [...versions][0];
+    return[...versions][0];
 }
 
 function readCargoVersion(path: string): string {
@@ -129,7 +129,7 @@ function readCargoVersion(path: string): string {
 }
 
 function readPackageVersion(path: string): string {
-    const parsed = JSON.parse(readFileSync(path, "utf8")) as { version?: string };
+    const parsed = JSON.parse(readFileSync(path, "utf8"))as { version?: string };
     if (!parsed.version) {
         throw new Error(`no version field in ${path}`);
     }
@@ -165,7 +165,7 @@ export function bumpSemver(version: string, kind: BumpKind): string {
 
 function collectCargoManifests(cratesDir: string): string[] {
     if (!existsSync(cratesDir)) {
-        return [];
+        return[];
     }
     return readdirSync(cratesDir, { withFileTypes: true })
         .filter((entry) => entry.isDirectory())
@@ -175,15 +175,15 @@ function collectCargoManifests(cratesDir: string): string[] {
 
 function collectPackageManifests(packagesDir: string): string[] {
     if (!existsSync(packagesDir)) {
-        return [];
+        return[];
     }
     return readdirSync(packagesDir, { withFileTypes: true })
-        .filter((entry) => entry.isDirectory() && entry.name !== "node_modules")
+        .filter((entry) => entry.isDirectory() && entry.name!== "node_modules")
         .map((entry) => join(packagesDir, entry.name, "package.json"))
         .filter((path) => existsSync(path));
 }
 
-function bumpCargoManifest(path: string, version: string, dryRun?: boolean): string {
+function bumpCargoManifest(path: string, version: string, dryRun?: boolean) : string {
     const original = readFileSync(path, "utf8");
     const next = original.replace(/^version\s*=\s*"[^"]*"/m, `version = "${version}"`);
     if (next === original) {
@@ -195,9 +195,9 @@ function bumpCargoManifest(path: string, version: string, dryRun?: boolean): str
     return path;
 }
 
-function bumpPackageManifest(path: string, version: string, dryRun?: boolean): string {
+function bumpPackageManifest(path: string, version: string, dryRun?: boolean) : string {
     const original = readFileSync(path, "utf8");
-    const parsed = JSON.parse(original) as { version?: string };
+    const parsed = JSON.parse(original)as { version?: string };
     if (!parsed.version) {
         throw new Error(`no version field in ${path}`);
     }
@@ -209,7 +209,7 @@ function bumpPackageManifest(path: string, version: string, dryRun?: boolean): s
     return path;
 }
 
-export function printBumpReport(report: BumpReport, dryRun?: boolean): void {
+export function printBumpReport(report: BumpReport, dryRun?: boolean) : void {
     const prefix = dryRun ? "would bump" : "bumped";
     const kind = report.kind ? ` (${report.kind})` : "";
     console.log(`${prefix} workspace ${report.root} ${report.from} -> ${report.to}${kind}`);
