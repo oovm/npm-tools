@@ -69,6 +69,42 @@ fn formats_parenthesized_ternary_colon() {
 }
 
 #[test]
+fn formats_generic_types_return_annotations_and_empty_objects() {
+    let input = "async function load(value: Record<string, unknown>): Promise<Array<number>> { return new Set<string>(); } const defaults: Record<string, string> = {};";
+    let output = format_sample("sample.ts", input);
+    assert_eq!(
+        output,
+        "async function load(value: Record<string, unknown>): Promise<Array<number>> { return new Set<string>(); } const defaults: Record<string, string> = {};"
+    );
+    assert_eq!(format_sample("sample.ts", &output), output);
+}
+
+#[test]
+fn formats_workspace_generic_and_return_type_spacing() {
+    let source = include_str!("../../../packages/nifty/src/github.ts");
+    let output = format_sample("github.ts", source);
+    assert!(output.contains("body: Record<string, unknown>, fallbackLogin?: string): GithubAuthor"), "output={output:?}");
+    assert!(output.contains("Promise<Record<string, unknown>>"), "output={output:?}");
+    assert!(output.contains("Promise<GithubAuthor | undefined>"), "output={output:?}");
+    assert!(!output.contains("Promise <"), "output={output:?}");
+    assert!(!output.contains("Record <"), "output={output:?}");
+    assert!(!output.contains("fallbackLogin?: string) :"), "output={output:?}");
+}
+
+#[test]
+fn preserves_workspace_authoring_spacing() {
+    for (path, source) in [
+        ("nifty.mjs", include_str!("../../../packages/nifty/cli/nifty.mjs")),
+        ("commit-cmd.ts", include_str!("../../../packages/nifty/src/cli/commit-cmd.ts")),
+        ("publish-cmd.ts", include_str!("../../../packages/nifty/src/cli/publish-cmd.ts")),
+        ("commit-lint-report.ts", include_str!("../../../packages/nifty/src/cli/commit-lint-report.ts")),
+        ("upload.ts", include_str!("../../../packages/nifty/src/cli/upload.ts")),
+    ] {
+        assert_eq!(format_sample(path, source), source, "path={path}");
+    }
+}
+
+#[test]
 fn formats_workspace_parenthesized_ternary_colons() {
     let source = include_str!("../../../packages/nifty/src/nifty.ts");
     let output = format_sample("nifty.ts", source);
