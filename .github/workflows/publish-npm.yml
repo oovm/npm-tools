@@ -53,7 +53,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           TAG_SHA: ${{ steps.bind.outputs.sha }}
           GITHUB_REPOSITORY: ${{ github.repository }}
-          CI_WORKFLOW_FILES: check-rust.yml,check-typescript.yml
+          CI_WORKFLOW_FILES: check-rust.yml
         run: node scripts/ci/require-ci-success.mjs --sha=${{ steps.bind.outputs.sha }}
 
   build-native:

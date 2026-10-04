@@ -4,6 +4,7 @@ import { defineConfig } from "@doki-land/nifty";
 export default defineConfig({
     format: {
         preset: "nifty",
+        excludes: ["scripts/ci/**"],
         style: {
             indentStyle: "space",
             indentWidth: 4,

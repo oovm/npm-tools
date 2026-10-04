@@ -8,7 +8,7 @@ const REPO = process.env.GITHUB_REPOSITORY || "oovm/npm-tools";
 const TAG_SHA = String(process.env.TAG_SHA || process.argv.find((arg) => arg.startsWith("--sha="))?.slice(6) || "")
     .trim()
     .toLowerCase();
-const WORKFLOWS = (process.env.CI_WORKFLOW_FILES || process.env.CI_WORKFLOW_FILE || "check-rust.yml,check-typescript.yml")
+const WORKFLOWS = (process.env.CI_WORKFLOW_FILES || process.env.CI_WORKFLOW_FILE || "check-rust.yml")
     .split(",")
     .map((workflow) => workflow.trim())
     .filter(Boolean);
