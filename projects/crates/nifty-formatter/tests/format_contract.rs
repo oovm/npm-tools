@@ -59,6 +59,44 @@ fn preserves_regex_bodies_and_distinguishes_division() {
 }
 
 #[test]
+fn workspace_typescript_formatting_preserves_every_token() {
+    use oak_core::{Lexer, ParseSession, SourceText};
+    use oak_typescript::{TypeScriptLanguage, TypeScriptLexer, TypeScriptTokenType};
+
+    let language = TypeScriptLanguage::default();
+    let lexer = TypeScriptLexer::new(&language);
+    let token_texts = |source: &str| {
+        let mut session = ParseSession::default();
+        let text = SourceText::new(source);
+        lexer.lex(&text, &[], &mut session).result.unwrap().iter()
+            .filter(|token| !matches!(token.kind, TypeScriptTokenType::Whitespace | TypeScriptTokenType::Newline))
+            .map(|token| (token.kind, source[token.span.start..token.span.end].to_owned()))
+            .collect::<Vec<_>>()
+    };
+    let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../packages/nifty/src");
+    let mut failures = Vec::new();
+    for entry in walkdir::WalkDir::new(root).into_iter().filter_map(Result::ok) {
+        let path = entry.path();
+        if path.extension().and_then(|ext| ext.to_str()) != Some("ts") {
+            continue;
+        }
+        let source = std::fs::read_to_string(path).unwrap();
+        match format_source_with_options(path, &source, default_format_options()) {
+            Ok(result) => {
+                if token_texts(&source) != token_texts(&result.output) {
+                    failures.push(format!("{}: token stream changed", path.display()));
+                }
+                if format_sample("sample.ts", &result.output) != result.output {
+                    failures.push(format!("{}: format is not idempotent", path.display()));
+                }
+            }
+            Err(error) => failures.push(format!("{}: {error}", path.display())),
+        }
+    }
+    assert!(failures.is_empty(), "{}", failures.join("\n"));
+}
+
+#[test]
 fn preserves_trailing_comment_and_block_comment_in_statement() {
     let input = "const x = 1 /* mid */ // end";
     assert_eq!(format_sample("sample.ts", input), input);
