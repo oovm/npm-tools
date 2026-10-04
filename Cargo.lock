@@ -339,7 +339,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "39cab71617ae0d63f51a36d69f866391735b51691dbda63cf6f96d042b63efeb"
 dependencies = [
  "libc",
- "windows-sys 0.61.2",
+ "windows-sys 0.52.0",
 ]
 
 [[package]]
@@ -1517,7 +1517,7 @@ dependencies = [
 [[package]]
 name = "oak-core"
 version = "0.0.12"
-source = "git+https://github.com/yggdrasil-language/oaks.git?branch=dev#2d18ebb7e46e6f7eac168f26123e3e8a92551b33"
+source = "git+https://github.com/yggdrasil-language/oaks.git?branch=dev#a29f08943a7e268b33b36005b8998b0e806d58e1"
 dependencies = [
  "serde",
  "smallvec",
@@ -1526,9 +1526,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "oak-formatter"
+version = "0.0.12"
+source = "git+https://github.com/yggdrasil-language/oaks.git?branch=dev#a29f08943a7e268b33b36005b8998b0e806d58e1"
+dependencies = [
+ "oak-core",
+]
+
+[[package]]
 name = "oak-javascript"
 version = "0.0.12"
-source = "git+https://github.com/yggdrasil-language/oaks.git?branch=dev#2d18ebb7e46e6f7eac168f26123e3e8a92551b33"
+source = "git+https://github.com/yggdrasil-language/oaks.git?branch=dev#a29f08943a7e268b33b36005b8998b0e806d58e1"
 dependencies = [
  "oak-core",
  "oak-typescript",
@@ -1536,30 +1544,9 @@ dependencies = [
 ]
 
 [[package]]
-name = "oak-macros"
-version = "0.0.12"
-source = "git+https://github.com/yggdrasil-language/oaks.git?branch=dev#2d18ebb7e46e6f7eac168f26123e3e8a92551b33"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 2.0.119",
-]
-
-[[package]]
-name = "oak-pretty-print"
-version = "0.0.12"
-source = "git+https://github.com/yggdrasil-language/oaks.git?branch=dev#2d18ebb7e46e6f7eac168f26123e3e8a92551b33"
-dependencies = [
- "oak-core",
- "oak-macros",
- "serde",
- "serde_json",
-]
-
-[[package]]
 name = "oak-testing"
 version = "0.0.12"
-source = "git+https://github.com/yggdrasil-language/oaks.git?branch=dev#2d18ebb7e46e6f7eac168f26123e3e8a92551b33"
+source = "git+https://github.com/yggdrasil-language/oaks.git?branch=dev#a29f08943a7e268b33b36005b8998b0e806d58e1"
 dependencies = [
  "oak-core",
  "serde",
@@ -1571,10 +1558,10 @@ dependencies = [
 [[package]]
 name = "oak-typescript"
 version = "0.0.12"
-source = "git+https://github.com/yggdrasil-language/oaks.git?branch=dev#2d18ebb7e46e6f7eac168f26123e3e8a92551b33"
+source = "git+https://github.com/yggdrasil-language/oaks.git?branch=dev#a29f08943a7e268b33b36005b8998b0e806d58e1"
 dependencies = [
  "oak-core",
- "oak-pretty-print",
+ "oak-formatter",
  "serde",
 ]
 
@@ -1804,7 +1791,7 @@ dependencies = [
  "errno",
  "libc",
  "linux-raw-sys 0.12.1",
- "windows-sys 0.61.2",
+ "windows-sys 0.52.0",
 ]
 
 [[package]]
@@ -1988,7 +1975,7 @@ dependencies = [
  "getrandom 0.4.3",
  "once_cell",
  "rustix 1.1.5",
- "windows-sys 0.61.2",
+ "windows-sys 0.52.0",
 ]
 
 [[package]]
@@ -2296,7 +2283,7 @@ version = "0.1.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c2a7b1c03c876122aa43f3020e6c3c3ee5c05081c9a00739faf7503aeba10d22"
 dependencies = [
- "windows-sys 0.61.2",
+ "windows-sys 0.52.0",
 ]
 
 [[package]]
@@ -2374,15 +2361,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1e38bc4d79ed67fd075bcc251a1c39b32a1776bbe92e5bef1f0bf1f8c531853b"
 dependencies = [
  "windows-targets",
-]
-
-[[package]]
-name = "windows-sys"
-version = "0.61.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ae137229bcbd6cdf0f7b80a31df61766145077ddf49416a728b02cb3921ff3fc"
-dependencies = [
- "windows-link",
 ]
 
 [[package]]

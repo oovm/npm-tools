@@ -6,7 +6,7 @@ use oak_typescript::formatter::{FormatOptions, format_source};
 fn jsx_element_with_string_attribute_formats() {
     let input = r#"const x = <div className="foo">bar</div>"#;
     let out = format_source(input, &FormatOptions::default()).expect("format");
-    assert!(out.contains("<div className='foo'>bar</div>"), "out={out:?}");
+    assert_eq!(out, r#"const x = <div className = "foo">bar</div>"#);
 }
 
 #[test]
