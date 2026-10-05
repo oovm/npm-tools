@@ -12,11 +12,11 @@ edition = "2021"
 [dependencies]
 nifty-config = { path = "../nifty-config" }
 nifty-types = { path = "../nifty-types" }
-oak-typescript = { git = "https://github.com/yggdrasil-language/oaks.git", rev = "39085d7086558f4db2c6ead58bc6a4d6f40ebd2d" }
+oak-typescript = { git = "https://github.com/yggdrasil-language/oaks.git", rev = "d77a25718b1f27af0046475edcde9fd60c90960d" }
 serde_json = "1.0"
 walkdir = "2.5"
 
 [dev-dependencies]
-oak-core = { git = "https://github.com/yggdrasil-language/oaks.git", rev = "39085d7086558f4db2c6ead58bc6a4d6f40ebd2d" }
-oak-javascript = { git = "https://github.com/yggdrasil-language/oaks.git", rev = "39085d7086558f4db2c6ead58bc6a4d6f40ebd2d" }
-oak-testing = { git = "https://github.com/yggdrasil-language/oaks.git", rev = "39085d7086558f4db2c6ead58bc6a4d6f40ebd2d" }
+oak-core = { git = "https://github.com/yggdrasil-language/oaks.git", rev = "d77a25718b1f27af0046475edcde9fd60c90960d" }
+oak-javascript = { git = "https://github.com/yggdrasil-language/oaks.git", rev = "d77a25718b1f27af0046475edcde9fd60c90960d" }
+oak-testing = { git = "https://github.com/yggdrasil-language/oaks.git", rev = "d77a25718b1f27af0046475edcde9fd60c90960d" }

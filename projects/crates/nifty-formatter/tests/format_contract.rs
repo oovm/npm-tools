@@ -52,6 +52,35 @@ fn formats_comparisons_nullish_coalescing_and_ternary_object_values() {
 }
 
 #[test]
+fn keeps_colons_tight_before_multiline_nullish_values() {
+    let input = "const roots = {\n    npmRoot :\n        config.npmRoot ??\n        layout.npmWorkspaceRoot,\n};";
+    let output = format_sample("sample.ts", input);
+    assert!(output.contains("npmRoot:"), "output={output:?}");
+    assert!(!output.contains("npmRoot :"), "output={output:?}");
+    assert_eq!(format_sample("sample.ts", &output), output);
+}
+
+#[test]
+fn formats_parenthesized_ternary_colon() {
+    let input = "const value = (condition ? expression() : undefined);";
+    assert_eq!(format_sample("sample.ts", input), input);
+    let malformed = "const value = (condition ? expression(): undefined);";
+    assert_eq!(format_sample("sample.ts", malformed), input);
+}
+
+#[test]
+fn formats_workspace_parenthesized_ternary_colons() {
+    let source = include_str!("../../../packages/nifty/src/nifty.ts");
+    let output = format_sample("nifty.ts", source);
+    assert!(output.contains("Cargo\\.toml$/, \"\") : undefined"), "output={output:?}");
+    assert!(output.contains("package\\.json$/, \"\") : undefined"), "output={output:?}");
+    assert!(output.contains("npmRoot:"), "output={output:?}");
+    assert!(!output.contains("npmRoot :"), "output={output:?}");
+    assert!(output.contains("static async open(options: NiftyOpenOptions = { }): Promise < Nifty>"), "output={output:?}");
+    assert!(output.contains("githubToken !== undefined ? { githubToken } : { }"), "output={output:?}");
+}
+
+#[test]
 fn formats_release_cli_with_regex_literals_without_changing_tokens() {
     let source = include_str!("../../../packages/nifty/src/cli/bump.ts");
     let output = format_sample("bump.ts", source);
