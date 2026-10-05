@@ -100,6 +100,7 @@ fn preserves_workspace_authoring_spacing() {
         ("commit-lint-report.ts", include_str!("../../../packages/nifty/src/cli/commit-lint-report.ts")),
         ("upload.ts", include_str!("../../../packages/nifty/src/cli/upload.ts")),
         ("bump.ts", include_str!("../../../packages/nifty/src/cli/bump.ts")),
+        ("defineConfig.ts", include_str!("../../../packages/nifty/src/config/defineConfig.ts")),
     ] {
         assert_eq!(format_sample(path, source), source, "path={path}");
     }
