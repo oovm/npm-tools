@@ -35,7 +35,7 @@ export async function cmdPublish(options: ParsedOptions): Promise < number> {
         placeholder: flag(options, "placeholder"),
         tag: str(options, "tag"),
         access: str(options, "access") ?? "public",
-        ...(packages.length === 1 ? { only: packages[0] }: packages.length > 1 ? { packages }: fromConfig.length > 0 ? { packages: fromConfig }: { }),
+        ...(packages.length === 1 ? { only: packages[0] } : packages.length > 1 ? { packages } : fromConfig.length > 0 ? { packages: fromConfig } : { }),
         ...trustPayloadFromConfig(config),
         ...authPayload(authFromOptions(options)),
     });

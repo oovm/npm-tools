@@ -29,7 +29,7 @@ export async function cmdTrust(options: ParsedOptions): Promise < number> {
         dryRun: flag(options, "dry-run"),
         refresh: flag(options, "refresh"),
         only: str(options, "only"),
-        ...(fromConfig.length > 0 ? { packages: fromConfig }: { }),
+        ...(fromConfig.length > 0 ? { packages: fromConfig } : { }),
         ...trustPayloadFromConfig(config),
         ...authPayload(authFromOptions(options)),
     });

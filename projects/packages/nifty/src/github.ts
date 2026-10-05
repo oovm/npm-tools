@@ -67,7 +67,7 @@ function loadAuthorMap(json: string): Map < string, GithubAuthor > {
         if (typeof entry.login === "string" && entry.login.trim()) {
             author.login = entry.login.trim();
         }
-        if (author.id!== undefined || author.login!== undefined) {
+        if (author.id !== undefined || author.login !== undefined) {
             map.set(email.trim().toLowerCase(), author);
         }
     }
@@ -82,10 +82,10 @@ function mergeAuthors(existing: GithubAuthor, incoming: GithubAuthor): GithubAut
 }
 
 async function enrichAuthor(author: GithubAuthor, token?: string, fetch = false) : Promise < GithubAuthor> {
-    if (!fetch && author.id!== undefined && author.login!== undefined) {
+    if (!fetch && author.id !== undefined && author.login !== undefined) {
         return author;
     }
-    if (!fetch && author.id!== undefined) {
+    if (!fetch && author.id !== undefined) {
         return author;
     }
     if (author.login && (author.id === undefined || fetch)) {

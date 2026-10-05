@@ -51,8 +51,8 @@ export async function lintCommits(
         toRef: options.to,
         subjects: options.subjects.length > 0 ? options.subjects : undefined,
         rules,
-        scanCargo : options.scanCargo,
-        commitOnly : commitOnly || options.commitOnly,
+        scanCargo: options.scanCargo,
+        commitOnly: commitOnly || options.commitOnly,
     });
 
     if (commitOnly || options.commitOnly) {
@@ -84,7 +84,7 @@ function printWorkspaceDiagnostic(item: LintDiagnostic): void {
         return;
     }
     const location =
-        item.path!== undefined ? item.line!== undefined ? `${item.path}:${item.line}` : item.path : undefined;
+        item.path !== undefined ? item.line !== undefined ? `${item.path}:${item.line}` : item.path : undefined;
     const suffix = location ? ` @ ${location}` : "";
     console.log(`${prefix} [${item.rule}] ${item.message}${suffix}`);
 }

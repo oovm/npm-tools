@@ -7,8 +7,8 @@ export function trustPayloadFromConfig(config: NiftyConfig) {
         return { };
     }
     return {
-        ...(npm.repo ? { trustRepo: npm.repo }: { }),
-        ...(npm.file ? { trustFile: npm.file }: { }),
-        ...(npm.environment ? { trustEnvironment: npm.environment }: { }),
+        ...(npm.repo ? { trustRepo: npm.repo } : { }),
+        ...(npm.file ? { trustFile: npm.file } : { }),
+        ...(npm.environment ? { trustEnvironment: npm.environment } : { }),
     };
 }

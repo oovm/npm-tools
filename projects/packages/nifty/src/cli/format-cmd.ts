@@ -16,7 +16,7 @@ export async function cmdFormat(options: ParsedOptions): Promise < number> {
         check: flag(options, "check"),
         cwd: cwdFrom(options),
     });
-    if (exitCode!== 0) {
+    if (exitCode !== 0) {
         throw new Error("format check failed");
     }
     return 0;

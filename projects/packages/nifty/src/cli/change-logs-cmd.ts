@@ -87,7 +87,7 @@ export async function cmdChangeLogsLookup(options: ParsedOptions): Promise < num
         fetch: flag(options, "fetch"),
     });
     const json: Record < string, unknown > = { };
-    if (author.id!== undefined) {
+    if (author.id !== undefined) {
         json.id = author.id;
     }
     if (author.login) {

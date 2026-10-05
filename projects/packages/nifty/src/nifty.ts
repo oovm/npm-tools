@@ -26,7 +26,7 @@ function resolveRoots(config: NiftyConfig, layout: ProjectLayout): NiftyConfig {
             config.cargoRoot ??
             layout.cargoWorkspaceRoot ??
             (layout.cargoManifest ? layout.cargoManifest.replace(/[/\\]Cargo\.toml$/, "") : undefined),
-        npmRoot :
+        npmRoot:
             config.npmRoot ??
             layout.npmWorkspaceRoot ??
             (layout.packageManifest ? layout.packageManifest.replace(/[/\\]package\.json$/, "") : undefined),
@@ -67,11 +67,11 @@ export class Nifty {
         const merged = resolveRoots(
             {
                 ...loaded.config,
-                ...(githubToken!== undefined ? { githubToken }: { }),
-                ...(authorMap!== undefined ? { authorMap }: { }),
-                ...(repoRoot!== undefined ? { repoRoot }: { }),
-                ...(cargoRoot!== undefined ? { cargoRoot }: { }),
-                ...(npmRoot!== undefined ? { npmRoot }: { }),
+                ...(githubToken !== undefined ? { githubToken } : { }),
+                ...(authorMap !== undefined ? { authorMap } : { }),
+                ...(repoRoot !== undefined ? { repoRoot } : { }),
+                ...(cargoRoot !== undefined ? { cargoRoot } : { }),
+                ...(npmRoot !== undefined ? { npmRoot } : { }),
             },
             layout,
         );

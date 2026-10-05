@@ -223,7 +223,7 @@ function walk(dir: string): string[] {
 
 function splitRepo(repo: string): [string, string] {
     const parts = repo.split("/");
-    if (parts.length!== 2 || !parts[0] || !parts[1]) {
+    if (parts.length !== 2 || !parts[0] || !parts[1]) {
         throw new Error(`invalid repo ${repo}, expected owner/name`);
     }
     return[parts[0], parts[1]];
@@ -307,7 +307,7 @@ function githubHeaders(token: string): Record < string, string > {
 
 function git(cwd: string, args: string[]): void {
     const result = spawnSync("git", args, { cwd, stdio: "inherit" });
-    if (result.status!== 0) {
+    if (result.status !== 0) {
         throw new Error(`git ${args.join(" ")} failed`);
     }
 }

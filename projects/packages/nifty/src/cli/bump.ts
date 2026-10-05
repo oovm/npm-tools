@@ -178,7 +178,7 @@ function collectPackageManifests(packagesDir: string): string[] {
         return[];
     }
     return readdirSync(packagesDir, { withFileTypes: true })
-        .filter((entry) => entry.isDirectory() && entry.name!== "node_modules")
+        .filter((entry) => entry.isDirectory() && entry.name !== "node_modules")
         .map((entry) => join(packagesDir, entry.name, "package.json"))
         .filter((path) => existsSync(path));
 }

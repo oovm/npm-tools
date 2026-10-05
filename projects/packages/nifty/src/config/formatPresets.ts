@@ -53,10 +53,10 @@ export function resolveFormatConfig(format: NiftyFormatConfig | undefined): Reso
     return {
         preset,
         includes: format?.includes ?? (presetIncludes ? [...presetIncludes] : undefined),
-        excludes : format?.excludes,
-        rust : format?.rust,
-        javascript : format?.javascript,
-        style : {
+        excludes: format?.excludes,
+        rust: format?.rust,
+        javascript: format?.javascript,
+        style: {
             ...DEFAULT_FORMAT_STYLE,
             ...format?.style,
         },

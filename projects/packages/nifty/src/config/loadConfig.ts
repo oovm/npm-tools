@@ -101,7 +101,7 @@ export async function loadConfig(options: LoadConfigOptions = { }): Promise < Lo
     let configFile = options.configFile ?? findConfigFile(cwd);
     let created = false;
 
-    if (!configFile && options.createIfMissing!== false) {
+    if (!configFile && options.createIfMissing !== false) {
         configFile = ensureConfigFile({ cwd, create: true });
         created = Boolean(configFile);
     } else if (!configFile) {
