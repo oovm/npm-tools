@@ -1,6 +1,6 @@
 [package]
 name = "nifty-history"
-version = "0.1.0"
+version = "0.1.2"
 authors = ["Aster <192607617@qq.com>"]
 description = "Commit reword/retime and release reference changelog for Nifty"
 repository = "https://github.com/oovm/npm-tools"
