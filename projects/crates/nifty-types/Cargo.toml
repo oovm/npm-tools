@@ -1,6 +1,6 @@
 [package]
 name = "nifty-types"
-version = "0.1.2"
+version = "0.1.3"
 authors = ["Aster <192607617@qq.com>"]
 description = "Shared Nifty types: gitmoji conventions and GitHub author maps"
 license = "MPL-2.0"
