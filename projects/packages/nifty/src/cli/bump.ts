@@ -85,27 +85,36 @@ export function bumpWorkspace(options: BumpOptions): BumpReport {
 
     const cargoPaths = collectCargoManifests(cratesDir);
     const npmPaths = collectPackageManifests(packagesDir);
-    const from = readWorkspaceVersion(cargoPaths, npmPaths);
+    const from = readWorkspaceVersion(root, cargoPaths, npmPaths);
     const to = options.version ?? bumpSemver(from, options.kind ?? DEFAULT_KIND);
     assertVersion(to);
 
-    const cargo = cargoPaths.map((path) => bumpCargoManifest(path, to, options.dryRun));
-    const npm = npmPaths.map((path) => bumpPackageManifest(path, to, options.dryRun));
+    const cargoUpdates = prepareCargoUpdates(root, cargoPaths, to);
+    const npmUpdates = npmPaths.map((path) => preparePackageUpdate(path, to));
+    if (!options.dryRun) {
+        cargoUpdates.concat(npmUpdates).forEach((update) => writeFileSync(update.path, update.next, "utf8"));
+    }
 
     return {
         root,
         from,
         to,
         kind: options.version ? undefined : options.kind ?? DEFAULT_KIND,
-        cargo,
-        npm,
+        cargo: cargoUpdates.map((update) => update.path),
+        npm: npmUpdates.map((update) => update.path),
     };
 }
 
-function readWorkspaceVersion(cargoPaths: string[], npmPaths: string[]): string {
+function readWorkspaceVersion(root: string, cargoPaths: string[], npmPaths: string[]): string {
     const versions = new Set<string>();
+    let usesWorkspaceVersion = false;
     for (const path of cargoPaths) {
-        versions.add(readCargoVersion(path));
+        const info = readCargoVersion(path);
+        if (info.inherited) usesWorkspaceVersion = true;
+        else versions.add(info.version);
+    }
+    if (usesWorkspaceVersion) {
+        versions.add(readWorkspacePackageVersion(join(root, "Cargo.toml")).version);
     }
     for (const path of npmPaths) {
         versions.add(readPackageVersion(path));
@@ -119,13 +128,18 @@ function readWorkspaceVersion(cargoPaths: string[], npmPaths: string[]): string 
     return [...versions][0];
 }
 
-function readCargoVersion(path: string): string {
+type CargoVersion = { version: string; inherited: boolean };
+
+type FileUpdate = { path: string; next: string };
+
+function readCargoVersion(path: string): CargoVersion {
     const original = readFileSync(path, "utf8");
-    const match = original.match(/^version\s*=\s*"([^"]*)"/m);
-    if (!match) {
-        throw new Error(`no [package].version found in ${path}`);
+    const field = findTomlField(original, "package", "version.workspace") ?? findTomlField(original, "package", "version");
+    if (!field) throw new Error(`no [package].version found in ${path}`);
+    if (isWorkspaceInheritedVersion(field)) {
+        return { version: "", inherited: true };
     }
-    return match[1];
+    return { version: parseTomlString(field.value, `[package].version in ${path}`), inherited: false };
 }
 
 function readPackageVersion(path: string): string {
@@ -183,19 +197,95 @@ function collectPackageManifests(packagesDir: string): string[] {
         .filter((path) => existsSync(path));
 }
 
-function bumpCargoManifest(path: string, version: string, dryRun?: boolean): string {
-    const original = readFileSync(path, "utf8");
-    const next = original.replace(/^version\s*=\s*"[^"]*"/m, `version = "${version}"`);
-    if (next === original) {
-        throw new Error(`no [package].version found in ${path}`);
+function prepareCargoUpdates(root: string, cargoPaths: string[], version: string): FileUpdate[] {
+    const updates: FileUpdate[] = [];
+    let usesWorkspaceVersion = false;
+    for (const path of cargoPaths) {
+        const original = readFileSync(path, "utf8");
+        const field = findTomlField(original, "package", "version.workspace") ?? findTomlField(original, "package", "version");
+        if (!field) throw new Error(`no [package].version found in ${path}`);
+        if (isWorkspaceInheritedVersion(field)) {
+            usesWorkspaceVersion = true;
+            continue;
+        }
+        parseTomlString(field.value, `[package].version in ${path}`);
+        updates.push({ path, next: replaceTomlField(original, field, version) });
     }
-    if (!dryRun) {
-        writeFileSync(path, next, "utf8");
+    if (usesWorkspaceVersion) {
+        const path = join(root, "Cargo.toml");
+        const original = readFileSync(path, "utf8");
+        const field = findTomlField(original, "workspace.package", "version");
+        if (!field) {
+            throw new Error(`Cargo members inherit version.workspace but ${path} has no [workspace.package].version`);
+        }
+        parseTomlString(field.value, `[workspace.package].version in ${path}`);
+        updates.push({ path, next: replaceTomlField(original, field, version) });
     }
-    return path;
+    return updates;
 }
 
-function bumpPackageManifest(path: string, version: string, dryRun?: boolean): string {
+function readWorkspacePackageVersion(path: string): CargoVersion {
+    const original = readFileSync(path, "utf8");
+    const field = findTomlField(original, "workspace.package", "version");
+    if (!field) throw new Error(`Cargo members inherit version.workspace but ${path} has no [workspace.package].version`);
+    return { version: parseTomlString(field.value, `[workspace.package].version in ${path}`), inherited: false };
+}
+
+function isWorkspaceInheritedVersion(field: NonNullable<ReturnType<typeof findTomlField>>): boolean {
+    if (field.key === "version.workspace") return true;
+    const value = field.value.trim();
+    if (!value.startsWith("{") || !value.endsWith("}")) return false;
+    return value
+        .slice(1, -1)
+        .split(",")
+        .some((assignment) => {
+            const equals = assignment.indexOf("=");
+            return equals >= 0 && assignment.slice(0, equals).trim() === "workspace" && assignment.slice(equals + 1).trim() === "true";
+        });
+}
+
+function findTomlField(contents: string, table: string, name: string) {
+    let currentTable = "";
+    const lines = contents.split(/(?<=\n)/);
+    for (let index = 0; index < lines.length; index += 1) {
+        const line = lines[index];
+        const trimmed = line.trim();
+        const tableMatch = trimmed.match(/^\[([^\]]+)\]$/);
+        if (tableMatch) {
+            currentTable = tableMatch[1].trim();
+            continue;
+        }
+        if (trimmed.startsWith("[[")) {
+            currentTable = "";
+            continue;
+        }
+        if (currentTable !== table) continue;
+        const fieldMatch = line.match(new RegExp(`^(\\s*)(${name.replace(".", "\\.")})\\s*=\\s*(.*?)(\\r?\\n?)$`));
+        if (fieldMatch) return { index, line, indent: fieldMatch[1], key: fieldMatch[2], value: fieldMatch[3], ending: fieldMatch[4] };
+    }
+    return undefined;
+}
+
+function parseTomlString(value: string, description: string): string {
+    const trimmed = value.trim();
+    const quote = trimmed[0];
+    if (quote !== '"' && quote !== "'") throw new Error(`expected a quoted string for ${description}`);
+    const closingQuote = trimmed.indexOf(quote, 1);
+    if (closingQuote < 0) throw new Error(`expected a quoted string for ${description}`);
+    const trailing = trimmed.slice(closingQuote + 1).trim();
+    if (trailing && !trailing.startsWith("#")) throw new Error(`expected a quoted string for ${description}`);
+    return trimmed.slice(1, closingQuote);
+}
+
+function replaceTomlField(contents: string, field: NonNullable<ReturnType<typeof findTomlField>>, version: string): string {
+    const value = field.value.trimStart();
+    const closingQuote = value.indexOf(value[0], 1);
+    const suffix = closingQuote >= 0 ? value.slice(closingQuote + 1) : "";
+    const line = `${field.indent}${field.key} = "${version}"${suffix}${field.ending}`;
+    return contents.split(/(?<=\n)/).map((current, index) => index === field.index ? line : current).join("");
+}
+
+function preparePackageUpdate(path: string, version: string): FileUpdate {
     const original = readFileSync(path, "utf8");
     const parsed = JSON.parse(original) as { version?: string };
     if (!parsed.version) {
@@ -203,10 +293,7 @@ function bumpPackageManifest(path: string, version: string, dryRun?: boolean): s
     }
     parsed.version = version;
     const next = `${JSON.stringify(parsed, null, 4)}\n`;
-    if (!dryRun) {
-        writeFileSync(path, next, "utf8");
-    }
-    return path;
+    return { path, next };
 }
 
 export function printBumpReport(report: BumpReport, dryRun?: boolean): void {
@@ -233,5 +320,7 @@ Usage:
   nifty bump --version 1.2.3
   nifty bump --dry-run
   nifty bump -C <cwd>
+
+Cargo members using version.workspace = true are updated through the root [workspace.package].version.
 `);
 }

@@ -99,6 +99,7 @@ fn preserves_workspace_authoring_spacing() {
         ("publish-cmd.ts", include_str!("../../../packages/nifty/src/cli/publish-cmd.ts")),
         ("commit-lint-report.ts", include_str!("../../../packages/nifty/src/cli/commit-lint-report.ts")),
         ("upload.ts", include_str!("../../../packages/nifty/src/cli/upload.ts")),
+        ("bump.ts", include_str!("../../../packages/nifty/src/cli/bump.ts")),
     ] {
         assert_eq!(format_sample(path, source), source, "path={path}");
     }
@@ -120,8 +121,8 @@ fn formats_workspace_parenthesized_ternary_colons() {
 fn formats_release_cli_with_regex_literals_without_changing_tokens() {
     let source = include_str!("../../../packages/nifty/src/cli/bump.ts");
     let output = format_sample("bump.ts", source);
+    assert_eq!(output, source);
     assert_eq!(format_sample("bump.ts", &output), output);
-    assert!(output.contains(r#"/^version\s*=\s*"([^"]*)"/m"#));
     assert!(output.contains(r#"/^\d+\.\d+\.\d+(-[\w.-]+)?$/"#));
 }
 
