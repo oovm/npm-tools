@@ -1,52 +1,30 @@
-# `@doki-land/nifty-skills`
+# @doki-land/nifty-skills
 
-[Agent Skills](https://agentskills.io/specification) for [**Nifty**](https://www.npmjs.com/package/@doki-land/nifty) —
-gitmoji commit conventions, hybrid Cargo + npm release workflows, and gix-backed git history tools.
+[Agent Skills](https://agentskills.io/specification) that teach coding agents how to run [**Nifty**](https://www.npmjs.com/package/@doki-land/nifty) — gitmoji lint, hybrid bumps, publish/trust, formatting, and git history tooling. This package is documentation only; install `@doki-land/nifty` for the CLI and native bindings.
 
-This package is **docs-only**. It teaches agents how to invoke the published `nifty` CLI. It does not replace
-`@doki-land/nifty` or its native bindings.
+Product overview: [npm-tools readme](https://github.com/oovm/npm-tools#readme).
 
-## Install
+## Skills
 
-Install one skill into a project (requires Node.js 18+):
+| Skill | Load when |
+| --- | --- |
+| `nifty` | Command map, workspace layout, when to delegate to sub-skills |
+| `nifty-commit` | Gitmoji subject/body rules, `nifty lint`, `nifty check` |
+| `nifty-release` | `nifty bump`, `publish`, `trust`, `upload`, `change-logs` |
+| `nifty-git-history` | `nifty commit`, `nifty retime`, object-layer history apply |
+
+## Example
+
+Install the overview skill into a consumer project:
 
 ```bash
 npx skills add @doki-land/nifty-skills --skill nifty -y
 ```
 
-List available skills or install globally:
+Example agent prompt after install:
 
-```bash
-npx skills add @doki-land/nifty-skills --list
-npx skills add @doki-land/nifty-skills --skill nifty-release -y -g
+```text
+Audit gitmoji commits from v0.1.2 to HEAD with nifty check, then draft a release changelog.
 ```
 
-## Skills
-
-| Skill               | Load when                                                                  |
-|---------------------|----------------------------------------------------------------------------|
-| `nifty`             | User mentions Nifty tooling, hybrid monorepos, or you need the command map |
-| `nifty-commit`      | Gitmoji commit lint, subject format, `nifty lint` / `nifty check`          |
-| `nifty-release`     | `nifty bump`, `publish`, `trust`, `upload`, `change-logs`, CI release      |
-| `nifty-git-history` | `nifty commit`, `nifty retime`, object-layer history apply                 |
-
-## Prerequisites
-
-Consumers need the CLI:
-
-```bash
-npm install @doki-land/nifty
-nifty --help
-```
-
-Monorepo authors can use `pnpm exec nifty` after `pnpm install` in [npm-tools](https://github.com/oovm/npm-tools).
-
-## Links
-
-- [npm package](https://www.npmjs.com/package/@doki-land/nifty-skills)
-- [Nifty CLI](https://www.npmjs.com/package/@doki-land/nifty)
-- [Source](https://github.com/oovm/npm-tools/tree/dev/projects/packages/nifty-skills)
-
-## License
-
-[MPL-2.0](https://www.npmjs.com/package/@doki-land/nifty-skills?activeTab=code)
+Requires `@doki-land/nifty` on the PATH (`nifty --help`).

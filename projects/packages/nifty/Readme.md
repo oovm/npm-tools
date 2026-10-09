@@ -2,28 +2,54 @@
 
 [![npm version](https://img.shields.io/npm/v/@doki-land/nifty.svg)](https://www.npmjs.com/package/@doki-land/nifty)
 
-**Gitmoji-first** commit conventions and release tooling for hybrid **Cargo + npm** workspaces.
+Programmatic and CLI surface for **Nifty** — gitmoji commit lint, hybrid Cargo + npm bumps, Oak formatting, workspace publish, and gix-backed git helpers. Product overview: [npm-tools readme](https://github.com/oovm/npm-tools#readme).
 
-## Install
+## Exports
+
+| Subpath | Purpose |
+| --- | --- |
+| `@doki-land/nifty` | `Nifty`, `Git`, `Github`, `Gitmoji`, config loaders, shared types |
+| `@doki-land/nifty/cli` | CLI module re-exports (advanced integrations) |
+| `nifty` (bin) | Full command-line interface |
+
+Platform native bindings (`@doki-land/nifty-*`) install automatically as optional dependencies on matching hosts. Do not import them directly.
+
+## Example
+
+**CLI** — run from a project root that contains `nifty.config.ts` (optional):
 
 ```bash
-npm install @doki-land/nifty
+nifty check --from v0.1.0 --to HEAD
+nifty bump --version 0.2.0 --dry-run
+nifty format --check
 ```
 
-## CLI
+**TypeScript API** — open a hybrid workspace and read git history:
 
-```bash
-nifty --help
+```ts
+import { createNifty } from "@doki-land/nifty";
+
+const nifty = await createNifty({ cwd: process.cwd() });
+const ok = nifty.gitmoji.validateSubject("✨ Add workspace helper");
+const range = nifty.git.resolveRange(nifty.layout.root, {
+  fromRef: "v0.1.0",
+  toRef: "HEAD",
+});
 ```
 
-See the [npm-tools README](https://github.com/oovm/npm-tools/blob/dev/README.md) for development.
+**Config** — typed project defaults:
 
-## Links
+```ts
+import { defineConfig } from "@doki-land/nifty";
 
-- [npm package](https://www.npmjs.com/package/@doki-land/nifty)
-- [Source](https://github.com/oovm/npm-tools)
-- [Issues](https://github.com/oovm/npm-tools/issues)
+export default defineConfig({
+  lint: {
+    rules: [{ id: "gitmoji/subject", severity: "error", enabled: true }],
+  },
+});
+```
 
-## License
+## Related packages
 
-[MPL-2.0](https://www.npmjs.com/package/@doki-land/nifty?activeTab=code)
+- [@doki-land/nifty-skills](https://www.npmjs.com/package/@doki-land/nifty-skills) — Agent Skills for `nifty` workflows
+- Platform sidecars (`@doki-land/nifty-win32-x64`, `@doki-land/nifty-linux-x64`, …) — prebuilt Node-API artifacts resolved by this package

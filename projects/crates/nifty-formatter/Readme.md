@@ -1,43 +1,19 @@
 # nifty-formatter
 
-Nifty formatting helpers and workspace formatter.
+Workspace formatter and release-note helpers for the [Nifty](https://www.npmjs.com/package/@doki-land/nifty) stack. Depend on `@doki-land/nifty` unless you need this crate directly.
 
-## Gitmoji and release notes
+- **`nifty format`** — `cargo fmt` for Rust; Oak CST formatting for TypeScript / JavaScript
+- **Release bullets** — gitmoji subjects, author mentions, grouped changelog sections
 
-- `format_subject` — gitmoji-prefixed commit subjects
-- `commit_bullet` / `author_mention` — release reference bullets
-- `format_release_section` / `format_release_notes` — grouped changelog markdown
-
-## Workspace format (`nifty format`)
-
-| Target                              | Engine                                    |
-|-------------------------------------|-------------------------------------------|
-| `*.rs` (Cargo workspace)            | `cargo fmt --all`                         |
-| `*.ts` / `*.js` / `*.jsx` / `*.tsx` | Oak public format contract |
-
-Default JS style comes from `nifty.config` `format.style` (4 spaces, single quotes, line width 144).
-
-```bash
-nifty format
-nifty format --check
-```
-
-## Library
+## Example
 
 ```rust
-use nifty_formatter::{format_source, run_format, RunFormatOptions};
+use nifty_formatter::{run_format, RunFormatOptions};
 
 let report = run_format(RunFormatOptions {
-    check: false,
+    check: true,
     cwd: None,
 })?;
 ```
 
-## Links
-
-- [Source](https://github.com/oovm/npm-tools/tree/dev/projects/crates/nifty-formatter)
-- [docs.rs](https://docs.rs/nifty-formatter)
-
-## License
-
-MPL-2.0
+[docs.rs](https://docs.rs/nifty-formatter) · [Nifty readme](https://www.npmjs.com/package/@doki-land/nifty) · [Source](https://github.com/oovm/npm-tools/tree/dev/projects/crates/nifty-formatter)

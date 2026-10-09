@@ -1,26 +1,16 @@
 # nifty-config
 
-Discover Nifty project configuration (`nifty.config.ts` / `nifty.config.js`) by walking upward from a directory.
+Find and interpret Nifty project configuration (`nifty.config.ts` / `.js`) and detect hybrid Cargo + npm layout. TypeScript helpers (`defineConfig`, `loadConfig`) ship from `@doki-land/nifty`.
 
-On the npm side, use [`@doki-land/nifty`](https://www.npmjs.com/package/@doki-land/nifty) for `defineConfig`,
-`loadConfig`, and Cargo/npm project detection.
+Depend on `@doki-land/nifty` unless you need this crate directly.
 
-```rust,no_run
-fn main() -> std::io::Result<()> {
-    use std::env::current_dir;
-    use nifty_config::{detect_project_layout, find_config_file};
+## Example
 
-    let _layout = detect_project_layout(&current_dir()?);
-    let _path = find_config_file(&current_dir()?);
-    Ok(())
-}
+```rust
+use nifty_config::{detect_project_layout, find_config_file};
+
+let layout = detect_project_layout(".")?;
+let config_path = find_config_file(".");
 ```
 
-## Links
-
-- [Source](https://github.com/oovm/npm-tools/tree/dev/projects/crates/nifty-config)
-- [docs.rs](https://docs.rs/nifty-config)
-
-## License
-
-MPL-2.0
+[docs.rs](https://docs.rs/nifty-config) · [Nifty readme](https://www.npmjs.com/package/@doki-land/nifty) · [Source](https://github.com/oovm/npm-tools/tree/dev/projects/crates/nifty-config)

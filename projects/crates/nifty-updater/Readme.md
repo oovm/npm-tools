@@ -1,28 +1,15 @@
 # nifty-updater
 
-Update **Cargo** and **npm/pnpm** dependencies for Nifty hybrid projects.
+Update **Cargo** and **npm / pnpm** dependencies for Nifty hybrid layouts. Queries `crates.io` and the npm registry, patches manifests, and refreshes lockfiles with `cargo update` or `pnpm|npm install`.
 
-Registry versions are queried directly (`crates.io` + `registry.npmjs.org`). Nifty patches manifests and refreshes lockfiles with built-in `cargo update` / `pnpm|npm install` only.
+Depend on `@doki-land/nifty` unless you need this crate directly.
 
-## Behavior
-
-| Layout   | Cargo                                              | JavaScript                                                       |
-|----------|----------------------------------------------------|------------------------------------------------------------------|
-| `cargo`  | `cargo metadata` + crates.io → patch `Cargo.toml` + `cargo update -p` | —                                                                |
-| `npm`    | —                                                  | read `package.json` + npm registry → patch + `npm install`       |
-| `hybrid` | both                                               | pnpm workspace discovery → patch + `pnpm install` at workspace root |
-
-Interactive mode (`-i`) uses `dialoguer` multi-select.
-
-## CLI
+## Example
 
 ```bash
 nifty update
 nifty update -i
-nifty update -C path/to/repo
 ```
-
-## Library
 
 ```rust
 use nifty_updater::{run_update, UpdateOptions};
@@ -33,11 +20,4 @@ run_update(UpdateOptions {
 })?;
 ```
 
-## Links
-
-- [Source](https://github.com/oovm/npm-tools/tree/dev/projects/crates/nifty-updater)
-- [docs.rs](https://docs.rs/nifty-updater)
-
-## License
-
-MPL-2.0
+[docs.rs](https://docs.rs/nifty-updater) · [Nifty readme](https://www.npmjs.com/package/@doki-land/nifty) · [Source](https://github.com/oovm/npm-tools/tree/dev/projects/crates/nifty-updater)

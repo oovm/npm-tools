@@ -1,32 +1,23 @@
 # nifty-github
 
-GitHub REST API helpers for [Nifty](https://www.npmjs.com/package/@doki-land/nifty).
+GitHub REST helpers for [Nifty](https://www.npmjs.com/package/@doki-land/nifty): resolve users by login, search by email, and map noreply addresses through `author-github.json`. Pairs with `nifty-types` for author metadata.
 
-| API                    | Token    | Notes                                   |
-|------------------------|----------|-----------------------------------------|
-| `user_by_login`        | optional | `GET /users/{login}`                    |
-| `search_user_by_email` | required | `GET /search/users?q=… in:email`        |
-| `lookup_user_by_email` | optional | noreply → map → search → optional fetch |
+Depend on `@doki-land/nifty` unless you need this crate directly.
 
-Pairs with [`nifty-types`](https://docs.rs/nifty-types) for noreply emails and `author-github.json` maps.
+## Example
 
 ```rust
 use nifty_github::{lookup_user_by_email, user_by_login};
 
-let user = user_by_login("oovm", None)?;
+let user = user_by_login("octocat", None)?;
 let mapped = lookup_user_by_email(
-    "aster@vers.site",
-    r#"{"aster@vers.site":{"login":"oovm"}}"#,
+    "12345678+octocat@users.noreply.github.com",
+    r#"{"12345678+octocat@users.noreply.github.com":{"login":"octocat"}}"#,
     None,
     true,
 )?;
 ```
 
-## Links
+Exposed to TypeScript as `Github` via `@doki-land/nifty`.
 
-- [Source](https://github.com/oovm/npm-tools/tree/dev/projects/crates/nifty-github)
-- [docs.rs](https://docs.rs/nifty-github)
-
-## License
-
-MPL-2.0
+[docs.rs](https://docs.rs/nifty-github) · [Nifty readme](https://www.npmjs.com/package/@doki-land/nifty) · [Source](https://github.com/oovm/npm-tools/tree/dev/projects/crates/nifty-github)
