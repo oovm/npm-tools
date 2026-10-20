@@ -4,7 +4,8 @@
     "scripts": {
         "build": "cargo build --release",
         "build:napi": "node scripts/build-napi.mjs",
-        "test": "cargo test --release",
+        "test": "cargo test --release --workspace",
+        "test:ci-gates": "node --test scripts/ci/require-ci-success.test.mjs",
         "fmt": "nifty format",
         "fmt:check": "nifty format --check",
         "p": "git push && git push --tags --prune",

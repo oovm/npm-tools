@@ -1,7 +1,9 @@
 name: Check Rust
 
-# Rust build/test only. TypeScript checks: check-typescript.yml
+# Rust build/test for every delivery crate. TypeScript checks: check-typescript.yml
 # Publish: publish-npm.yml on v*.*.* tags.
+# `--workspace` is required: root `default-members` only lists uploader and formatter,
+# so the publisher (and the other delivered crates) were never proven by this job.
 on:
   push:
     branches: [master, dev]
@@ -23,6 +25,6 @@ jobs:
           shared-key: rust-ci-${{ matrix.os }}
           cache-on-failure: true
       - name: Build
-        run: cargo build --release
+        run: cargo build --release --workspace
       - name: Tests
-        run: cargo test --release
+        run: cargo test --release --workspace

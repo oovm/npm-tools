@@ -1,7 +1,9 @@
 name: Check TypeScript
 
-# Nifty format and @doki-land/nifty typecheck. Rust checks: check-rust.yml
+# Nifty format, @doki-land/nifty typecheck and package tests. Rust checks: check-rust.yml
 # Publish: publish-npm.yml on v*.*.* tags.
+# The package `node --test tests/*.test.mjs` suite must run here: the publish gate
+# consumes this workflow, so defineConfig/bump regressions need execution evidence.
 on:
   push:
     branches: [master, dev]
@@ -24,3 +26,7 @@ jobs:
       - run: pnpm run build:napi
       - run: pnpm fmt:check
       - run: pnpm --filter @doki-land/nifty run typecheck
+      - name: Release gate fixtures
+        run: pnpm test:ci-gates
+      - name: Package tests
+        run: pnpm --filter @doki-land/nifty run test
