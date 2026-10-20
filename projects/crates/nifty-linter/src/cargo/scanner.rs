@@ -2,12 +2,12 @@
 //!
 //! Ported from [cargo-tools](https://github.com/oovm/cargo-tools) `cargo cry` scanner.
 
+use fs_tools::walk::{Filter, Walker};
 use std::{
     collections::HashSet,
     fs,
     path::{Path, PathBuf},
 };
-use fs_tools::walk::{Filter, Walker};
 use toml::Value;
 
 const MAX_RUST_LINES: usize = 1000;
