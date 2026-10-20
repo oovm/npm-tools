@@ -1,6 +1,7 @@
 //! GitHub REST API client (`api.github.com`).
 
 use nifty_types::GithubAuthor;
+use request::{HttpTransport, Method, Request, Transport, Url};
 use serde_json::Value;
 
 pub type Result<T> = std::result::Result<T, String>;
@@ -60,22 +61,22 @@ pub fn parse_user_json(body: &Value, fallback_login: Option<&str>) -> Result<Git
 }
 
 fn get_json(url: &str, token: Option<&str>) -> Result<Value> {
-    let mut request = ureq::get(url).set("Accept", ACCEPT).set("User-Agent", USER_AGENT);
+    let url = Url::parse(url).map_err(|err| format!("invalid GitHub API URL: {err}"))?;
+    let mut request = Request::new(Method::Get, url).with_header("Accept", ACCEPT).with_header("User-Agent", USER_AGENT);
     if let Some(token) = token {
         let token = token.trim();
         if !token.is_empty() {
-            request = request.set("Authorization", &format!("Bearer {token}"));
+            request.set_header("Authorization", format!("Bearer {token}"));
         }
     }
-    let response = request.call().map_err(|err| format!("GitHub API request failed: {err}"))?;
-    let status = response.status();
-    if status == 404 {
+    let response = HttpTransport::new().send(&request).map_err(|err| format!("GitHub API request failed: {err}"))?;
+    if response.status == 404 {
         return Err("GitHub resource not found".to_string());
     }
-    if !(200..300).contains(&status) {
-        return Err(format!("GitHub API error: {} {}", status, response.status_text()));
+    if !response.is_success() {
+        return Err(format!("GitHub API error: {}", response.status));
     }
-    response.into_json().map_err(|err| format!("parse GitHub API JSON: {err}"))
+    serde_json::from_slice(&response.body).map_err(|err| format!("parse GitHub API JSON: {err}"))
 }
 
 #[cfg(test)]

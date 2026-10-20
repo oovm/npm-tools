@@ -1,5 +1,6 @@
-use std::path::Path;
+use std::{path::Path, str::FromStr};
 
+use request::{HttpTransport, Method, Request, Transport, Url};
 use serde_json::{Value, json};
 
 use crate::{
@@ -161,30 +162,27 @@ fn registry_request(
 ) -> Result<(u16, String)> {
     let base = registry.trim_end_matches('/');
     let url = format!("{base}{path}");
-    let payload = body.map(|value| serde_json::to_vec(value).map_err(|err| err.to_string()));
-    let payload = match payload {
-        Some(result) => Some(result?),
-        None => None,
-    };
-
-    let mut request = ureq::request(method, &url)
-        .set("Accept", "application/json")
-        .set("Authorization", &format!("Bearer {token}"))
-        .set("User-Agent", USER_AGENT);
+    let wire_method = method;
+    let method = Method::from_str(wire_method).map_err(|err| format!("invalid registry method `{wire_method}`: {err}"))?;
+    let url = Url::parse(&url).map_err(|err| format!("invalid registry URL `{url}`: {err}"))?;
+    let payload = body.map(|value| serde_json::to_vec(value).map_err(|err| err.to_string())).transpose()?;
+    let request_url = url.clone();
+    let mut request = Request::new(method, url)
+        .with_header("Accept", "application/json")
+        .with_header("Authorization", format!("Bearer {token}"))
+        .with_header("User-Agent", USER_AGENT);
     if let Some(code) = otp {
-        request = request.set("npm-otp", code);
+        request.set_header("npm-otp", code);
     }
-    let response = if let Some(bytes) = &payload {
-        request.set("Content-Type", "application/json").send_bytes(bytes)
+    if let Some(bytes) = payload {
+        request.set_header("Content-Type", "application/json");
+        request = request.with_body(bytes);
     }
-    else {
-        request.call()
-    }
-    .map_err(|err| format!("registry request failed ({method} {url}): {err}"))?;
+    let response = HttpTransport::new()
+        .send(&request)
+        .map_err(|err| format!("registry request failed ({wire_method} {request_url}): {err}"))?;
 
-    let status = response.status();
-    let body = response.into_string().map_err(|err| err.to_string())?;
-    Ok((status, body))
+    Ok((response.status, String::from_utf8_lossy(&response.body).into_owned()))
 }
 
 pub fn trust_already_matches(configs: &[Value], expect: &TrustExpect) -> bool {

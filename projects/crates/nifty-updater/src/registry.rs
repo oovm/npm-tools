@@ -1,3 +1,4 @@
+use request::{HttpTransport, Method, Request, Transport, Url};
 use serde_json::Value;
 
 use crate::Result;
@@ -25,15 +26,13 @@ pub fn fetch_npm_latest(name: &str) -> Result<String> {
 }
 
 fn fetch_json(url: &str) -> Result<Value> {
-    let response = ureq::get(url)
-        .set("Accept", "application/json")
-        .set("User-Agent", CRATES_IO_USER_AGENT)
-        .call()
-        .map_err(|err| format!("registry request failed ({url}): {err}"))?;
-    let status = response.status();
-    let body = response.into_string().map_err(|err| err.to_string())?;
-    if !(200..300).contains(&status) {
-        return Err(format!("registry {status} ({url}): {body}"));
+    let parsed = Url::parse(url).map_err(|err| format!("invalid registry URL `{url}`: {err}"))?;
+    let request = Request::new(Method::Get, parsed)
+        .with_header("Accept", "application/json")
+        .with_header("User-Agent", CRATES_IO_USER_AGENT);
+    let response = HttpTransport::new().send(&request).map_err(|err| format!("registry request failed ({url}): {err}"))?;
+    if !response.is_success() {
+        return Err(format!("registry {} ({url}): {}", response.status, String::from_utf8_lossy(&response.body)));
     }
-    serde_json::from_str(&body).map_err(|err| format!("registry JSON parse ({url}): {err}"))
+    serde_json::from_slice(&response.body).map_err(|err| format!("registry JSON parse ({url}): {err}"))
 }

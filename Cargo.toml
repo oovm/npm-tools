@@ -8,6 +8,9 @@ exclude = [
     "projects/.DS_Store",
 ]
 
+[workspace.dependencies]
+request = { git = "https://github.com/oovm/rust-boost", branch = "dev" }
+
 [profile.release]
 lto = true
 panic = "abort"

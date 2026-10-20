@@ -1,13 +1,16 @@
+use std::time::Duration;
+
+use request::{HttpTransport, HttpTransportConfig, Method, Request, Response, Transport, Url};
 use serde_json::Value;
-use ureq::Agent;
 
 use crate::Result;
 
 const USER_AGENT: &str = "nifty-uploader";
 const ACCEPT: &str = "application/vnd.github+json";
+const UPLOAD_TIMEOUT: Duration = Duration::from_secs(300);
 
 pub struct GitHubClient {
-    agent: Agent,
+    transport: HttpTransport,
     token: String,
 }
 
@@ -17,62 +20,50 @@ impl GitHubClient {
         if token.is_empty() {
             return Err("GitHub token must not be empty".to_string());
         }
-        Ok(Self { agent: Agent::new(), token: token.to_string() })
+        let config = HttpTransportConfig { timeout: UPLOAD_TIMEOUT, ..HttpTransportConfig::default() };
+        Ok(Self { transport: HttpTransport::with_config(config), token: token.to_string() })
     }
 
     pub fn get_json(&self, url: &str) -> Result<Value> {
-        let response = self
-            .agent
-            .get(url)
-            .set("Accept", ACCEPT)
-            .set("User-Agent", USER_AGENT)
-            .set("Authorization", &format!("Bearer {}", self.token))
-            .call()
-            .map_err(|err| format!("GitHub GET failed: {err}"))?;
+        let request = self.request(Method::Get, url)?;
+        let response = self.transport.send(&request).map_err(|err| format!("GitHub GET failed: {err}"))?;
         parse_json_response(response)
     }
 
     pub fn post_json(&self, url: &str, body: &Value) -> Result<Value> {
-        let response = self
-            .agent
-            .post(url)
-            .set("Accept", ACCEPT)
-            .set("User-Agent", USER_AGENT)
-            .set("Authorization", &format!("Bearer {}", self.token))
-            .set("Content-Type", "application/json")
-            .send_json(body)
-            .map_err(|err| format!("GitHub POST failed: {err}"))?;
+        let body = serde_json::to_vec(body).map_err(|err| format!("serialize GitHub JSON body: {err}"))?;
+        let request = self.request(Method::Post, url)?.with_header("Content-Type", "application/json").with_body(body);
+        let response = self.transport.send(&request).map_err(|err| format!("GitHub POST failed: {err}"))?;
         parse_json_response(response)
     }
 
     pub fn upload_bytes(&self, url: &str, content_type: &str, bytes: &[u8]) -> Result<Value> {
-        let response = self
-            .agent
-            .post(url)
-            .set("Accept", ACCEPT)
-            .set("User-Agent", USER_AGENT)
-            .set("Authorization", &format!("Bearer {}", self.token))
-            .set("Content-Type", content_type)
-            .send(bytes)
-            .map_err(|err| format!("GitHub upload failed: {err}"))?;
+        let request = self.request(Method::Post, url)?.with_header("Content-Type", content_type).with_body(bytes.to_vec());
+        let response = self.transport.send(&request).map_err(|err| format!("GitHub upload failed: {err}"))?;
         parse_json_response(response)
+    }
+
+    fn request(&self, method: Method, url: &str) -> Result<Request> {
+        let url = Url::parse(url).map_err(|err| format!("invalid GitHub URL `{url}`: {err}"))?;
+        Ok(Request::new(method, url)
+            .with_header("Accept", ACCEPT)
+            .with_header("User-Agent", USER_AGENT)
+            .with_header("Authorization", format!("Bearer {}", self.token)))
     }
 }
 
-fn parse_json_response(response: ureq::Response) -> Result<Value> {
-    let status = response.status();
-    let status_text = response.status_text().to_string();
-    let body = response.into_string().unwrap_or_default();
+fn parse_json_response(response: Response) -> Result<Value> {
+    let status = response.status;
     if status == 404 {
         return Err("GitHub resource not found".to_string());
     }
-    if !(200..300).contains(&status) {
-        return Err(format!("GitHub API error: {} {} {}", status, status_text, body));
+    if !response.is_success() {
+        return Err(format!("GitHub API error: {status} {}", String::from_utf8_lossy(&response.body)));
     }
-    if body.is_empty() {
+    if response.body.is_empty() {
         return Ok(Value::Null);
     }
-    serde_json::from_str(&body).map_err(|err| format!("parse GitHub JSON: {err}"))
+    serde_json::from_slice(&response.body).map_err(|err| format!("parse GitHub JSON: {err}"))
 }
 
 pub fn release_asset_already_exists(message: &str) -> bool {

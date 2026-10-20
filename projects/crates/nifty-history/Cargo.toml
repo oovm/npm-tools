@@ -18,7 +18,7 @@ regex = { version = "1.11", default-features = false, features = ["std", "unicod
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 tracing = "0.1"
-ureq = { version = "2.12", default-features = false, features = ["json"] }
+request = { workspace = true }
 urlencoding = "2.1"
 
 [dev-dependencies]

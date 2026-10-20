@@ -3,6 +3,7 @@
 use std::{collections::HashMap, path::Path};
 
 use regex::Regex;
+use request::{HttpTransport, Method, Request, Transport, Url};
 use serde_json::Value;
 
 use crate::error::{Result, validation, validation_with_input};
@@ -132,21 +133,23 @@ pub fn merge_authors(existing: &GithubAuthor, incoming: &GithubAuthor) -> Github
 /// 通过 GitHub REST API 按 login 查询 numeric id。
 pub fn fetch_github_user_by_login(login: &str, token: Option<&str>) -> Result<GithubAuthor> {
     let url = format!("https://api.github.com/users/{login}");
-    let mut request = ureq::get(&url).set("Accept", "application/vnd.github+json").set("User-Agent", "nifty");
+    let url = Url::parse(&url).map_err(|err| validation_with_input("invalid GitHub API URL", err.to_string()))?;
+    let mut request = Request::new(Method::Get, url)
+        .with_header("Accept", "application/vnd.github+json")
+        .with_header("User-Agent", "nifty");
     if let Some(token) = token {
-        request = request.set("Authorization", &format!("Bearer {token}"));
+        request.set_header("Authorization", format!("Bearer {token}"));
     }
-    let response = request.call().map_err(|err| validation_with_input("GitHub API request failed", err.to_string()))?;
-    if response.status() == 404 {
+    let response = HttpTransport::new()
+        .send(&request)
+        .map_err(|err| validation_with_input("GitHub API request failed", err.to_string()))?;
+    if response.status == 404 {
         return Err(validation_with_input("GitHub user not found", login));
     }
-    if !(200..300).contains(&response.status()) {
-        return Err(validation_with_input(
-            "GitHub API returned an error status",
-            format!("{} {}", response.status(), response.status_text()),
-        ));
+    if !response.is_success() {
+        return Err(validation_with_input("GitHub API returned an error status", response.status.to_string()));
     }
-    let body: Value = response.into_json().map_err(|err| validation(format!("parse GitHub API JSON: {err}")))?;
+    let body: Value = serde_json::from_slice(&response.body).map_err(|err| validation(format!("parse GitHub API JSON: {err}")))?;
     let id = body.get("id").and_then(Value::as_u64);
     let api_login = body.get("login").and_then(Value::as_str).map(str::to_string);
     Ok(GithubAuthor { id, login: api_login.or_else(|| Some(login.to_string())) })
@@ -156,19 +159,18 @@ pub fn fetch_github_user_by_login(login: &str, token: Option<&str>) -> Result<Gi
 pub fn search_github_user_by_email(email: &str, token: &str) -> Result<Option<GithubAuthor>> {
     let query = format!("{} in:email", email);
     let url = format!("https://api.github.com/search/users?q={}", urlencoding::encode(&query));
-    let response = ureq::get(&url)
-        .set("Accept", "application/vnd.github+json")
-        .set("User-Agent", "nifty")
-        .set("Authorization", &format!("Bearer {token}"))
-        .call()
+    let url = Url::parse(&url).map_err(|err| validation_with_input("invalid GitHub search URL", err.to_string()))?;
+    let request = Request::new(Method::Get, url)
+        .with_header("Accept", "application/vnd.github+json")
+        .with_header("User-Agent", "nifty")
+        .with_header("Authorization", format!("Bearer {token}"));
+    let response = HttpTransport::new()
+        .send(&request)
         .map_err(|err| validation_with_input("GitHub search API request failed", err.to_string()))?;
-    if !(200..300).contains(&response.status()) {
-        return Err(validation_with_input(
-            "GitHub search API returned an error status",
-            format!("{} {}", response.status(), response.status_text()),
-        ));
+    if !response.is_success() {
+        return Err(validation_with_input("GitHub search API returned an error status", response.status.to_string()));
     }
-    let body: Value = response.into_json().map_err(|err| validation(format!("parse GitHub search JSON: {err}")))?;
+    let body: Value = serde_json::from_slice(&response.body).map_err(|err| validation(format!("parse GitHub search JSON: {err}")))?;
     let items = body.get("items").and_then(Value::as_array);
     let Some(items) = items
     else {
