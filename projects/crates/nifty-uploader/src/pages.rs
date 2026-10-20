@@ -6,7 +6,7 @@ pub fn deploy_github_pages(repo: &str, token: &str, dir: &Path) -> Result<()> {
     let (owner, name) = split_repo(repo)?;
     let dir = dir.canonicalize().map_err(|err| format!("resolve pages dir {}: {err}", dir.display()))?;
 
-    let work = tempfile::tempdir().map_err(|err| err.to_string())?;
+    let work = fs_tools::temp::create_folder().map_err(|err| err.to_string())?;
     let root = work.path();
 
     copy_dir_recursive(&dir, root)?;
@@ -30,11 +30,11 @@ pub fn deploy_github_pages(repo: &str, token: &str, dir: &Path) -> Result<()> {
 }
 
 fn copy_dir_recursive(from: &Path, to: &Path) -> Result<()> {
-    for entry in walkdir::WalkDir::new(from).into_iter().filter_map(|entry| entry.ok()) {
+    for entry in fs_tools::walk::Walker::new(from).into_iter().filter_map(|entry| entry.ok()) {
         let path = entry.path();
         let relative = path.strip_prefix(from).map_err(|err| err.to_string())?;
         let target = to.join(relative);
-        if entry.file_type().is_dir() {
+        if entry.is_folder() {
             fs::create_dir_all(&target).map_err(|err| err.to_string())?;
         }
         else {

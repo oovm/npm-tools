@@ -1,7 +1,7 @@
 use std::{fs, process::Command};
 
 use nifty_publisher::{OtpOverrides, PublishOptions, plan_publish_order, publish_workspace};
-use tempfile::tempdir;
+use fs_tools::temp::create_folder;
 
 fn write_package(root: &std::path::Path, dir_name: &str, name: &str, private: bool, deps_json: &str) {
     let dir = root.join("projects").join("packages").join(dir_name);
@@ -27,7 +27,7 @@ fn write_workspace_skeleton(root: &std::path::Path) {
 
 #[test]
 fn plans_dependency_order_from_manifests() {
-    let root = tempdir().expect("tempdir");
+    let root = create_folder().expect("tempdir");
     write_workspace_skeleton(root.path());
     write_package(root.path(), "platform", "@scope/platform", false, "{}");
     write_package(root.path(), "main", "@scope/main", false, r#"{ "@scope/platform": "file:../platform" }"#);
@@ -47,7 +47,7 @@ fn publish_workspace_dry_run_restores_manifest() {
         return;
     }
 
-    let root = tempdir().expect("tempdir");
+    let root = create_folder().expect("tempdir");
     write_workspace_skeleton(root.path());
     write_package(root.path(), "platform", "@scope/platform", false, "{}");
     write_package(root.path(), "main", "@scope/main", false, r#"{ "@scope/platform": "file:../platform" }"#);

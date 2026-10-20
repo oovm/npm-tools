@@ -7,20 +7,23 @@ use std::{
     fs,
     path::{Path, PathBuf},
 };
+use fs_tools::walk::{Filter, Walker};
 use toml::Value;
-use walkdir::WalkDir;
 
 const MAX_RUST_LINES: usize = 1000;
 /// 超过此行数的 `readme.md` 视为正式文档，须用 `include_str` 导入。
 const MIN_README_LINES_FOR_INCLUDE_STR: usize = 10;
 const SKIP_WALK_DIRS: &[&str] = &["node_modules", "target", ".git", "dist", ".cache"];
 
-fn should_walk_entry(entry: &walkdir::DirEntry) -> bool {
-    if !entry.file_type().is_dir() {
-        return true;
+fn should_walk_entry(entry: &fs_tools::walk::Entry) -> Filter {
+    if !entry.is_folder() {
+        return Filter::Continue;
     }
     let name = entry.file_name().to_string_lossy();
-    !name.starts_with(".cry-") && !SKIP_WALK_DIRS.contains(&name.as_ref())
+    if name.starts_with(".cry-") || SKIP_WALK_DIRS.contains(&name.as_ref()) {
+        return Filter::IgnoreFolder;
+    }
+    Filter::Continue
 }
 
 /// Kind of cargo workspace finding (maps to Nifty lint rule ids).
@@ -50,8 +53,8 @@ pub struct CargoFinding {
 /// 在 `root` 下发现全部 `Cargo.toml` 包目录（跳过 `target/`）。
 pub fn discover_packages(root: &Path) -> Vec<PathBuf> {
     let mut packages = Vec::new();
-    for entry in WalkDir::new(root).into_iter().filter_entry(should_walk_entry).filter_map(Result::ok) {
-        if entry.file_type().is_file() && entry.file_name() == "Cargo.toml" {
+    for entry in Walker::new(root).filter(should_walk_entry).into_iter().filter_map(Result::ok) {
+        if entry.is_file() && entry.file_name() == "Cargo.toml" {
             packages.push(entry.path().parent().expect("Cargo.toml parent").to_path_buf());
         }
     }
@@ -135,8 +138,8 @@ pub fn scan_misplaced(root: &Path) -> Vec<CargoFinding> {
 /// 超过 `1000` 行的 Rust 源文件。
 pub fn scan_large_files(root: &Path) -> Vec<CargoFinding> {
     let mut findings = Vec::new();
-    for entry in WalkDir::new(root).into_iter().filter_entry(should_walk_entry).filter_map(Result::ok) {
-        if !entry.file_type().is_file() {
+    for entry in Walker::new(root).filter(should_walk_entry).into_iter().filter_map(Result::ok) {
+        if !entry.is_file() {
             continue;
         }
         if entry.path().extension().and_then(|e| e.to_str()) != Some("rs") {
@@ -158,8 +161,8 @@ pub fn scan_large_files(root: &Path) -> Vec<CargoFinding> {
 
 fn scan_readme_case(root: &Path) -> Vec<CargoFinding> {
     let mut findings = Vec::new();
-    for entry in WalkDir::new(root).into_iter().filter_entry(should_walk_entry).filter_map(Result::ok) {
-        if !entry.file_type().is_file() {
+    for entry in Walker::new(root).filter(should_walk_entry).into_iter().filter_map(Result::ok) {
+        if !entry.is_file() {
             continue;
         }
         if entry.file_name() == "README.md" {
@@ -354,8 +357,8 @@ fn scan_misplaced_tests(package: &Path) -> Vec<CargoFinding> {
         return findings;
     }
 
-    for entry in WalkDir::new(&src).into_iter().filter_map(Result::ok) {
-        if !entry.file_type().is_file() || entry.path().extension().and_then(|e| e.to_str()) != Some("rs") {
+    for entry in Walker::new(&src).into_iter().filter_map(Result::ok) {
+        if !entry.is_file() || entry.path().extension().and_then(|e| e.to_str()) != Some("rs") {
             continue;
         }
         let content = fs::read_to_string(entry.path()).unwrap_or_default();

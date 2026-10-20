@@ -246,11 +246,11 @@ fn now_iso() -> String {
 #[cfg(test)]
 mod tests {
     use super::{PlaceholderCache, TrustExpect, VersionSource, resolve_published_version, should_skip_publish};
-    use tempfile::TempDir;
+    use fs_tools::temp::create_folder;
 
     #[test]
     fn saves_and_loads_cache_file() {
-        let dir = TempDir::new().expect("tempdir");
+        let dir = create_folder().expect("tempdir");
         let expect = TrustExpect {
             repo: "oovm/npm-tools".to_string(),
             file: "publish-npm.yml".to_string(),

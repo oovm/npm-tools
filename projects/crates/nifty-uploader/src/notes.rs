@@ -47,9 +47,9 @@ pub fn collect_files(dir: &Path) -> Result<Vec<PathBuf>> {
         return Err(format!("upload directory not found: {}", dir.display()));
     }
     let mut files = Vec::new();
-    for entry in walkdir::WalkDir::new(dir).into_iter().filter_map(|entry| entry.ok()) {
-        if entry.file_type().is_file() {
-            files.push(entry.into_path());
+    for entry in fs_tools::walk::Walker::new(dir).into_iter().filter_map(|entry| entry.ok()) {
+        if entry.is_file() {
+            files.push(entry.path().to_path_buf());
         }
     }
     if files.is_empty() {

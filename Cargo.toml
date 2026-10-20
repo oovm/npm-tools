@@ -9,6 +9,7 @@ exclude = [
 ]
 
 [workspace.dependencies]
+fs-tools = { git = "https://github.com/oovm/rust-boost", branch = "dev" }
 request = { git = "https://github.com/oovm/rust-boost", branch = "dev" }
 
 [profile.release]

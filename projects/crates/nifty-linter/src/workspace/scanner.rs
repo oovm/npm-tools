@@ -2,19 +2,22 @@
 
 use std::{fs, path::PathBuf};
 
-use walkdir::WalkDir;
+use fs_tools::walk::{Filter, Walker};
 
 const MAX_TYPESCRIPT_LINES: usize = 1000;
 const SKIP_WALK_DIRS: &[&str] = &["node_modules", "target", ".git", "dist", ".cache"];
 
 const TYPESCRIPT_EXTENSIONS: &[&str] = &["ts", "tsx", "mts", "cts"];
 
-fn should_walk_entry(entry: &walkdir::DirEntry) -> bool {
-    if !entry.file_type().is_dir() {
-        return true;
+fn should_walk_entry(entry: &fs_tools::walk::Entry) -> Filter {
+    if !entry.is_folder() {
+        return Filter::Continue;
     }
     let name = entry.file_name().to_string_lossy();
-    !name.starts_with(".cry-") && !SKIP_WALK_DIRS.contains(&name.as_ref())
+    if name.starts_with(".cry-") || SKIP_WALK_DIRS.contains(&name.as_ref()) {
+        return Filter::IgnoreFolder;
+    }
+    Filter::Continue
 }
 
 fn is_typescript_source(path: &std::path::Path) -> bool {
@@ -40,8 +43,8 @@ pub struct WorkspaceFinding {
 /// TypeScript sources over `1000` lines.
 pub fn scan_large_typescript_files(root: &std::path::Path) -> Vec<WorkspaceFinding> {
     let mut findings = Vec::new();
-    for entry in WalkDir::new(root).into_iter().filter_entry(should_walk_entry).filter_map(Result::ok) {
-        if !entry.file_type().is_file() || !is_typescript_source(entry.path()) {
+    for entry in Walker::new(root).filter(should_walk_entry).into_iter().filter_map(Result::ok) {
+        if !entry.is_file() || !is_typescript_source(entry.path()) {
             continue;
         }
         let content = fs::read_to_string(entry.path()).unwrap_or_default();

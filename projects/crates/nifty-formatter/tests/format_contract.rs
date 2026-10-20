@@ -165,7 +165,7 @@ fn workspace_typescript_formatting_preserves_every_token() {
     };
     let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../packages/nifty/src");
     let mut failures = Vec::new();
-    for entry in walkdir::WalkDir::new(root).into_iter().filter_map(Result::ok) {
+    for entry in fs_tools::walk::Walker::new(root).into_iter().filter_map(Result::ok) {
         let path = entry.path();
         if path.extension().and_then(|ext| ext.to_str()) != Some("ts") {
             continue;
