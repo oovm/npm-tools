@@ -7,10 +7,12 @@ Depend on `@doki-land/nifty` unless you need this crate directly.
 ## Example
 
 ```rust
+use std::path::Path;
 use nifty_config::{detect_project_layout, find_config_file};
 
-let layout = detect_project_layout(".")?;
-let config_path = find_config_file(".");
+let layout = detect_project_layout(Path::new("."));
+let config_path = find_config_file(Path::new("."));
+println!("{layout:?} {config_path:?}");
 ```
 
 [docs.rs](https://docs.rs/nifty-config) · [Nifty readme](https://www.npmjs.com/package/@doki-land/nifty) · [Source](https://github.com/oovm/npm-tools/tree/dev/projects/crates/nifty-config)
