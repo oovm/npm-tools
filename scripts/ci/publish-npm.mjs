@@ -139,7 +139,7 @@ function rewriteDepsField(pkg, version) {
 }
 
 function isAlreadyPublished(blob) {
-    return /cannot publish over existing|EPUBLISHCONFLICT|previously published versions|version already exists|cannot publish.*same version|you cannot publish over/i.test(
+    return /cannot publish over|EPUBLISHCONFLICT|version already exists|previously (published|staged) version/i.test(
         blob,
     );
 }
@@ -408,19 +408,26 @@ function publishJs(version, artifactsRoot) {
     return { published, skipped };
 }
 
-const version = resolveVersion();
-console.log(`ci-publish-npm: version=${version}`);
-console.log(` GITHUB_REF=${process.env.GITHUB_REF ?? "(none)"}`);
-console.log(" Trusted Publisher contract: publish-npm.yml + env NPM_PUBLISH\n");
+function main() {
+    const version = resolveVersion();
+    console.log(`ci-publish-npm: version=${version}`);
+    console.log(` GITHUB_REF=${process.env.GITHUB_REF ?? "(none)"}`);
+    console.log(" Trusted Publisher contract: publish-npm.yml + env NPM_PUBLISH\n");
 
-delete process.env.NODE_AUTH_TOKEN;
-delete process.env.NPM_TOKEN;
+    delete process.env.NODE_AUTH_TOKEN;
+    delete process.env.NPM_TOKEN;
 
-const artifactsRoot = process.env.NIFTY_NATIVE_ARTIFACTS || path.join(ROOT, "dist", "native-flat");
+    const artifactsRoot = process.env.NIFTY_NATIVE_ARTIFACTS || path.join(ROOT, "dist", "native-flat");
 
-const native = publishNative(version, artifactsRoot);
-const js = publishJs(version, artifactsRoot);
+    const native = publishNative(version, artifactsRoot);
+    const js = publishJs(version, artifactsRoot);
 
-console.log(
-    `\nci-publish-npm: done (native published=${native.published} skipped=${native.skipped}; js published=${js.published} skipped=${js.skipped})`,
-);
+    console.log(
+        `\nci-publish-npm: done (native published=${native.published} skipped=${native.skipped}; js published=${js.published} skipped=${js.skipped})`,
+    );
+}
+
+const isEntrypoint = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+if (isEntrypoint) main();
+
+export { isAlreadyPublished, isAuthFailure };
