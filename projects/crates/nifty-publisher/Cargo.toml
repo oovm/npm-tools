@@ -1,6 +1,6 @@
 [package]
 name = "nifty-publisher"
-version = "0.1.6"
+version = "0.1.7"
 authors = ["Aster <192607617@qq.com>"]
 description = "Publish npm workspace packages in dependency order for Nifty hybrid projects"
 repository = "https://github.com/oovm/npm-tools"
