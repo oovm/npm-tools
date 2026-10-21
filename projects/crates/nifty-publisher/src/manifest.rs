@@ -11,7 +11,8 @@ const DEPENDENCY_FIELDS: [&str; 4] = ["dependencies", "devDependencies", "option
 /// Options for [`patch_manifest_for_publish`].
 #[derive(Debug, Clone, Copy, Default)]
 pub struct PatchPublishOptions<'a> {
-    /// Force `version` on the published manifest (e.g. `0.0.0` for `--placeholder`).
+    /// Force `version` on the published manifest and on workspace dependency specs
+    /// (e.g. `0.0.0` for `--placeholder`).
     pub publish_version: Option<&'a str>,
     /// Workspace dependency names that should resolve to `0.0.0` this run.
     pub placeholder_dep_names: Option<&'a std::collections::BTreeSet<String>>,
