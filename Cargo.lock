@@ -1548,11 +1548,11 @@ dependencies = [
 name = "oak-testing"
 version = "0.0.12"
 dependencies = [
+ "fs-tools",
  "oak-core",
  "serde",
  "serde_json",
  "triomphe",
- "walkdir",
 ]
 
 [[package]]
