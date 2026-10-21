@@ -4,8 +4,6 @@ use serde_json::Value;
 
 use crate::{Result, workspace::NpmPackage};
 
-const PUBLISH_REPOSITORY_URL: &str = "git+https://github.com/oovm/npm-tools.git";
-
 const DEPENDENCY_FIELDS: [&str; 4] = ["dependencies", "devDependencies", "optionalDependencies", "peerDependencies"];
 
 /// Options for [`patch_manifest_for_publish`].
@@ -53,22 +51,9 @@ pub fn patch_manifest_for_publish(
 }
 
 fn ensure_publish_metadata(object: &mut serde_json::Map<String, Value>) {
-    let has_repo_url = object
-        .get("repository")
-        .and_then(Value::as_object)
-        .and_then(|repo| repo.get("url"))
-        .and_then(Value::as_str)
-        .is_some_and(|url| !url.is_empty());
-    if !has_repo_url {
-        object.insert(
-            "repository".to_string(),
-            serde_json::json!({
-                "type": "git",
-                "url": PUBLISH_REPOSITORY_URL
-            }),
-        );
-    }
-
+    // Never synthesize `repository`: npm provenance compares it with the GitHub
+    // repository running the workflow, so a fabricated URL fails the publish with
+    // E422. Workspaces that publish with provenance must declare their own repo.
     let publish_config = object.entry("publishConfig".to_string()).or_insert_with(|| Value::Object(serde_json::Map::new()));
     if let Value::Object(map) = publish_config {
         map.entry("access".to_string()).or_insert_with(|| Value::String("public".to_string()));
@@ -199,5 +184,19 @@ mod tests {
         let value: serde_json::Value = serde_json::from_str(&patched).expect("json");
         assert_eq!(value["version"], "0.3.1");
         assert_eq!(value["dependencies"]["@scope/platform"], "0.3.1");
+    }
+
+    #[test]
+    fn publish_manifest_never_invents_a_repository() {
+        let main = pkg("@vmz/vmz", "0.3.4");
+        let by_name = BTreeMap::from([("@vmz/vmz".to_string(), main.clone())]);
+        let original = r#"{
+  "name": "@vmz/vmz",
+  "version": "0.1.0"
+}"#;
+        let patched = patch_manifest_for_publish(original, &main, &by_name, PatchPublishOptions::default()).expect("patch");
+        let value: serde_json::Value = serde_json::from_str(&patched).expect("json");
+        assert!(value.get("repository").is_none(), "{patched}");
+        assert_eq!(value["publishConfig"]["access"], "public");
     }
 }
