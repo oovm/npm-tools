@@ -43,6 +43,8 @@ pub struct PublishOptions {
     pub only: Option<String>,
     /// Publish an explicit subset (multiple `--package` flags).
     pub packages: Option<Vec<String>>,
+    /// Override the published version for every package (tag-driven releases).
+    pub version: Option<String>,
     pub trust: Option<trust_expect::TrustExpectInput>,
 }
 
@@ -96,12 +98,17 @@ pub fn publish_workspace(options: PublishOptions) -> Result<PublishReport> {
         }
         let package = by_name.get(name).ok_or_else(|| format!("missing workspace package {name}"))?;
         let registry = registry_name(package);
-        let publish_version = if options.placeholder { PLACEHOLDER_VERSION } else { package.version.as_str() };
+        let publish_version = if options.placeholder {
+            PLACEHOLDER_VERSION
+        }
+        else {
+            options.version.as_deref().unwrap_or(package.version.as_str())
+        };
         if !options.placeholder {
             let live = runner.view_version(registry)?;
             let resolved = cache::resolve_published_version(&mut cache, name, live);
-            if cache::should_skip_publish(&cache, name, &package.version, &resolved, options.refresh, options.dry_run) {
-                println!("skip publish {registry}@{} (already on registry)", package.version);
+            if cache::should_skip_publish(&cache, name, publish_version, &resolved, options.refresh, options.dry_run) {
+                println!("skip publish {registry}@{publish_version} (already on registry)");
                 skipped_versions.push(name.clone());
                 continue;
             }
@@ -119,7 +126,7 @@ pub fn publish_workspace(options: PublishOptions) -> Result<PublishReport> {
             access,
             options.npm.as_deref(),
             &auth,
-            if options.placeholder { Some(PLACEHOLDER_VERSION) } else { None },
+            if options.placeholder { Some(PLACEHOLDER_VERSION) } else { Some(publish_version) },
             if options.placeholder { Some(&placeholder_names) } else { None },
         );
         match result {
@@ -151,15 +158,15 @@ fn is_native_binary_package(package: &NpmPackage) -> bool {
 }
 
 fn has_staged_native_binary(package: &NpmPackage) -> bool {
-    let lib_dir = package.dir.join("lib");
-    if !lib_dir.is_dir() {
-        return false;
-    }
-    fs::read_dir(&lib_dir)
-        .map(|entries| {
-            entries.filter_map(|entry| entry.ok()).any(|entry| entry.path().extension().is_some_and(|ext| ext == "node"))
-        })
-        .unwrap_or(false)
+    let has_node = |dir: &Path| {
+        fs::read_dir(dir)
+            .map(|entries| {
+                entries.filter_map(|entry| entry.ok()).any(|entry| entry.path().extension().is_some_and(|ext| ext == "node"))
+            })
+            .unwrap_or(false)
+    };
+    // Two shipped layouts: `lib/<addon>.node` (nifty) and `<addon>.node` at the package root (vmz).
+    has_node(&package.dir.join("lib")) || has_node(&package.dir)
 }
 
 fn already_published(message: &str) -> bool {
@@ -238,12 +245,14 @@ fn resolve_publish_targets(options: &PublishOptions) -> Result<Vec<String>> {
 
 #[cfg(test)]
 mod native_binary_tests {
-    use std::{collections::BTreeMap, path::PathBuf};
+    use std::{collections::BTreeMap, fs, path::PathBuf};
 
-    use super::is_native_binary_package;
+    use fs_tools::temp::create_folder;
+
+    use super::{has_staged_native_binary, is_native_binary_package};
     use crate::workspace::{NpmPackage, PackageManifest};
 
-    fn package(name: &str, os: Option<Vec<String>>, cpu: Option<Vec<String>>) -> NpmPackage {
+    fn package_with_dir(name: &str, dir: PathBuf, os: Option<Vec<String>>, cpu: Option<Vec<String>>) -> NpmPackage {
         let manifest = PackageManifest {
             name: name.to_string(),
             version: "0.0.0".to_string(),
@@ -259,11 +268,15 @@ mod native_binary_tests {
         NpmPackage {
             name: name.to_string(),
             version: "0.0.0".to_string(),
-            dir: PathBuf::from(name),
-            manifest_path: PathBuf::from(name).join("package.json"),
+            dir: dir.clone(),
+            manifest_path: dir.join("package.json"),
             private: false,
             manifest,
         }
+    }
+
+    fn package(name: &str, os: Option<Vec<String>>, cpu: Option<Vec<String>>) -> NpmPackage {
+        package_with_dir(name, PathBuf::from(name), os, cpu)
     }
 
     #[test]
@@ -278,6 +291,23 @@ mod native_binary_tests {
             Some(vec!["win32".to_string()]),
             Some(vec!["x64".to_string()]),
         )));
+    }
+
+    #[test]
+    fn staged_native_binary_supports_lib_and_root_layouts() {
+        let root = create_folder().expect("tempdir");
+        let lib_pkg = package_with_dir("lib", root.path().join("lib-pkg"), None, None);
+        fs::create_dir_all(&lib_pkg.dir).expect("mkdir");
+        assert!(!has_staged_native_binary(&lib_pkg));
+        fs::create_dir_all(lib_pkg.dir.join("lib")).expect("mkdir lib");
+        fs::write(lib_pkg.dir.join("lib").join("addon.node"), b"bin").expect("write lib addon");
+        assert!(has_staged_native_binary(&lib_pkg));
+
+        let root_pkg = package_with_dir("root", root.path().join("root-pkg"), None, None);
+        fs::create_dir_all(&root_pkg.dir).expect("mkdir");
+        assert!(!has_staged_native_binary(&root_pkg));
+        fs::write(root_pkg.dir.join("addon.node"), b"bin").expect("write root addon");
+        assert!(has_staged_native_binary(&root_pkg));
     }
 }
 

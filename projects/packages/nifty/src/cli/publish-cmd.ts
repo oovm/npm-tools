@@ -16,6 +16,7 @@ export function registerPublishCommand(cli: Cli): void {
         .option("--package <name>", "cli.opt.package")
         .option("--tag <tag>", "cli.opt.tag")
         .option("--access <access>", "cli.opt.access")
+        .option("--version <version>", "cli.opt.version")
         .option("--otp <code>", "cli.opt.otp")
         .option("--totp-secret <secret>", "cli.opt.totp-secret")
         .option("--npm-token <token>", "cli.opt.npm-token")
@@ -35,6 +36,7 @@ export async function cmdPublish(options: ParsedOptions): Promise<number> {
         placeholder: flag(options, "placeholder"),
         tag: str(options, "tag"),
         access: str(options, "access") ?? "public",
+        version: str(options, "version"),
         ...(packages.length === 1
             ? { only: packages[0] }
             : packages.length > 1

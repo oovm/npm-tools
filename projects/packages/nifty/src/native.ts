@@ -222,6 +222,7 @@ export type PublisherExports = {
         placeholder?: boolean;
         only?: string;
         packages?: string[];
+        version?: string;
         tag?: string;
         access?: string;
         npm?: string;
@@ -303,6 +304,7 @@ type NativeBinding = {
         token?: string | null;
         only?: string | null;
         packages?: string[] | null;
+        version?: string | null;
     }) => PublishReport;
     publisherTrustWorkspace: (options: {
         cwd?: string | null;
@@ -700,6 +702,7 @@ function wrapBinding(binding: NativeBinding): NiftyNative {
                     ...(options.placeholder !== undefined ? { placeholder: options.placeholder } : {}),
                     ...(options.only !== undefined ? { only: options.only } : {}),
                     ...(options.packages !== undefined ? { packages: options.packages } : {}),
+                    ...(options.version !== undefined ? { version: options.version } : {}),
                     ...(options.tag !== undefined ? { tag: options.tag } : {}),
                     ...(options.access !== undefined ? { access: options.access } : {}),
                     ...(options.npm !== undefined ? { npm: options.npm } : {}),

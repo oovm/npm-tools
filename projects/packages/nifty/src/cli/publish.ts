@@ -8,6 +8,7 @@ export type PublishOptions = {
     placeholder?: boolean;
     tag?: string;
     access?: string;
+    version?: string;
 };
 
 export type PublishReport = {
@@ -28,6 +29,7 @@ export async function runPublish(argv: string[]): Promise<void> {
         placeholder: options.placeholder,
         tag: options.tag,
         access: options.access,
+        version: options.version,
         ...authPayload(options.auth),
     });
     printPublishReport(report, options.dryRun);
@@ -40,6 +42,7 @@ function parsePublishArgs(argv: string[]) {
     let placeholder = false;
     let tag: string | undefined;
     let access = "public";
+    let version: string | undefined;
     const auth = parseAuthArgs(argv);
 
     for (let i = 0; i < argv.length; i += 1) {
@@ -56,6 +59,8 @@ function parsePublishArgs(argv: string[]) {
             tag = argv[++i];
         } else if (arg === "--access") {
             access = argv[++i];
+        } else if (arg === "--version") {
+            version = argv[++i];
         } else if (arg === "-h" || arg === "--help") {
             printPublishHelp();
             process.exit(0);
@@ -64,7 +69,7 @@ function parsePublishArgs(argv: string[]) {
         }
     }
 
-    return { cwd, dryRun, refresh, placeholder, tag, access, auth };
+    return { cwd, dryRun, refresh, placeholder, tag, access, version, auth };
 }
 
 export function printPublishReport(report: PublishReport, dryRun?: boolean): void {
@@ -96,6 +101,7 @@ Usage:
   nifty publish --placeholder
   nifty publish --tag next
   nifty publish --access public
+  nifty publish --version 0.3.1
   nifty publish --otp 123456
   nifty publish -C <cwd>
 

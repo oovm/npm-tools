@@ -35,7 +35,8 @@ pub fn patch_manifest_for_publish(
         else {
             continue;
         };
-        let patched = patch_dependency_entries(entries, &package.dir, by_name, opts.placeholder_dep_names)?;
+        let patched =
+            patch_dependency_entries(entries, &package.dir, by_name, opts.publish_version, opts.placeholder_dep_names)?;
         object.insert(field.to_string(), Value::Object(patched));
     }
 
@@ -77,6 +78,7 @@ fn patch_dependency_entries(
     entries: &serde_json::Map<String, Value>,
     package_dir: &Path,
     by_name: &BTreeMap<String, NpmPackage>,
+    publish_version: Option<&str>,
     placeholder_dep_names: Option<&std::collections::BTreeSet<String>>,
 ) -> Result<serde_json::Map<String, Value>> {
     let mut next = serde_json::Map::new();
@@ -87,7 +89,7 @@ fn patch_dependency_entries(
                 "0.0.0".to_string()
             }
             else {
-                package.version.clone()
+                publish_version.unwrap_or(package.version.as_str()).to_string()
             }
         }
         else {
@@ -172,5 +174,29 @@ mod tests {
         let value: serde_json::Value = serde_json::from_str(&patched).expect("json");
         assert_eq!(value["version"], "0.0.0");
         assert_eq!(value["dependencies"]["@scope/platform"], "0.0.0");
+    }
+
+    #[test]
+    fn version_override_applies_to_workspace_dependencies() {
+        let main = pkg("@scope/main", "0.1.0");
+        let platform = pkg("@scope/platform", "0.1.0");
+        let by_name = BTreeMap::from([("@scope/main".to_string(), main.clone()), ("@scope/platform".to_string(), platform)]);
+        let original = r#"{
+  "name": "@scope/main",
+  "version": "0.1.0",
+  "dependencies": {
+    "@scope/platform": "workspace:*"
+  }
+}"#;
+        let patched = patch_manifest_for_publish(
+            original,
+            &main,
+            &by_name,
+            PatchPublishOptions { publish_version: Some("0.3.1"), placeholder_dep_names: None },
+        )
+        .expect("patch");
+        let value: serde_json::Value = serde_json::from_str(&patched).expect("json");
+        assert_eq!(value["version"], "0.3.1");
+        assert_eq!(value["dependencies"]["@scope/platform"], "0.3.1");
     }
 }

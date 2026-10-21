@@ -67,6 +67,7 @@ fn publish_workspace_dry_run_restores_manifest() {
         trust: None,
         only: None,
         packages: None,
+        version: None,
     })
     .expect("publish");
 

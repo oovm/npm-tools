@@ -260,6 +260,7 @@ pub struct PublishWorkspaceOptions {
     pub token: Option<String>,
     pub only: Option<String>,
     pub packages: Option<Vec<String>>,
+    pub version: Option<String>,
     pub trust_repo: Option<String>,
     pub trust_file: Option<String>,
     pub trust_environment: Option<String>,
@@ -305,6 +306,7 @@ pub fn publisher_publish_workspace(options: PublishWorkspaceOptions) -> Result<P
             otp,
             only: options.only,
             packages: options.packages.clone(),
+            version: options.version,
             trust,
         })
         .map(|report| PublishReport {
