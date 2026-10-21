@@ -4,7 +4,7 @@ use std::collections::BTreeSet;
 
 use chrono::{DateTime, Duration, NaiveDate, NaiveDateTime, NaiveTime};
 use gix::{ObjectId, Repository};
-use logger::{enter, span};
+use boost_log::{enter, span};
 use rand::Rng;
 
 use crate::error::{Result, validation};

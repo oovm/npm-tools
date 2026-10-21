@@ -1,6 +1,6 @@
 use std::{fs, process::Command};
 
-use fs_tools::temp::create_folder;
+use boost_fs::temp::create_folder;
 use nifty_publisher::{OtpOverrides, PublishOptions, plan_publish_order, publish_workspace};
 
 fn write_package(root: &std::path::Path, dir_name: &str, name: &str, private: bool, deps_json: &str) {

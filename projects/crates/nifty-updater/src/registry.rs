@@ -1,4 +1,4 @@
-use request::{HttpTransport, Method, Request, Transport, Url};
+use boost_http::{HttpTransport, Method, Request, Transport, Url};
 use serde_json::Value;
 
 use crate::Result;

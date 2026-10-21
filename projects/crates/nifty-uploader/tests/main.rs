@@ -2,7 +2,7 @@ use nifty_uploader::{asset_name, collect_files};
 
 #[test]
 fn collects_files_recursively() {
-    let dir = fs_tools::temp::create_folder().expect("tempdir");
+    let dir = boost_fs::temp::create_folder().expect("tempdir");
     std::fs::write(dir.path().join("a.txt"), b"a").expect("write");
     std::fs::create_dir_all(dir.path().join("nested")).expect("mkdir");
     std::fs::write(dir.path().join("nested/b.txt"), b"b").expect("write");
@@ -14,7 +14,7 @@ fn collects_files_recursively() {
 
 #[test]
 fn asset_name_preserves_relative_path() {
-    let dir = fs_tools::temp::create_folder().expect("tempdir");
+    let dir = boost_fs::temp::create_folder().expect("tempdir");
     let nested = dir.path().join("nested").join("file.bin");
     std::fs::create_dir_all(nested.parent().unwrap()).expect("mkdir");
     std::fs::write(&nested, b"x").expect("write");

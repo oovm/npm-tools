@@ -9,9 +9,10 @@ exclude = [
 ]
 
 [workspace.dependencies]
-fs-tools = { git = "https://github.com/oovm/rust-boost", branch = "dev" }
-logger = { git = "https://github.com/oovm/rust-boost", branch = "dev" }
-request = { git = "https://github.com/oovm/rust-boost", branch = "dev" }
+# Overlaid by local path `.cargo/config.toml` (git ignored).
+boost-fs = { git = "https://github.com/oovm/rust-boost", branch = "dev" }
+boost-log = { git = "https://github.com/oovm/rust-boost", branch = "dev" }
+boost-http = { git = "https://github.com/oovm/rust-boost", branch = "dev" }
 
 [profile.release]
 lto = true

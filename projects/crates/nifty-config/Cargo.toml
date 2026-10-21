@@ -12,6 +12,6 @@ edition = "2021"
 [dependencies]
 
 [dev-dependencies]
-fs-tools = { workspace = true }
+boost-fs = { workspace = true }
 [features]
 default = []

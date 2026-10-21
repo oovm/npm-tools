@@ -87,6 +87,47 @@ dependencies = [
 ]
 
 [[package]]
+name = "boost-fs"
+version = "0.1.0"
+source = "git+https://github.com/oovm/rust-boost?branch=dev#2218a644af335aa4cef9f3e9e6b37475a829cfe2"
+dependencies = [
+ "boost-random 0.1.0 (git+https://github.com/oovm/rust-boost?branch=dev)",
+]
+
+[[package]]
+name = "boost-fs"
+version = "0.1.0"
+source = "git+https://github.com/oovm/rust-boost?rev=2218a644af335aa4cef9f3e9e6b37475a829cfe2#2218a644af335aa4cef9f3e9e6b37475a829cfe2"
+dependencies = [
+ "boost-random 0.1.0 (git+https://github.com/oovm/rust-boost?rev=2218a644af335aa4cef9f3e9e6b37475a829cfe2)",
+]
+
+[[package]]
+name = "boost-http"
+version = "0.1.0"
+source = "git+https://github.com/oovm/rust-boost?branch=dev#2218a644af335aa4cef9f3e9e6b37475a829cfe2"
+dependencies = [
+ "rustls",
+ "url",
+ "webpki-roots",
+]
+
+[[package]]
+name = "boost-log"
+version = "0.1.0"
+source = "git+https://github.com/oovm/rust-boost?branch=dev#2218a644af335aa4cef9f3e9e6b37475a829cfe2"
+
+[[package]]
+name = "boost-random"
+version = "0.1.0"
+source = "git+https://github.com/oovm/rust-boost?branch=dev#2218a644af335aa4cef9f3e9e6b37475a829cfe2"
+
+[[package]]
+name = "boost-random"
+version = "0.1.0"
+source = "git+https://github.com/oovm/rust-boost?rev=2218a644af335aa4cef9f3e9e6b37475a829cfe2#2218a644af335aa4cef9f3e9e6b37475a829cfe2"
+
+[[package]]
 name = "bstr"
 version = "1.13.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -402,14 +443,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cb4cb245038516f5f85277875cdaa4f7d2c9a0fa0468de06ed190163b1581fcf"
 dependencies = [
  "percent-encoding",
-]
-
-[[package]]
-name = "fs-tools"
-version = "0.1.0"
-source = "git+https://github.com/oovm/rust-boost?branch=dev#0b47ed7965a42e566d611f3439c2327b6d591df0"
-dependencies = [
- "random",
 ]
 
 [[package]]
@@ -1280,11 +1313,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f9f8bd3e56ce4dfc153cf470fffbfa98c7620958b312ca5c3a4b8d5181fd13c6"
 
 [[package]]
-name = "logger"
-version = "0.1.0"
-source = "git+https://github.com/oovm/rust-boost?branch=dev#0b47ed7965a42e566d611f3439c2327b6d591df0"
-
-[[package]]
 name = "memchr"
 version = "2.8.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1372,14 +1400,14 @@ dependencies = [
 name = "nifty-config"
 version = "0.1.5"
 dependencies = [
- "fs-tools",
+ "boost-fs 0.1.0 (git+https://github.com/oovm/rust-boost?branch=dev)",
 ]
 
 [[package]]
 name = "nifty-formatter"
 version = "0.1.5"
 dependencies = [
- "fs-tools",
+ "boost-fs 0.1.0 (git+https://github.com/oovm/rust-boost?branch=dev)",
  "nifty-config",
  "nifty-types",
  "oak-core",
@@ -1402,8 +1430,8 @@ dependencies = [
 name = "nifty-github"
 version = "0.1.5"
 dependencies = [
+ "boost-http",
  "nifty-types",
- "request",
  "serde_json",
  "urlencoding",
 ]
@@ -1412,13 +1440,13 @@ dependencies = [
 name = "nifty-history"
 version = "0.1.5"
 dependencies = [
+ "boost-http",
+ "boost-log",
  "chrono",
  "gix",
  "gix-error",
- "logger",
  "rand 0.8.8",
  "regex",
- "request",
  "serde",
  "serde_json",
  "urlencoding",
@@ -1428,7 +1456,7 @@ dependencies = [
 name = "nifty-linter"
 version = "0.1.5"
 dependencies = [
- "fs-tools",
+ "boost-fs 0.1.0 (git+https://github.com/oovm/rust-boost?branch=dev)",
  "nifty-config",
  "nifty-formatter",
  "nifty-git",
@@ -1461,12 +1489,12 @@ dependencies = [
 name = "nifty-publisher"
 version = "0.1.5"
 dependencies = [
- "fs-tools",
+ "boost-fs 0.1.0 (git+https://github.com/oovm/rust-boost?branch=dev)",
+ "boost-http",
  "hmac",
  "nifty-config",
  "nifty-git",
  "petgraph",
- "request",
  "serde",
  "serde_json",
  "sha1",
@@ -1485,9 +1513,9 @@ dependencies = [
 name = "nifty-updater"
 version = "0.1.5"
 dependencies = [
+ "boost-http",
  "dialoguer",
  "nifty-config",
- "request",
  "semver",
  "serde",
  "serde_json",
@@ -1499,12 +1527,12 @@ dependencies = [
 name = "nifty-uploader"
 version = "0.1.5"
 dependencies = [
- "fs-tools",
+ "boost-fs 0.1.0 (git+https://github.com/oovm/rust-boost?branch=dev)",
+ "boost-http",
  "nifty-config",
  "nifty-formatter",
  "nifty-git",
  "nifty-types",
- "request",
  "serde",
  "serde_json",
 ]
@@ -1548,7 +1576,7 @@ dependencies = [
 name = "oak-testing"
 version = "0.0.12"
 dependencies = [
- "fs-tools",
+ "boost-fs 0.1.0 (git+https://github.com/oovm/rust-boost?rev=2218a644af335aa4cef9f3e9e6b37475a829cfe2)",
  "oak-core",
  "serde",
  "serde_json",
@@ -1730,11 +1758,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "63b8176103e19a2643978565ca18b50549f6101881c443590420e4dc998a3c69"
 
 [[package]]
-name = "random"
-version = "0.1.0"
-source = "git+https://github.com/oovm/rust-boost?branch=dev#0b47ed7965a42e566d611f3439c2327b6d591df0"
-
-[[package]]
 name = "redox_syscall"
 version = "0.5.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1771,16 +1794,6 @@ name = "regex-syntax"
 version = "0.8.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d6f6ff9a378485b298a5286656da665ba74413d36db0979633275d2e708145d4"
-
-[[package]]
-name = "request"
-version = "0.1.0"
-source = "git+https://github.com/oovm/rust-boost?branch=dev#0b47ed7965a42e566d611f3439c2327b6d591df0"
-dependencies = [
- "rustls",
- "url",
- "webpki-roots",
-]
 
 [[package]]
 name = "ring"

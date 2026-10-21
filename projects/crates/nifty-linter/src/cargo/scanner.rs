@@ -2,7 +2,7 @@
 //!
 //! Ported from [cargo-tools](https://github.com/oovm/cargo-tools) `cargo cry` scanner.
 
-use fs_tools::walk::{Filter, Walker};
+use boost_fs::walk::{Filter, Walker};
 use std::{
     collections::HashSet,
     fs,
@@ -15,7 +15,7 @@ const MAX_RUST_LINES: usize = 1000;
 const MIN_README_LINES_FOR_INCLUDE_STR: usize = 10;
 const SKIP_WALK_DIRS: &[&str] = &["node_modules", "target", ".git", "dist", ".cache"];
 
-fn should_walk_entry(entry: &fs_tools::walk::Entry) -> Filter {
+fn should_walk_entry(entry: &boost_fs::walk::Entry) -> Filter {
     if !entry.is_folder() {
         return Filter::Continue;
     }

@@ -3,7 +3,7 @@
 use std::{collections::HashMap, path::Path};
 
 use regex::Regex;
-use request::{HttpTransport, Method, Request, Transport, Url};
+use boost_http::{HttpTransport, Method, Request, Transport, Url};
 use serde_json::Value;
 
 use crate::error::{Result, validation, validation_with_input};

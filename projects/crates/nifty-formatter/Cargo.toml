@@ -14,7 +14,7 @@ nifty-config = { path = "../nifty-config" }
 nifty-types = { path = "../nifty-types" }
 oak-typescript = { git = "https://github.com/yggdrasil-language/oaks.git", rev = "68304f26fc470f1d05e24e9b856981f21eebee33" }
 serde_json = "1.0"
-fs-tools = { workspace = true }
+boost-fs = { workspace = true }
 
 [dev-dependencies]
 oak-core = { git = "https://github.com/yggdrasil-language/oaks.git", rev = "68304f26fc470f1d05e24e9b856981f21eebee33" }

@@ -246,7 +246,7 @@ fn now_iso() -> String {
 #[cfg(test)]
 mod tests {
     use super::{PlaceholderCache, TrustExpect, VersionSource, resolve_published_version, should_skip_publish};
-    use fs_tools::temp::create_folder;
+    use boost_fs::temp::create_folder;
 
     #[test]
     fn saves_and_loads_cache_file() {

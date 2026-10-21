@@ -10,7 +10,7 @@ fn config_file_names_include_ts_and_js() {
 
 #[test]
 fn find_config_file_in_tree() -> std::io::Result<()> {
-    let dir = fs_tools::temp::create_folder()?;
+    let dir = boost_fs::temp::create_folder()?;
     let nested = dir.path().join("a").join("b");
     std::fs::create_dir_all(&nested)?;
     let config = dir.path().join("nifty.config.js");

@@ -247,7 +247,7 @@ fn resolve_publish_targets(options: &PublishOptions) -> Result<Vec<String>> {
 mod native_binary_tests {
     use std::{collections::BTreeMap, fs, path::PathBuf};
 
-    use fs_tools::temp::create_folder;
+    use boost_fs::temp::create_folder;
 
     use super::{has_staged_native_binary, is_native_binary_package};
     use crate::workspace::{NpmPackage, PackageManifest};

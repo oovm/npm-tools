@@ -47,7 +47,7 @@ pub fn collect_files(dir: &Path) -> Result<Vec<PathBuf>> {
         return Err(format!("upload directory not found: {}", dir.display()));
     }
     let mut files = Vec::new();
-    for entry in fs_tools::walk::Walker::new(dir).into_iter().filter_map(|entry| entry.ok()) {
+    for entry in boost_fs::walk::Walker::new(dir).into_iter().filter_map(|entry| entry.ok()) {
         if entry.is_file() {
             files.push(entry.path().to_path_buf());
         }

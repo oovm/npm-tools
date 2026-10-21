@@ -2,14 +2,14 @@
 
 use std::{fs, path::PathBuf};
 
-use fs_tools::walk::{Filter, Walker};
+use boost_fs::walk::{Filter, Walker};
 
 const MAX_TYPESCRIPT_LINES: usize = 1000;
 const SKIP_WALK_DIRS: &[&str] = &["node_modules", "target", ".git", "dist", ".cache"];
 
 const TYPESCRIPT_EXTENSIONS: &[&str] = &["ts", "tsx", "mts", "cts"];
 
-fn should_walk_entry(entry: &fs_tools::walk::Entry) -> Filter {
+fn should_walk_entry(entry: &boost_fs::walk::Entry) -> Filter {
     if !entry.is_folder() {
         return Filter::Continue;
     }

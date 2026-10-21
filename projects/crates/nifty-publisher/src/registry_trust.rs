@@ -1,6 +1,6 @@
 use std::{path::Path, str::FromStr};
 
-use request::{HttpTransport, Method, Request, Transport, Url};
+use boost_http::{HttpTransport, Method, Request, Transport, Url};
 use serde_json::{Value, json};
 
 use crate::{

@@ -3,7 +3,7 @@
 use std::collections::HashMap;
 
 use gix::{ObjectId, Repository};
-use logger::{enter, span};
+use boost_log::{enter, span};
 
 use crate::error::{OptionExt, Result, message, validation};
 
