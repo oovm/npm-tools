@@ -5,7 +5,7 @@
 #
 # Native flow (aligned with vmz-framework):
 #   1. build-native (matrix) — compile .node per OS → Actions artifact
-#   2. publish — normalize artifacts → scripts/ci/publish-npm.mjs (npm OIDC)
+#   2. publish — stage artifacts into platform packages, then `nifty publish` (npm OIDC)
 # Platform .node binaries ship only as @doki-land/nifty-* npm packages, not GitHub Release assets.
 
 name: Publish npm
@@ -206,8 +206,28 @@ jobs:
             fi
           done
 
+      - name: Stage native artifacts into platform packages
+        shell: bash
+        run: |
+          set -euo pipefail
+          for short in win32-x64 linux-x64 linux-arm64 darwin-arm64 darwin-x64; do
+            mkdir -p "projects/packages/nifty-$short/lib"
+            cp -r "dist/native-flat/$short"/. "projects/packages/nifty-$short/lib/"
+          done
+
+      - name: Verify tag version matches workspace manifests
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag="${{ needs.provenance.outputs.version }}"
+          for pkg in nifty nifty-skills nifty-win32-x64 nifty-linux-x64 nifty-linux-arm64 nifty-darwin-arm64 nifty-darwin-x64; do
+            manifest="projects/packages/$pkg/package.json"
+            version="$(node -p "require('./$manifest').version")"
+            if [[ "$version" != "$tag" ]]; then
+              echo "$manifest version $version != tag $tag" >&2
+              exit 1
+            fi
+          done
+
       - name: Publish packages to npm
-        env:
-          NIFTY_NATIVE_ARTIFACTS: ${{ github.workspace }}/dist/native-flat
-          GITHUB_REF: refs/tags/v${{ needs.provenance.outputs.version }}
-        run: node scripts/ci/publish-npm.mjs --version=${{ needs.provenance.outputs.version }}
+        run: node projects/packages/nifty/cli/nifty.mjs publish --access public

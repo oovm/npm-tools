@@ -79,9 +79,9 @@ GitHub Actions OIDC can publish on the next tag. `nifty trust` uses `publish.pac
 Local auth: `NPM_TOKEN`, `--npm-token`, `--otp`, or `--totp-secret` (see `nifty publish --help`). Trust uses the
 registry API with bearer token from `NPM_TOKEN` or `~/.npmrc`. Add OTP/TOTP on 2FA accounts when the registry asks.
 
-**npm-tools CI**: tag `vX.Y.Z` triggers `.github/workflows/publish-npm.yml` → `scripts/ci/publish-npm.mjs` (OIDC, no
-long-lived token in YAML). Native `.node` files ship as `@doki-land/nifty-*` optional packages, not GitHub Release
-assets.
+**npm-tools CI**: tag `vX.Y.Z` triggers `.github/workflows/publish-npm.yml`. The workflow stages native artifacts into
+the platform packages and then runs `nifty publish` (OIDC, no long-lived token in YAML). Native `.node` files ship as
+`@doki-land/nifty-*` optional packages, not GitHub Release assets.
 
 ## Reference changelogs
 

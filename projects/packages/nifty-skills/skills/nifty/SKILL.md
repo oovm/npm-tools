@@ -50,7 +50,7 @@ Global flag: `-C, --cwd <dir>`.
 ```text
 projects/crates/     # Rust libraries + nifty-napi
 projects/packages/   # @doki-land/nifty + platform @doki-land/nifty-*
-scripts/ci/          # publish-npm.mjs, nifty.mjs
+scripts/ci/          # bind-publish-tag.mjs, require-ci-success.mjs, nifty.mjs
 ```
 
 Do **not** confuse npm-tools `legion` / Valkyrie with Nifty. Nifty is independent Node-API + TypeScript CLI tooling.
