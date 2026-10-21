@@ -2,9 +2,9 @@
 
 use std::collections::BTreeSet;
 
+use boost_log::{enter, span};
 use chrono::{DateTime, Duration, NaiveDate, NaiveDateTime, NaiveTime};
 use gix::{ObjectId, Repository};
-use boost_log::{enter, span};
 use rand::Rng;
 
 use crate::error::{Result, validation};

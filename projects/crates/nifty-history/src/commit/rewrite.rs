@@ -2,8 +2,8 @@
 
 use std::collections::HashMap;
 
-use gix::{ObjectId, Repository};
 use boost_log::{enter, span};
+use gix::{ObjectId, Repository};
 
 use crate::error::{OptionExt, Result, message, validation};
 

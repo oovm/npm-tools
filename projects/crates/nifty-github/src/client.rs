@@ -1,7 +1,7 @@
 //! GitHub REST API client (`api.github.com`).
 
-use nifty_types::GithubAuthor;
 use boost_http::{HttpTransport, Method, Request, Transport, Url};
+use nifty_types::GithubAuthor;
 use serde_json::Value;
 
 pub type Result<T> = std::result::Result<T, String>;
