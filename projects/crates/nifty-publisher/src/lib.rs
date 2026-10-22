@@ -75,6 +75,7 @@ pub fn publish_workspace(options: PublishOptions) -> Result<PublishReport> {
     let access = options.access.as_deref().or(Some("public"));
     let mut published = Vec::new();
     let mut skipped_versions = Vec::new();
+    let mut failures: Vec<(String, String)> = Vec::new();
 
     // Placeholder: only packages with no registry version yet. Force publish as 0.0.0.
     let mut placeholder_names = BTreeSet::new();
@@ -137,17 +138,40 @@ pub fn publish_workspace(options: PublishOptions) -> Result<PublishReport> {
                 }
                 published.push(name.clone());
             }
-            Err(message) if already_published(&message) => {
-                cache.record_version(name, publish_version);
-                cache.save(&root)?;
-                println!("skip publish {name}@{publish_version} (registry says already published)");
-                skipped_versions.push(name.clone());
+            Err(message) => {
+                match classify_publish_error(&message) {
+                    PublishErrorKind::AlreadyLive => {
+                        cache.record_version(name, publish_version);
+                        cache.save(&root)?;
+                        println!("skip publish {name}@{publish_version} (registry says already live)");
+                        skipped_versions.push(name.clone());
+                    }
+                    PublishErrorKind::StagedPending => {
+                        println!("skip publish {name}@{publish_version} (registry has a staged pending version — not yet live)");
+                        // Do NOT record into version cache: staged is not live.
+                        skipped_versions.push(name.clone());
+                    }
+                    PublishErrorKind::Other => {
+                        println!("publish failed for {name}: {message}");
+                        if let Err(aggregated) = aggregate_failure(&mut failures, name, &message) {
+                            return Err(aggregated);
+                        }
+                    }
+                }
             }
-            Err(message) => return Err(message),
         }
     }
 
     cache.save(&root)?;
+
+    if !failures.is_empty() {
+        let joined = failures
+            .iter()
+            .map(|(name, msg)| format!("  - {name}: {msg}"))
+            .collect::<Vec<_>>()
+            .join("\n");
+        return Err(format!("publish failed for {} package(s):\n{joined}", failures.len()));
+    }
 
     Ok(PublishReport { root, order, published, skipped, skipped_versions })
 }
@@ -169,12 +193,46 @@ fn has_staged_native_binary(package: &NpmPackage) -> bool {
     has_node(&package.dir.join("lib")) || has_node(&package.dir)
 }
 
-fn already_published(message: &str) -> bool {
+/// Classification of an `npm publish` failure message.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum PublishErrorKind {
+    /// The version is already on the live registry — safe to skip and cache.
+    AlreadyLive,
+    /// The registry has a staged pending version that has not yet been promoted to live.
+    /// Must NOT be cached as live.
+    StagedPending,
+    /// Any other publish failure (auth, network, dep conflict, etc.).
+    Other,
+}
+
+/// Classify an `npm publish` error message without mutating any state.
+///
+/// Order matters: staged-pending must be checked before the generic
+/// "cannot publish over" live-match, because npm's staged error begins with
+/// the same prefix ("Cannot publish over previously staged version...")
+/// as the live error ("Cannot publish over previously published version...").
+fn classify_publish_error(message: &str) -> PublishErrorKind {
     let lower = message.to_ascii_lowercase();
-    lower.contains("cannot publish over")
+    if lower.contains("previously staged") || lower.contains("staged pending") {
+        return PublishErrorKind::StagedPending;
+    }
+    if lower.contains("cannot publish over")
         || lower.contains("previously published")
         || lower.contains("version already exists")
         || lower.contains("already been published")
+    {
+        return PublishErrorKind::AlreadyLive;
+    }
+    PublishErrorKind::Other
+}
+
+fn aggregate_failure(
+    failures: &mut Vec<(String, String)>,
+    name: &str,
+    message: &str,
+) -> std::result::Result<(), String> {
+    failures.push((name.to_string(), message.to_string()));
+    Ok(())
 }
 
 pub fn trust_workspace(options: TrustOptions) -> Result<TrustReport> {
@@ -308,6 +366,55 @@ mod native_binary_tests {
         assert!(!has_staged_native_binary(&root_pkg));
         fs::write(root_pkg.dir.join("addon.node"), b"bin").expect("write root addon");
         assert!(has_staged_native_binary(&root_pkg));
+    }
+}
+
+#[cfg(test)]
+mod error_classification_tests {
+    use super::{PublishErrorKind, classify_publish_error};
+
+    #[test]
+    fn staged_is_not_live() {
+        assert_eq!(
+            classify_publish_error("npm ERR! Cannot publish over previously staged version of this package."),
+            PublishErrorKind::StagedPending
+        );
+        assert_eq!(
+            classify_publish_error("E409 publish failed: previously staged version exists"),
+            PublishErrorKind::StagedPending
+        );
+    }
+
+    #[test]
+    fn previously_published_is_live() {
+        assert_eq!(
+            classify_publish_error("npm ERR! Cannot publish over the previously published version"),
+            PublishErrorKind::AlreadyLive
+        );
+        assert_eq!(
+            classify_publish_error("version already exists"),
+            PublishErrorKind::AlreadyLive
+        );
+        assert_eq!(
+            classify_publish_error("package has already been published"),
+            PublishErrorKind::AlreadyLive
+        );
+    }
+
+    #[test]
+    fn network_or_auth_failure_is_other() {
+        assert_eq!(
+            classify_publish_error("npm ERR! code ENEEDAUTH"),
+            PublishErrorKind::Other
+        );
+        assert_eq!(
+            classify_publish_error("ETIMEDOUT registry.npmjs.org"),
+            PublishErrorKind::Other
+        );
+        assert_eq!(
+            classify_publish_error("package.json not found"),
+            PublishErrorKind::Other
+        );
     }
 }
 
