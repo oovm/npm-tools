@@ -39,7 +39,7 @@ function bumpOptionsFromParsed(options: ParsedOptions): BumpOptions {
             version = positional;
         }
     }
-    if (version && !/^\d+\.\d+\.\d+(-[\w.-]+)?$/.test(version)) {
+    if (version && ! /^\d+\.\d+\.\d+(-[\w.-]+)?$/.test(version)) {
         throw new Error(`invalid version ${version}, expected semver like 0.0.0`);
     }
     return {

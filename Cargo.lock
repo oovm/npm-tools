@@ -1549,6 +1549,7 @@ dependencies = [
 [[package]]
 name = "oak-core"
 version = "0.0.12"
+source = "git+https://github.com/yggdrasil-language/oak.rs.git?rev=31eb920a#31eb920afad249903dc0d6a63ea16da91242c918"
 dependencies = [
  "serde",
  "smallvec",
@@ -1559,6 +1560,7 @@ dependencies = [
 [[package]]
 name = "oak-formatter"
 version = "0.0.12"
+source = "git+https://github.com/yggdrasil-language/oak.rs.git?rev=31eb920a#31eb920afad249903dc0d6a63ea16da91242c918"
 dependencies = [
  "oak-core",
 ]
@@ -1566,6 +1568,7 @@ dependencies = [
 [[package]]
 name = "oak-javascript"
 version = "0.0.12"
+source = "git+https://github.com/yggdrasil-language/oak.rs.git?rev=31eb920a#31eb920afad249903dc0d6a63ea16da91242c918"
 dependencies = [
  "oak-core",
  "oak-typescript",
@@ -1575,6 +1578,7 @@ dependencies = [
 [[package]]
 name = "oak-testing"
 version = "0.0.12"
+source = "git+https://github.com/yggdrasil-language/oak.rs.git?rev=31eb920a#31eb920afad249903dc0d6a63ea16da91242c918"
 dependencies = [
  "boost-fs 0.1.0 (git+https://github.com/oovm/rust-boost?rev=2218a644af335aa4cef9f3e9e6b37475a829cfe2)",
  "oak-core",
@@ -1586,6 +1590,7 @@ dependencies = [
 [[package]]
 name = "oak-typescript"
 version = "0.0.12"
+source = "git+https://github.com/yggdrasil-language/oak.rs.git?rev=31eb920a#31eb920afad249903dc0d6a63ea16da91242c918"
 dependencies = [
  "oak-core",
  "oak-formatter",
@@ -2613,3 +2618,19 @@ name = "zmij"
 version = "1.0.23"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "29666d0abbfad1e3dc4dcf6144730dd3a3ab225bbbdac83319345b1b44ccfc1b"
+
+[[patch.unused]]
+name = "oak-core"
+version = "0.0.12"
+
+[[patch.unused]]
+name = "oak-javascript"
+version = "0.0.12"
+
+[[patch.unused]]
+name = "oak-testing"
+version = "0.0.12"
+
+[[patch.unused]]
+name = "oak-typescript"
+version = "0.0.12"
