@@ -89,23 +89,13 @@ dependencies = [
 [[package]]
 name = "boost-fs"
 version = "0.1.0"
-source = "git+https://github.com/oovm/rust-boost?branch=dev#2218a644af335aa4cef9f3e9e6b37475a829cfe2"
 dependencies = [
- "boost-random 0.1.0 (git+https://github.com/oovm/rust-boost?branch=dev)",
-]
-
-[[package]]
-name = "boost-fs"
-version = "0.1.0"
-source = "git+https://github.com/oovm/rust-boost?rev=2218a644af335aa4cef9f3e9e6b37475a829cfe2#2218a644af335aa4cef9f3e9e6b37475a829cfe2"
-dependencies = [
- "boost-random 0.1.0 (git+https://github.com/oovm/rust-boost?rev=2218a644af335aa4cef9f3e9e6b37475a829cfe2)",
+ "boost-random",
 ]
 
 [[package]]
 name = "boost-http"
 version = "0.1.0"
-source = "git+https://github.com/oovm/rust-boost?branch=dev#2218a644af335aa4cef9f3e9e6b37475a829cfe2"
 dependencies = [
  "rustls",
  "url",
@@ -115,17 +105,10 @@ dependencies = [
 [[package]]
 name = "boost-log"
 version = "0.1.0"
-source = "git+https://github.com/oovm/rust-boost?branch=dev#2218a644af335aa4cef9f3e9e6b37475a829cfe2"
 
 [[package]]
 name = "boost-random"
 version = "0.1.0"
-source = "git+https://github.com/oovm/rust-boost?branch=dev#2218a644af335aa4cef9f3e9e6b37475a829cfe2"
-
-[[package]]
-name = "boost-random"
-version = "0.1.0"
-source = "git+https://github.com/oovm/rust-boost?rev=2218a644af335aa4cef9f3e9e6b37475a829cfe2#2218a644af335aa4cef9f3e9e6b37475a829cfe2"
 
 [[package]]
 name = "bstr"
@@ -1400,14 +1383,14 @@ dependencies = [
 name = "nifty-config"
 version = "0.1.9"
 dependencies = [
- "boost-fs 0.1.0 (git+https://github.com/oovm/rust-boost?branch=dev)",
+ "boost-fs",
 ]
 
 [[package]]
 name = "nifty-formatter"
 version = "0.1.9"
 dependencies = [
- "boost-fs 0.1.0 (git+https://github.com/oovm/rust-boost?branch=dev)",
+ "boost-fs",
  "nifty-config",
  "nifty-types",
  "oak-core",
@@ -1456,7 +1439,7 @@ dependencies = [
 name = "nifty-linter"
 version = "0.1.9"
 dependencies = [
- "boost-fs 0.1.0 (git+https://github.com/oovm/rust-boost?branch=dev)",
+ "boost-fs",
  "nifty-config",
  "nifty-formatter",
  "nifty-git",
@@ -1489,7 +1472,7 @@ dependencies = [
 name = "nifty-publisher"
 version = "0.1.9"
 dependencies = [
- "boost-fs 0.1.0 (git+https://github.com/oovm/rust-boost?branch=dev)",
+ "boost-fs",
  "boost-http",
  "hmac",
  "nifty-config",
@@ -1527,7 +1510,7 @@ dependencies = [
 name = "nifty-uploader"
 version = "0.1.9"
 dependencies = [
- "boost-fs 0.1.0 (git+https://github.com/oovm/rust-boost?branch=dev)",
+ "boost-fs",
  "boost-http",
  "nifty-config",
  "nifty-formatter",
@@ -1549,7 +1532,6 @@ dependencies = [
 [[package]]
 name = "oak-core"
 version = "0.0.12"
-source = "git+https://github.com/yggdrasil-language/oak.rs.git?rev=31eb920a#31eb920afad249903dc0d6a63ea16da91242c918"
 dependencies = [
  "serde",
  "smallvec",
@@ -1560,7 +1542,6 @@ dependencies = [
 [[package]]
 name = "oak-formatter"
 version = "0.0.12"
-source = "git+https://github.com/yggdrasil-language/oak.rs.git?rev=31eb920a#31eb920afad249903dc0d6a63ea16da91242c918"
 dependencies = [
  "oak-core",
 ]
@@ -1568,7 +1549,6 @@ dependencies = [
 [[package]]
 name = "oak-javascript"
 version = "0.0.12"
-source = "git+https://github.com/yggdrasil-language/oak.rs.git?rev=31eb920a#31eb920afad249903dc0d6a63ea16da91242c918"
 dependencies = [
  "oak-core",
  "oak-typescript",
@@ -1578,9 +1558,8 @@ dependencies = [
 [[package]]
 name = "oak-testing"
 version = "0.0.12"
-source = "git+https://github.com/yggdrasil-language/oak.rs.git?rev=31eb920a#31eb920afad249903dc0d6a63ea16da91242c918"
 dependencies = [
- "boost-fs 0.1.0 (git+https://github.com/oovm/rust-boost?rev=2218a644af335aa4cef9f3e9e6b37475a829cfe2)",
+ "boost-fs",
  "oak-core",
  "serde",
  "serde_json",
@@ -1590,7 +1569,6 @@ dependencies = [
 [[package]]
 name = "oak-typescript"
 version = "0.0.12"
-source = "git+https://github.com/yggdrasil-language/oak.rs.git?rev=31eb920a#31eb920afad249903dc0d6a63ea16da91242c918"
 dependencies = [
  "oak-core",
  "oak-formatter",
@@ -2618,19 +2596,3 @@ name = "zmij"
 version = "1.0.23"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "29666d0abbfad1e3dc4dcf6144730dd3a3ab225bbbdac83319345b1b44ccfc1b"
-
-[[patch.unused]]
-name = "oak-core"
-version = "0.0.12"
-
-[[patch.unused]]
-name = "oak-javascript"
-version = "0.0.12"
-
-[[patch.unused]]
-name = "oak-testing"
-version = "0.0.12"
-
-[[patch.unused]]
-name = "oak-typescript"
-version = "0.0.12"
