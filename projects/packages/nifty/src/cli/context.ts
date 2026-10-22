@@ -15,7 +15,7 @@ export function parseCliContext(argv: string[]): { cwd: string; dryRun: boolean 
         if (arg === "--dry-run") {
             dryRun = true;
         } else if (arg === "-C" || arg === "--cwd") {
-            cwd = resolve(argv[++i] ?? cwd);
+            cwd = resolve(argv[ ++i] ?? cwd);
         }
     }
 

@@ -35,9 +35,9 @@ function parseTrustArgs(argv: string[]) {
         } else if (arg === "--refresh") {
             refresh = true;
         } else if (arg === "-C" || arg === "--cwd") {
-            cwd = argv[++i];
+            cwd = argv[ ++i];
         } else if (arg === "--only") {
-            only = argv[++i];
+            only = argv[ ++i];
         } else if (arg === "-h" || arg === "--help") {
             printTrustHelp();
             process.exit(0);

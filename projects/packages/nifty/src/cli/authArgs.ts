@@ -15,11 +15,11 @@ export function parseAuthArgs(argv: string[]): AuthCliOptions {
     for (let i = 0; i < argv.length; i += 1) {
         const arg = argv[i];
         if (arg === "--otp") {
-            otp = argv[++i];
+            otp = argv[ ++i];
         } else if (arg === "--totp-secret") {
-            totpSecret = argv[++i];
+            totpSecret = argv[ ++i];
         } else if (arg === "--token") {
-            token = argv[++i];
+            token = argv[ ++i];
         } else if (arg.startsWith("--otp=")) {
             otp = arg.slice("--otp=".length);
         } else if (arg.startsWith("--totp-secret=")) {

@@ -147,7 +147,9 @@ pub fn publish_workspace(options: PublishOptions) -> Result<PublishReport> {
                         skipped_versions.push(name.clone());
                     }
                     PublishErrorKind::StagedPending => {
-                        println!("skip publish {name}@{publish_version} (registry has a staged pending version — not yet live)");
+                        println!(
+                            "skip publish {name}@{publish_version} (registry has a staged pending version — not yet live)"
+                        );
                         // Do NOT record into version cache: staged is not live.
                         skipped_versions.push(name.clone());
                     }
@@ -165,11 +167,7 @@ pub fn publish_workspace(options: PublishOptions) -> Result<PublishReport> {
     cache.save(&root)?;
 
     if !failures.is_empty() {
-        let joined = failures
-            .iter()
-            .map(|(name, msg)| format!("  - {name}: {msg}"))
-            .collect::<Vec<_>>()
-            .join("\n");
+        let joined = failures.iter().map(|(name, msg)| format!("  - {name}: {msg}")).collect::<Vec<_>>().join("\n");
         return Err(format!("publish failed for {} package(s):\n{joined}", failures.len()));
     }
 
@@ -226,11 +224,7 @@ fn classify_publish_error(message: &str) -> PublishErrorKind {
     PublishErrorKind::Other
 }
 
-fn aggregate_failure(
-    failures: &mut Vec<(String, String)>,
-    name: &str,
-    message: &str,
-) -> std::result::Result<(), String> {
+fn aggregate_failure(failures: &mut Vec<(String, String)>, name: &str, message: &str) -> std::result::Result<(), String> {
     failures.push((name.to_string(), message.to_string()));
     Ok(())
 }
@@ -391,30 +385,15 @@ mod error_classification_tests {
             classify_publish_error("npm ERR! Cannot publish over the previously published version"),
             PublishErrorKind::AlreadyLive
         );
-        assert_eq!(
-            classify_publish_error("version already exists"),
-            PublishErrorKind::AlreadyLive
-        );
-        assert_eq!(
-            classify_publish_error("package has already been published"),
-            PublishErrorKind::AlreadyLive
-        );
+        assert_eq!(classify_publish_error("version already exists"), PublishErrorKind::AlreadyLive);
+        assert_eq!(classify_publish_error("package has already been published"), PublishErrorKind::AlreadyLive);
     }
 
     #[test]
     fn network_or_auth_failure_is_other() {
-        assert_eq!(
-            classify_publish_error("npm ERR! code ENEEDAUTH"),
-            PublishErrorKind::Other
-        );
-        assert_eq!(
-            classify_publish_error("ETIMEDOUT registry.npmjs.org"),
-            PublishErrorKind::Other
-        );
-        assert_eq!(
-            classify_publish_error("package.json not found"),
-            PublishErrorKind::Other
-        );
+        assert_eq!(classify_publish_error("npm ERR! code ENEEDAUTH"), PublishErrorKind::Other);
+        assert_eq!(classify_publish_error("ETIMEDOUT registry.npmjs.org"), PublishErrorKind::Other);
+        assert_eq!(classify_publish_error("package.json not found"), PublishErrorKind::Other);
     }
 }
 

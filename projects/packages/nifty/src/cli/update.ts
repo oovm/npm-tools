@@ -25,7 +25,7 @@ function parseUpdateArgs(argv: string[]): UpdateOptions {
         if (arg === "-i" || arg === "--interactive") {
             interactive = true;
         } else if (arg === "-C" || arg === "--cwd") {
-            cwd = argv[++i];
+            cwd = argv[ ++i];
         }
     }
     return { interactive, cwd };

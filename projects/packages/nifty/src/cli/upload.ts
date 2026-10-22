@@ -86,21 +86,21 @@ function parseUploadArgs(argv: string[]): UploadOptions {
         if (arg === "--release") options.release = true;
         else if (arg === "--pages") options.pages = true;
         else if (arg === "--both") options.both = true;
-        else if (arg === "-d" || arg === "--dir") options.dir = argv[++i];
+        else if (arg === "-d" || arg === "--dir") options.dir = argv[ ++i];
         else if (arg === "-h" || arg === "--help") {
             printUploadHelp();
             process.exit(0);
         }
-        else if (arg === "-t" || arg === "--tag") options.tag = argv[++i];
-        else if (arg === "--repo") options.repo = argv[++i];
-        else if (arg === "--token") options.token = argv[++i];
-        else if (arg === "--name") options.name = argv[++i];
-        else if (arg === "--notes") options.notes = argv[++i];
-        else if (arg === "--notes-file") options.notesFile = argv[++i];
+        else if (arg === "-t" || arg === "--tag") options.tag = argv[ ++i];
+        else if (arg === "--repo") options.repo = argv[ ++i];
+        else if (arg === "--token") options.token = argv[ ++i];
+        else if (arg === "--name") options.name = argv[ ++i];
+        else if (arg === "--notes") options.notes = argv[ ++i];
+        else if (arg === "--notes-file") options.notesFile = argv[ ++i];
         else if (arg === "--draft") options.draft = true;
         else if (arg === "--no-generate-notes") options.generateNotes = false;
         else if (arg === "--github-action") options.githubAction = true;
-        else if (arg === "-C" || arg === "--cwd") options.cwd = argv[++i];
+        else if (arg === "-C" || arg === "--cwd") options.cwd = argv[ ++i];
     }
 
     return options;

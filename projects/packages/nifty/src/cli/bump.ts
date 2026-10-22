@@ -41,9 +41,9 @@ function parseBumpArgs(argv: string[]): BumpOptions {
         if (arg === "--dry-run") {
             dryRun = true;
         } else if (arg === "-C" || arg === "--cwd") {
-            cwd = argv[++i];
+            cwd = argv[ ++i];
         } else if (arg === "--version" || arg === "-v") {
-            version = argv[++i];
+            version = argv[ ++i];
         } else if (arg === "--patch") {
             kind = "patch";
         } else if (arg === "--minor") {
