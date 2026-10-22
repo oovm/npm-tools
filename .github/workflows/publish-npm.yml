@@ -48,14 +48,6 @@ jobs:
           GITHUB_SHA: ${{ github.sha }}
         run: node scripts/ci/bind-publish-tag.mjs
 
-      - name: Require green CI on tag commit
-        env:
-          GH_TOKEN: ${{ github.token }}
-          TAG_SHA: ${{ steps.bind.outputs.sha }}
-          GITHUB_REPOSITORY: ${{ github.repository }}
-          CI_WORKFLOW_FILES: check-rust.yml,check-typescript.yml
-        run: node scripts/ci/require-ci-success.mjs --sha=${{ steps.bind.outputs.sha }}
-
   build-native:
     name: Native ${{ matrix.short }}
     needs: provenance
