@@ -98,13 +98,13 @@ function parseLintArgs(argv: string[]): LintOptions {
     for (let i = 0; i < argv.length; i += 1) {
         const arg = argv[i];
         if (arg === "--from") {
-            options.from = argv[ ++i];
+            options.from = argv[++i];
         } else if (arg === "--to") {
-            options.to = argv[ ++i];
+            options.to = argv[++i];
         } else if (arg === "-C" || arg === "--cwd") {
-            options.cwd = argv[ ++i];
+            options.cwd = argv[++i];
         } else if (arg === "-s" || arg === "--subject") {
-            options.subjects.push(argv[ ++i]);
+            options.subjects.push(argv[++i]);
         } else if (arg === "--no-cargo") {
             options.scanCargo = false;
         }

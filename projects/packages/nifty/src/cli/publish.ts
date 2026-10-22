@@ -54,13 +54,13 @@ function parsePublishArgs(argv: string[]) {
         } else if (arg === "--placeholder") {
             placeholder = true;
         } else if (arg === "-C" || arg === "--cwd") {
-            cwd = argv[ ++i];
+            cwd = argv[++i];
         } else if (arg === "--tag") {
-            tag = argv[ ++i];
+            tag = argv[++i];
         } else if (arg === "--access") {
-            access = argv[ ++i];
+            access = argv[++i];
         } else if (arg === "--version") {
-            version = argv[ ++i];
+            version = argv[++i];
         } else if (arg === "-h" || arg === "--help") {
             printPublishHelp();
             process.exit(0);
