@@ -32,6 +32,8 @@ Then ask it to run `nifty check`, `nifty bump`, or `nifty publish` against your 
 
 ### 2. Manual install
 
+Requires Node.js >=24.12.0.
+
 ```bash
 pnpm add -D @doki-land/nifty
 nifty --help

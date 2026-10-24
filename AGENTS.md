@@ -29,9 +29,12 @@ skill bodies elsewhere.
 
 ## Nifty CLI
 
+Nifty requires Node.js >=24.12.0. The CLI loads built JS from `dist`, so build the package before using the local bin.
+
 ```bash
 pnpm install
 pnpm run build:napi
+pnpm --filter @doki-land/nifty run build
 pnpm exec nifty --help
 ```
 

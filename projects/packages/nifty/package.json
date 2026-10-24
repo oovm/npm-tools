@@ -8,6 +8,9 @@
     "version": "0.1.10",
     "description": "Gitmoji-first commit conventions and release helpers (Node-API + TypeScript)",
     "type": "module",
+    "engines": {
+        "node": ">=24.12.0"
+    },
     "license": "MPL-2.0",
     "types": "./dist/index.d.ts",
     "bin": {

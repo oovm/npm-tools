@@ -14,6 +14,10 @@ Programmatic and CLI surface for **Nifty** — gitmoji commit lint, hybrid Cargo
 
 Platform native bindings (`@doki-land/nifty-*`) install automatically as optional dependencies on matching hosts. Do not import them directly.
 
+## Runtime
+
+Requires Node.js >=24.12.0. The CLI and package exports load prebuilt JS from `dist`. Project configs (`nifty.config.ts` / `.mts` / `.js` / `.mjs` / `.cjs`) are executed by Node itself, so npm packages imported by a config must expose JS runtime exports — Node does not run TypeScript inside `node_modules`.
+
 ## Example
 
 **CLI** — run from a project root that contains `nifty.config.ts` (optional):

@@ -1,6 +1,9 @@
 {
     "private": true,
     "packageManager": "pnpm@11.24.0",
+    "engines": {
+        "node": ">=24.12.0"
+    },
     "scripts": {
         "build": "cargo build --release",
         "build:napi": "node scripts/build-napi.mjs",
