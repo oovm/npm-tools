@@ -20,9 +20,6 @@ importers:
       '@vmz/commander':
         specifier: ^0.2.0
         version: 0.2.0
-      jiti:
-        specifier: ^2.4.2
-        version: 2.7.0
     devDependencies:
       '@types/node':
         specifier: ^22.13.10
@@ -73,10 +70,6 @@ packages:
     resolution: {integrity: sha512-LHe3WtgYFQbrgBQVJ9f9JDcnCrw2T6JwO8llIqywzvIS+MOeYOLcTEm/3wVuDLvGbB0FaB2ya1wTkLLAOL9Wiw==}
     engines: {node: '>=20'}
 
-  jiti@2.7.0:
-    resolution: {integrity: sha512-AC/7JofJvZGrrneWNaEnJeOLUx+JlGt7tNa0wZiRPT4MY1wmfKjt2+6O2p2uz2+skll8OZZmJMNqeke7kKbNgQ==}
-    hasBin: true
-
   typescript@5.9.3:
     resolution: {integrity: sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw==}
     engines: {node: '>=14.17'}
@@ -94,8 +87,6 @@ snapshots:
       undici-types: 6.21.0
 
   '@vmz/commander@0.2.0': {}
-
-  jiti@2.7.0: {}
 
   typescript@5.9.3: {}
 
