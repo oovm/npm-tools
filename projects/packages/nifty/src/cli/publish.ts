@@ -17,6 +17,7 @@ export type PublishReport = {
     published: string[];
     skipped: string[];
     skippedVersions: string[];
+    staged: string[];
 };
 
 export async function runPublish(argv: string[]): Promise<void> {
@@ -80,6 +81,9 @@ export function printPublishReport(report: PublishReport, dryRun?: boolean): voi
     }
     if (report.skippedVersions.length > 0) {
         console.log(`skipped already published: ${report.skippedVersions.join(", ")}`);
+    }
+    if (report.staged.length > 0) {
+        console.log(`staged but not live: ${report.staged.join(", ")}`);
     }
     console.log("publish order:");
     for (const name of report.order) {

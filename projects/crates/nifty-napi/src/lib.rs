@@ -244,6 +244,7 @@ pub struct PublishReport {
     pub published: Vec<String>,
     pub skipped: Vec<String>,
     pub skipped_versions: Vec<String>,
+    pub staged: Vec<String>,
 }
 
 #[napi(object)]
@@ -315,6 +316,7 @@ pub fn publisher_publish_workspace(options: PublishWorkspaceOptions) -> Result<P
             published: report.published,
             skipped: report.skipped,
             skipped_versions: report.skipped_versions,
+            staged: report.staged,
         }),
     )
 }

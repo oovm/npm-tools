@@ -53,6 +53,7 @@ export type PublishReport = {
     published: string[];
     skipped: string[];
     skippedVersions: string[];
+    staged: string[];
 };
 
 export type TrustReport = {

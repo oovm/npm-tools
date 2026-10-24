@@ -5,6 +5,8 @@
 //! classifier keys off those codes first and only falls back to the registry's
 //! exact conflict sentences where npm has no distinct code for two outcomes.
 
+use crate::cache::PlaceholderCache;
+
 /// Why a single `npm publish` invocation did not succeed.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum PublishFailureKind {
@@ -93,6 +95,80 @@ impl PublishAttempt {
             PublishFailureKind::StagedPending => Self::StagedPending,
             _ => Self::Failed(failure),
         }
+    }
+}
+
+/// One failed package in a batch.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct PackageFailure {
+    pub name: String,
+    pub version: String,
+    pub failure: PublishFailure,
+}
+
+/// Accumulated batch results. Recording a failure never stops the batch.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct PublishBatch {
+    pub published: Vec<String>,
+    pub already_live: Vec<String>,
+    /// Staged-only packages. They are deliberately absent from the live version cache.
+    pub staged: Vec<String>,
+    pub failures: Vec<PackageFailure>,
+}
+
+impl PublishBatch {
+    /// Record one package outcome. Returns whether the live version cache changed.
+    ///
+    /// Only [`PublishAttempt::Published`] and [`PublishAttempt::AlreadyLive`] touch the live
+    /// version cache. Staged and failed outcomes are recorded in the batch report only.
+    pub fn record(
+        &mut self,
+        cache: &mut PlaceholderCache,
+        name: &str,
+        version: &str,
+        attempt: PublishAttempt,
+        dry_run: bool,
+    ) -> bool {
+        match attempt {
+            PublishAttempt::Published => {
+                self.published.push(name.to_string());
+                if dry_run {
+                    return false;
+                }
+                cache.record_version(name, version);
+                true
+            }
+            PublishAttempt::AlreadyLive => {
+                self.already_live.push(name.to_string());
+                if dry_run {
+                    return false;
+                }
+                cache.record_version(name, version);
+                true
+            }
+            PublishAttempt::StagedPending => {
+                self.staged.push(name.to_string());
+                false
+            }
+            PublishAttempt::Failed(failure) => {
+                self.failures.push(PackageFailure { name: name.to_string(), version: version.to_string(), failure });
+                false
+            }
+        }
+    }
+
+    /// Aggregated failure text, or `None` when every package succeeded or was skipped.
+    pub fn failure_summary(&self) -> Option<String> {
+        if self.failures.is_empty() {
+            return None;
+        }
+        let lines = self
+            .failures
+            .iter()
+            .map(|failure| format!("  - {}@{}: {}", failure.name, failure.version, failure.failure.summary()))
+            .collect::<Vec<_>>()
+            .join("\n");
+        Some(format!("publish failed for {} package(s):\n{lines}", self.failures.len()))
     }
 }
 

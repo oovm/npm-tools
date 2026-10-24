@@ -21,7 +21,7 @@ use std::{
 pub use cache::{CACHE_DIR_NAME, CACHE_FILE_NAME, PlaceholderCache, TrustExpect};
 pub use graph::plan_publish_order;
 pub use otp::{OtpAuth, OtpOverrides};
-pub use publish::{PublishAttempt, PublishFailure, PublishFailureKind};
+pub use publish::{PackageFailure, PublishAttempt, PublishBatch, PublishFailure, PublishFailureKind};
 pub use trust::{TRUST_ENV, TRUST_FILE, TRUST_REPO, TrustOptions, TrustReport};
 pub use workspace::{NpmPackage, PackageManifest, find_workspace_root, list_workspace_packages, registry_name};
 
@@ -58,6 +58,8 @@ pub struct PublishReport {
     pub published: Vec<String>,
     pub skipped: Vec<String>,
     pub skipped_versions: Vec<String>,
+    /// Packages whose version only reached the registry staging area (not live).
+    pub staged: Vec<String>,
 }
 
 /// Discover workspace npm packages, sort them with `petgraph`, and run `npm publish`.
@@ -75,9 +77,8 @@ pub fn publish_workspace(options: PublishOptions) -> Result<PublishReport> {
     let order = graph::sort_packages_for_publish(&candidates, &by_name)?;
 
     let access = options.access.as_deref().or(Some("public"));
-    let mut published = Vec::new();
     let mut skipped_versions = Vec::new();
-    let mut failures: Vec<(String, String)> = Vec::new();
+    let mut batch = PublishBatch::default();
 
     // Placeholder: only packages with no registry version yet. Force publish as 0.0.0.
     let mut placeholder_names = BTreeSet::new();
@@ -135,41 +136,31 @@ pub fn publish_workspace(options: PublishOptions) -> Result<PublishReport> {
             Ok(attempt) => attempt,
             Err(message) => PublishAttempt::Failed(PublishFailure::local(message)),
         };
-        match attempt {
-            PublishAttempt::Published => {
-                published.push(name.clone());
-                if !options.dry_run {
-                    cache.record_version(name, publish_version);
-                    cache.save(&root)?;
-                }
-            }
+        match &attempt {
+            PublishAttempt::Published => {}
             PublishAttempt::AlreadyLive => {
-                if !options.dry_run {
-                    cache.record_version(name, publish_version);
-                    cache.save(&root)?;
-                }
                 println!("skip publish {name}@{publish_version} (registry says already live)");
-                skipped_versions.push(name.clone());
             }
             PublishAttempt::StagedPending => {
                 println!("skip publish {name}@{publish_version} (registry has a staged pending version — not yet live)");
-                // Staged is not live: never write it to the live version cache.
             }
             PublishAttempt::Failed(failure) => {
                 println!("publish failed for {name}: {}", failure.summary());
-                failures.push((name.clone(), failure.summary()));
             }
+        }
+        if batch.record(&mut cache, name, publish_version, attempt, options.dry_run) {
+            cache.save(&root)?;
         }
     }
 
     cache.save(&root)?;
 
-    if !failures.is_empty() {
-        let joined = failures.iter().map(|(name, message)| format!("  - {name}: {message}")).collect::<Vec<_>>().join("\n");
-        return Err(format!("publish failed for {} package(s):\n{joined}", failures.len()));
+    if let Some(summary) = batch.failure_summary() {
+        return Err(summary);
     }
 
-    Ok(PublishReport { root, order, published, skipped, skipped_versions })
+    skipped_versions.extend(batch.already_live);
+    Ok(PublishReport { root, order, published: batch.published, skipped, skipped_versions, staged: batch.staged })
 }
 
 fn is_native_binary_package(package: &NpmPackage) -> bool {
