@@ -41,6 +41,27 @@ fn formats_optional_property_spacing() {
 }
 
 #[test]
+fn preserves_optional_methods_keyword_members_and_control_flow_spacing() {
+    for source in [
+        "class A { foo?(x: number): void; }",
+        "class A { delete(k: string): void; }",
+        "class A { foo?(x: number): void; delete(k: string): void; }",
+        "obj.delete(k);",
+        "function f(x: number): void { if (x) {} }",
+        "function f(x: number): void { for (const y of x) { if (y) {} } }",
+        "function f(x: number): string { switch (x) { case 1: return 'a'; } return 'b'; }",
+        "function f(x: number): Record<string, unknown> { if (x) {} }",
+        "function f(x: number): Promise<Record<string, unknown>> { if (x) {} }",
+        "function f(x: number): Map<string, GithubAuthor> { if (x) {} }",
+        "const f = (x: number): void => { if (x) {} };",
+    ] {
+        let output = format_sample("sample.ts", source);
+        assert_eq!(output, source, "input={source:?}");
+        assert_eq!(format_sample("sample.ts", &output), output, "input={source:?}");
+    }
+}
+
+#[test]
 fn formats_comparisons_nullish_coalescing_and_ternary_object_values() {
     let input = "const value=items.length>0?items[0]:fallback; const roots={cargoRoot:config.cargoRoot??layout.root};";
     let output = format_sample("sample.ts", input);
