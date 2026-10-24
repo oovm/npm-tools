@@ -6,6 +6,7 @@ mod manifest;
 mod npm;
 mod npmrc;
 mod otp;
+mod publish;
 mod registry_trust;
 mod trust;
 pub mod trust_expect;
@@ -17,9 +18,10 @@ use std::{
     path::{Path, PathBuf},
 };
 
-pub use cache::{CACHE_DIR_NAME, CACHE_FILE_NAME, PlaceholderCache};
+pub use cache::{CACHE_DIR_NAME, CACHE_FILE_NAME, PlaceholderCache, TrustExpect};
 pub use graph::plan_publish_order;
 pub use otp::{OtpAuth, OtpOverrides};
+pub use publish::{PublishAttempt, PublishFailure, PublishFailureKind};
 pub use trust::{TRUST_ENV, TRUST_FILE, TRUST_REPO, TrustOptions, TrustReport};
 pub use workspace::{NpmPackage, PackageManifest, find_workspace_root, list_workspace_packages, registry_name};
 
@@ -119,7 +121,7 @@ pub fn publish_workspace(options: PublishOptions) -> Result<PublishReport> {
             continue;
         }
         println!("publishing {registry}@{publish_version}");
-        let result = publish_package(
+        let attempt = match publish_package(
             package,
             &by_name,
             options.dry_run,
@@ -129,37 +131,33 @@ pub fn publish_workspace(options: PublishOptions) -> Result<PublishReport> {
             &auth,
             if options.placeholder { Some(PLACEHOLDER_VERSION) } else { Some(publish_version) },
             if options.placeholder { Some(&placeholder_names) } else { None },
-        );
-        match result {
-            Ok(()) => {
+        ) {
+            Ok(attempt) => attempt,
+            Err(message) => PublishAttempt::Failed(PublishFailure::local(message)),
+        };
+        match attempt {
+            PublishAttempt::Published => {
+                published.push(name.clone());
                 if !options.dry_run {
                     cache.record_version(name, publish_version);
                     cache.save(&root)?;
                 }
-                published.push(name.clone());
             }
-            Err(message) => {
-                match classify_publish_error(&message) {
-                    PublishErrorKind::AlreadyLive => {
-                        cache.record_version(name, publish_version);
-                        cache.save(&root)?;
-                        println!("skip publish {name}@{publish_version} (registry says already live)");
-                        skipped_versions.push(name.clone());
-                    }
-                    PublishErrorKind::StagedPending => {
-                        println!(
-                            "skip publish {name}@{publish_version} (registry has a staged pending version — not yet live)"
-                        );
-                        // Do NOT record into version cache: staged is not live.
-                        skipped_versions.push(name.clone());
-                    }
-                    PublishErrorKind::Other => {
-                        println!("publish failed for {name}: {message}");
-                        if let Err(aggregated) = aggregate_failure(&mut failures, name, &message) {
-                            return Err(aggregated);
-                        }
-                    }
+            PublishAttempt::AlreadyLive => {
+                if !options.dry_run {
+                    cache.record_version(name, publish_version);
+                    cache.save(&root)?;
                 }
+                println!("skip publish {name}@{publish_version} (registry says already live)");
+                skipped_versions.push(name.clone());
+            }
+            PublishAttempt::StagedPending => {
+                println!("skip publish {name}@{publish_version} (registry has a staged pending version — not yet live)");
+                // Staged is not live: never write it to the live version cache.
+            }
+            PublishAttempt::Failed(failure) => {
+                println!("publish failed for {name}: {}", failure.summary());
+                failures.push((name.clone(), failure.summary()));
             }
         }
     }
@@ -167,7 +165,7 @@ pub fn publish_workspace(options: PublishOptions) -> Result<PublishReport> {
     cache.save(&root)?;
 
     if !failures.is_empty() {
-        let joined = failures.iter().map(|(name, msg)| format!("  - {name}: {msg}")).collect::<Vec<_>>().join("\n");
+        let joined = failures.iter().map(|(name, message)| format!("  - {name}: {message}")).collect::<Vec<_>>().join("\n");
         return Err(format!("publish failed for {} package(s):\n{joined}", failures.len()));
     }
 
@@ -189,44 +187,6 @@ fn has_staged_native_binary(package: &NpmPackage) -> bool {
     };
     // Two shipped layouts: `lib/<addon>.node` (nifty) and `<addon>.node` at the package root (vmz).
     has_node(&package.dir.join("lib")) || has_node(&package.dir)
-}
-
-/// Classification of an `npm publish` failure message.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum PublishErrorKind {
-    /// The version is already on the live registry — safe to skip and cache.
-    AlreadyLive,
-    /// The registry has a staged pending version that has not yet been promoted to live.
-    /// Must NOT be cached as live.
-    StagedPending,
-    /// Any other publish failure (auth, network, dep conflict, etc.).
-    Other,
-}
-
-/// Classify an `npm publish` error message without mutating any state.
-///
-/// Order matters: staged-pending must be checked before the generic
-/// "cannot publish over" live-match, because npm's staged error begins with
-/// the same prefix ("Cannot publish over previously staged version...")
-/// as the live error ("Cannot publish over previously published version...").
-fn classify_publish_error(message: &str) -> PublishErrorKind {
-    let lower = message.to_ascii_lowercase();
-    if lower.contains("previously staged") || lower.contains("staged pending") {
-        return PublishErrorKind::StagedPending;
-    }
-    if lower.contains("cannot publish over")
-        || lower.contains("previously published")
-        || lower.contains("version already exists")
-        || lower.contains("already been published")
-    {
-        return PublishErrorKind::AlreadyLive;
-    }
-    PublishErrorKind::Other
-}
-
-fn aggregate_failure(failures: &mut Vec<(String, String)>, name: &str, message: &str) -> std::result::Result<(), String> {
-    failures.push((name.to_string(), message.to_string()));
-    Ok(())
 }
 
 pub fn trust_workspace(options: TrustOptions) -> Result<TrustReport> {
@@ -364,40 +324,6 @@ mod native_binary_tests {
 }
 
 #[cfg(test)]
-mod error_classification_tests {
-    use super::{PublishErrorKind, classify_publish_error};
-
-    #[test]
-    fn staged_is_not_live() {
-        assert_eq!(
-            classify_publish_error("npm ERR! Cannot publish over previously staged version of this package."),
-            PublishErrorKind::StagedPending
-        );
-        assert_eq!(
-            classify_publish_error("E409 publish failed: previously staged version exists"),
-            PublishErrorKind::StagedPending
-        );
-    }
-
-    #[test]
-    fn previously_published_is_live() {
-        assert_eq!(
-            classify_publish_error("npm ERR! Cannot publish over the previously published version"),
-            PublishErrorKind::AlreadyLive
-        );
-        assert_eq!(classify_publish_error("version already exists"), PublishErrorKind::AlreadyLive);
-        assert_eq!(classify_publish_error("package has already been published"), PublishErrorKind::AlreadyLive);
-    }
-
-    #[test]
-    fn network_or_auth_failure_is_other() {
-        assert_eq!(classify_publish_error("npm ERR! code ENEEDAUTH"), PublishErrorKind::Other);
-        assert_eq!(classify_publish_error("ETIMEDOUT registry.npmjs.org"), PublishErrorKind::Other);
-        assert_eq!(classify_publish_error("package.json not found"), PublishErrorKind::Other);
-    }
-}
-
-#[cfg(test)]
 mod publish_filter_tests {
     use std::{collections::BTreeMap, path::PathBuf};
 
@@ -490,7 +416,7 @@ fn publish_package(
     auth: &OtpAuth,
     publish_version: Option<&str>,
     placeholder_dep_names: Option<&BTreeSet<String>>,
-) -> Result<()> {
+) -> Result<PublishAttempt> {
     let original = fs::read_to_string(&package.manifest_path).map_err(|err| err.to_string())?;
     let next = manifest::patch_manifest_for_publish(
         &original,
@@ -511,7 +437,10 @@ fn publish_package(
         fs::write(&package.manifest_path, &next).map_err(|err| err.to_string())?;
     }
 
-    let result = npm::run_npm_publish(&package.dir, dry_run, tag, access, npm, auth);
+    let attempt = match npm::run_npm_publish(&package.dir, dry_run, tag, access, npm, auth) {
+        Ok(()) => PublishAttempt::Published,
+        Err(failure) => PublishAttempt::from_failure(failure),
+    };
     restore();
-    result
+    Ok(attempt)
 }

@@ -3,12 +3,28 @@ use std::{
     process::{Command, Stdio},
 };
 
-use crate::{Result, npmrc, otp::OtpAuth};
+use crate::{Result, npmrc, otp::OtpAuth, publish::PublishFailure};
 
 pub struct NpmOutput {
     pub status: i32,
     pub stdout: String,
     pub stderr: String,
+}
+
+/// Structured failure from a checked npm invocation.
+pub struct NpmFailure {
+    pub exit_status: i32,
+    /// Combined stdout/stderr, kept verbatim so error codes can be parsed.
+    pub output: String,
+    /// Human-readable rendering (`format_npm_failure`).
+    pub message: String,
+}
+
+impl NpmFailure {
+    pub fn into_publish_failure(self) -> PublishFailure {
+        let failure = PublishFailure::from_npm_output(self.exit_status, &self.output);
+        if self.message.is_empty() { failure } else { failure.with_message(self.message) }
+    }
 }
 
 pub struct NpmRunner {
@@ -26,11 +42,19 @@ impl NpmRunner {
         run_command(&self.program, &argv, cwd, false, &self.auth)
     }
 
-    pub fn run_inherit(&self, args: &[&str], cwd: Option<&Path>) -> Result<()> {
+    /// Run npm and keep the raw output so failures can be classified by error code.
+    pub fn run_checked(&self, args: &[&str], cwd: Option<&Path>) -> std::result::Result<(), NpmFailure> {
         let argv = with_otp(args, &self.auth);
-        let output = run_command(&self.program, &argv, cwd, false, &self.auth)?;
+        let output = match run_command(&self.program, &argv, cwd, false, &self.auth) {
+            Ok(output) => output,
+            Err(message) => return Err(NpmFailure { exit_status: 1, output: String::new(), message }),
+        };
         if output.status != 0 {
-            return Err(format_npm_failure(&argv, &output));
+            return Err(NpmFailure {
+                exit_status: output.status,
+                output: format!("{}\n{}", output.stdout, output.stderr),
+                message: format_npm_failure(&argv, &output),
+            });
         }
         if !output.stdout.is_empty() {
             print!("{}", output.stdout);
@@ -58,7 +82,7 @@ pub fn run_npm_publish(
     access: Option<&str>,
     npm: Option<&Path>,
     auth: &OtpAuth,
-) -> Result<()> {
+) -> std::result::Result<(), PublishFailure> {
     let runner = NpmRunner::new(npm, auth.clone());
     let mut args = vec!["publish"];
     if dry_run {
@@ -72,7 +96,7 @@ pub fn run_npm_publish(
         args.push("--access");
         args.push(access);
     }
-    runner.run_inherit(&args, Some(dir))
+    runner.run_checked(&args, Some(dir)).map_err(NpmFailure::into_publish_failure)
 }
 
 fn with_otp(args: &[&str], auth: &OtpAuth) -> Vec<String> {
