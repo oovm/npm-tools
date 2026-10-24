@@ -34,7 +34,6 @@ export function loadInvocationConfig(options: LoadConfigOptions = {}): Promise<L
         options.configFile ?? "",
         options.env?.command ?? "",
         options.env?.mode ?? "",
-        options.createIfMissing !== false,
     ].join("\u0000");
     if (invocationConfig?.key === key) {
         return invocationConfig.value;

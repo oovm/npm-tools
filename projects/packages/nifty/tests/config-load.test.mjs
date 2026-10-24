@@ -67,6 +67,22 @@ export default {};
     }
 });
 
+test("evaluates the config once per command invocation", () => {
+    const root = createProject(`import { appendFileSync } from "node:fs";
+
+appendFileSync(new URL("./evaluations.txt", import.meta.url), "run\\n");
+
+export default {};
+`);
+    try {
+        runNifty(root, ["format", "--check"]);
+        const evaluations = readFileSync(path.join(root, "evaluations.txt"), "utf8");
+        assert.equal(evaluations, "run\n");
+    } finally {
+        rmSync(root, { recursive: true, force: true });
+    }
+});
+
 test("reports config execution failures as structured errors with exit 1", async () => {
     const root = createProject(`throw new Error("boom");
 `);
