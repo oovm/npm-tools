@@ -3,7 +3,7 @@ import { readFile, writeFile } from "node:fs/promises";
 import type { Cli, ParsedOptions } from "@vmz/commander";
 
 import { loadNiftyNative } from "../native.js";
-import { bootstrapFromOptions } from "./context.js";
+import { bootstrapFromOptions, trackAction } from "./context.js";
 import { lintCommits, type LintOptions } from "./lint.js";
 import { cwdFrom, flag, str, strList } from "./options.js";
 
@@ -17,7 +17,7 @@ export function registerCommitCommand(cli: Cli): void {
         .option("--path <file>", "cli.opt.path")
         .option("--with-lint", "cli.opt.with-lint")
         .option("--errors-only", "cli.opt.errors-only")
-        .action(async (options) => cmdCommitExport(options));
+        .action(trackAction(async (options) => cmdCommitExport(options)));
 
     commit
         .command("apply", "cli.cmd.commit.apply")
@@ -25,7 +25,7 @@ export function registerCommitCommand(cli: Cli): void {
         .option("--ref <ref>", "cli.opt.ref")
         .option("--path <file>", "cli.opt.path")
         .option("--dry-run", "cli.opt.dry-run")
-        .action(async (options) => cmdCommitApply(options));
+        .action(trackAction(async (options) => cmdCommitApply(options)));
 
     commit
         .command("scan", "cli.cmd.commit.scan")
@@ -34,7 +34,7 @@ export function registerCommitCommand(cli: Cli): void {
         .option("-s, --subject <text>...", "cli.opt.subject")
         .option("--json", "cli.opt.json")
         .option("--errors-only", "cli.opt.errors-only")
-        .action(async (options) => cmdCommitScan(options));
+        .action(trackAction(async (options) => cmdCommitScan(options)));
 
     commit
         .command("audit", "cli.cmd.commit.audit")
@@ -43,7 +43,7 @@ export function registerCommitCommand(cli: Cli): void {
         .option("-s, --subject <text>...", "cli.opt.subject")
         .option("--json", "cli.opt.json")
         .option("--errors-only", "cli.opt.errors-only")
-        .action(async (options) => cmdCommitAudit(options));
+        .action(trackAction(async (options) => cmdCommitAudit(options)));
 }
 
 export async function cmdCommitExport(options: ParsedOptions): Promise<number> {

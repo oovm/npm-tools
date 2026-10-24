@@ -17,6 +17,7 @@ export {
     ensureConfigFile,
     findConfigFile,
     loadConfig,
+    NiftyConfigError,
     type LoadConfigOptions,
     type LoadedNiftyConfig,
 } from "./loadConfig.js";

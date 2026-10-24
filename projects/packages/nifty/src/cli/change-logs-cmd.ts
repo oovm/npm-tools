@@ -4,9 +4,8 @@ import type { Cli, ParsedOptions } from "@vmz/commander";
 
 import { resolveAuthorMapPath } from "../config/authorMap.js";
 import { detectProjectLayout } from "../config/detectProject.js";
-import { loadConfig } from "../config/loadConfig.js";
 import { loadNiftyNative } from "../native.js";
-import { bootstrapFromOptions } from "./context.js";
+import { bootstrapFromOptions, loadInvocationConfig, trackAction } from "./context.js";
 import { cwdFrom, flag, str } from "./options.js";
 
 export function registerChangeLogsCommand(cli: Cli): void {
@@ -27,15 +26,15 @@ export function registerChangeLogsCommand(cli: Cli): void {
         .option("--map <path>", "cli.opt.author-map")
         .option("--github-token <token>", "cli.opt.github-token")
         .option("--fetch", "cli.opt.fetch")
-        .action(async (options) => cmdChangeLogsLookup(options));
+        .action(trackAction(async (options) => cmdChangeLogsLookup(options)));
 
-    changeLogs.action(async (options) => cmdChangeLogsRender(options));
+    changeLogs.action(trackAction(async (options) => cmdChangeLogsRender(options)));
 }
 
 export async function cmdChangeLogsRender(options: ParsedOptions): Promise<number> {
     await bootstrapFromOptions(options);
     const cwd = cwdFrom(options) ?? process.cwd();
-    const { config } = await loadConfig({ cwd, createIfMissing: false });
+    const { config } = await loadInvocationConfig({ cwd, createIfMissing: false });
     const layout = detectProjectLayout(cwd);
     const repoRoot = config.repoRoot ?? layout.root;
     const native = loadNiftyNative();
@@ -69,7 +68,7 @@ export async function cmdChangeLogsRender(options: ParsedOptions): Promise<numbe
 export async function cmdChangeLogsLookup(options: ParsedOptions): Promise<number> {
     await bootstrapFromOptions(options);
     const cwd = cwdFrom(options) ?? process.cwd();
-    const { config } = await loadConfig({ cwd, createIfMissing: false });
+    const { config } = await loadInvocationConfig({ cwd, createIfMissing: false });
     const layout = detectProjectLayout(cwd);
     const repoRoot = config.repoRoot ?? layout.root;
     const email = str(options, "email");

@@ -1,10 +1,25 @@
 import { existsSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
-import { createJiti } from "jiti";
+import { pathToFileURL } from "node:url";
 
 import type { NiftyConfig, NiftyConfigEnv, NiftyConfigExport } from "./types.js";
 import { CONFIG_FILE_NAMES } from "./types.js";
 import { detectProjectLayout } from "./detectProject.js";
+
+/** Structured project-config failure (code, args, config path, cause). */
+export class NiftyConfigError extends Error {
+    readonly code: string;
+    readonly args: Readonly<Record<string, string>>;
+    readonly configPath: string;
+
+    constructor(code: string, configPath: string, args: Readonly<Record<string, string>>, cause?: unknown) {
+        super(args.reason ?? "project config failed", cause === undefined ? undefined : { cause });
+        this.name = "NiftyConfigError";
+        this.code = code;
+        this.args = args;
+        this.configPath = configPath;
+    }
+}
 
 export type LoadConfigOptions = {
     /** Directory to start searching from (defaults to `process.cwd()`). */
@@ -114,9 +129,19 @@ export async function loadConfig(options: LoadConfigOptions = {}): Promise<Loade
     }
 
     const env: NiftyConfigEnv = { ...DEFAULT_ENV(cwd), ...options.env };
-    const jiti = createJiti(import.meta.url, { interopDefault: true });
-    const mod = await jiti.import(configFile);
-    const config = await resolveExport(normalizeExport(mod), env);
-    return { config, configFile, created };
+    const configPath = resolve(configFile);
+    let config: NiftyConfig;
+    try {
+        const mod = await import(pathToFileURL(configPath).href);
+        config = await resolveExport(normalizeExport(mod), env);
+    } catch (error) {
+        throw new NiftyConfigError(
+            "config-load-failed",
+            configPath,
+            { reason: "failed to execute project config" },
+            error,
+        );
+    }
+    return { config, configFile: configPath, created };
 }
 

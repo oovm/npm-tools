@@ -2,9 +2,8 @@ import type { Cli, ParsedOptions } from "@vmz/commander";
 
 import { loadNiftyNative } from "../native.js";
 import { authPayload } from "./authArgs.js";
-import { loadConfig } from "../config/loadConfig.js";
 import { trustPayloadFromConfig } from "../config/trustPayload.js";
-import { bootstrapFromOptions } from "./context.js";
+import { bootstrapFromOptions, loadInvocationConfig, trackAction } from "./context.js";
 import { printPublishReport } from "./publish.js";
 import { authFromOptions, cwdFrom, flag, str, strList } from "./options.js";
 
@@ -20,12 +19,12 @@ export function registerPublishCommand(cli: Cli): void {
         .option("--otp <code>", "cli.opt.otp")
         .option("--totp-secret <secret>", "cli.opt.totp-secret")
         .option("--npm-token <token>", "cli.opt.npm-token")
-        .action(async (options) => cmdPublish(options));
+        .action(trackAction(async (options) => cmdPublish(options)));
 }
 
 export async function cmdPublish(options: ParsedOptions): Promise<number> {
     await bootstrapFromOptions(options);
-    const { config } = await loadConfig({ cwd: cwdFrom(options), createIfMissing: false });
+    const { config } = await loadInvocationConfig({ cwd: cwdFrom(options), createIfMissing: false });
     const packages = strList(options, "package");
     const fromConfig = config.publish?.packages ?? [];
     const native = loadNiftyNative();

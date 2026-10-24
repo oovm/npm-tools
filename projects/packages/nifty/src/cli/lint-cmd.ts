@@ -1,6 +1,6 @@
 import type { Cli, ParsedOptions } from "@vmz/commander";
 
-import { bootstrapFromOptions } from "./context.js";
+import { bootstrapFromOptions, trackAction } from "./context.js";
 import { lintCommits, type LintOptions } from "./lint.js";
 import { cwdFrom, flag, str, strList } from "./options.js";
 
@@ -15,7 +15,7 @@ function registerLintLike(cli: Cli, name: string, helpId: string, check: boolean
         .option("--to <ref>", "cli.opt.to")
         .option("-s, --subject <text>...", "cli.opt.subject")
         .option("--no-cargo", "cli.opt.no-cargo")
-        .action(async (options) => cmdLint(options, check));
+        .action(trackAction(async (options) => cmdLint(options, check)));
 }
 
 export async function cmdLint(options: ParsedOptions, check: boolean): Promise<number> {

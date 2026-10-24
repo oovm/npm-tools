@@ -1,12 +1,13 @@
 import type { Cli, ParsedOptions } from "@vmz/commander";
 
+import { trackAction } from "./context.js";
 import { installNativeFromOptions } from "./install-native.js";
 import { cwdFrom, str } from "./options.js";
 
 export function registerInstallNativeCommand(cli: Cli): void {
     cli.command("install-native", "cli.cmd.install-native")
         .option("--from <dir>", "cli.opt.from-artifacts")
-        .action(async (options) => cmdInstallNative(options));
+        .action(trackAction(async (options) => cmdInstallNative(options)));
 }
 
 export async function cmdInstallNative(options: ParsedOptions): Promise<number> {

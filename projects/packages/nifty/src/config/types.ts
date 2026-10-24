@@ -105,6 +105,7 @@ export type NiftyConfigEnv = {
 
 export const CONFIG_FILE_NAMES = [
     "nifty.config.ts",
+    "nifty.config.mts",
     "nifty.config.js",
     "nifty.config.mjs",
     "nifty.config.cjs",

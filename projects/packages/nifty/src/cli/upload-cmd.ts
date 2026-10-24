@@ -1,6 +1,6 @@
 import type { Cli, ParsedOptions } from "@vmz/commander";
 
-import { bootstrapFromOptions } from "./context.js";
+import { bootstrapFromOptions, trackAction } from "./context.js";
 import { uploadFromOptions } from "./upload.js";
 import { cwdFrom, flag, str } from "./options.js";
 
@@ -19,7 +19,7 @@ export function registerUploadCommand(cli: Cli): void {
         .option("--draft", "cli.opt.draft")
         .option("--no-generate-notes", "cli.opt.no-generate-notes")
         .option("--github-action", "cli.opt.github-action")
-        .action(async (options) => cmdUpload(options));
+        .action(trackAction(async (options) => cmdUpload(options)));
 }
 
 export async function cmdUpload(options: ParsedOptions): Promise<number> {

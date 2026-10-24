@@ -1,5 +1,6 @@
-import { loadConfig, resolveFormatConfig } from "../config/index.js";
+import { resolveFormatConfig } from "../config/index.js";
 import { loadNiftyNative } from "../native.js";
+import { loadInvocationConfig } from "./context.js";
 
 export type FormatOptions = {
     check?: boolean;
@@ -8,7 +9,7 @@ export type FormatOptions = {
 
 export async function formatWorkspace(options: FormatOptions): Promise<number> {
     const cwd = options.cwd ?? process.cwd();
-    const { config } = await loadConfig({ cwd, createIfMissing: false, env: { command: "format" } });
+    const { config } = await loadInvocationConfig({ cwd, createIfMissing: false, env: { command: "format" } });
     const resolved = resolveFormatConfig(config.format);
     const native = loadNiftyNative();
     const report = native.formatter.run({

@@ -20,6 +20,7 @@ export { Nifty, createNifty, type NiftyOpenOptions } from "./nifty.js";
 export {
     defineConfig,
     loadConfig,
+    NiftyConfigError,
     findConfigFile,
     DEFAULT_AUTHOR_MAP_PATH,
     loadAuthorMapJson,

@@ -1,9 +1,12 @@
+import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { createCli } from "@vmz/commander";
+import { createCli, normalizeArgv } from "@vmz/commander";
 
+import { NiftyConfigError } from "../config/loadConfig.js";
 import { registerBumpCommand } from "./bump-cmd.js";
+import { actionCountSnapshot, resetConfigScope } from "./context.js";
 import { registerFormatCommand } from "./format-cmd.js";
 import { registerChangeLogsCommand } from "./change-logs-cmd.js";
 import { registerInstallNativeCommand } from "./install-native-cmd.js";
@@ -37,11 +40,45 @@ function buildNiftyCli() {
     return cli;
 }
 
-export async function runCli(argv: string[]): Promise<number> {
+const packageVersion = readPackageVersion();
+
+function readPackageVersion(): string {
     try {
-        return await buildNiftyCli().parse(argv);
-    } catch (error) {
-        console.error(`error: ${error instanceof Error ? error.message : String(error)}`);
+        const manifest = JSON.parse(readFileSync(new URL("../../package.json", import.meta.url), "utf8")) as {
+            version?: string;
+        };
+        return manifest.version ?? "0.0.0";
+    } catch {
+        return "0.0.0";
+    }
+}
+
+function reportError(error: unknown): number {
+    if (error instanceof NiftyConfigError) {
+        console.error(`error [${error.code}] ${error.configPath}: ${error.args.reason}`);
+        if (error.cause !== undefined) {
+            const cause = error.cause instanceof Error ? error.cause.message : String(error.cause);
+            console.error(`  cause: ${cause}`);
+        }
         return 1;
+    }
+    console.error(`error: ${error instanceof Error ? error.message : String(error)}`);
+    return 1;
+}
+
+export async function runCli(argv: string[]): Promise<number> {
+    const args = normalizeArgv(argv);
+    if (args.length === 1 && (args[0] === "--version" || args[0] === "-V")) {
+        console.log(packageVersion);
+        return 0;
+    }
+
+    resetConfigScope();
+    const actionsBefore = actionCountSnapshot();
+    try {
+        const code = await buildNiftyCli().parse(argv);
+        return code === 1 && actionCountSnapshot() === actionsBefore ? 2 : code;
+    } catch (error) {
+        return reportError(error);
     }
 }

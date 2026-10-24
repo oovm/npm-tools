@@ -1,7 +1,7 @@
 import type { Cli, ParsedOptions } from "@vmz/commander";
 
 import { loadNiftyNative } from "../native.js";
-import { bootstrapFromOptions } from "./context.js";
+import { bootstrapFromOptions, trackAction } from "./context.js";
 import { cwdFrom, str } from "./options.js";
 
 export function registerRetimeCommand(cli: Cli): void {
@@ -18,9 +18,9 @@ export function registerRetimeCommand(cli: Cli): void {
         .option("-b, --branch <branch>", "cli.opt.branch")
         .option("--tip <ref>", "cli.opt.tip")
         .option("-m, --message <text>", "cli.opt.message")
-        .action(async (options) => cmdRetimeRoot(options));
+        .action(trackAction(async (options) => cmdRetimeRoot(options)));
 
-    retime.action(async (options) => cmdRetimeRange(options));
+    retime.action(trackAction(async (options) => cmdRetimeRange(options)));
 }
 
 export async function cmdRetimeRange(options: ParsedOptions): Promise<number> {

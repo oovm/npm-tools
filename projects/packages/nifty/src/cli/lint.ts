@@ -1,6 +1,6 @@
-import { loadConfig } from "../config/loadConfig.js";
 import { loadNiftyNative } from "../native.js";
 import { printCommitLintReport, type CommitLintDiagnostic } from "./commit-lint-report.js";
+import { loadInvocationConfig } from "./context.js";
 
 export type LintOptions = {
     subjects: string[];
@@ -37,7 +37,7 @@ export async function lintCommits(
 ): Promise<number> {
     const native = loadNiftyNative();
     const cwd = options.cwd ?? process.cwd();
-    const { config } = await loadConfig({ cwd, createIfMissing: false });
+    const { config } = await loadInvocationConfig({ cwd, createIfMissing: false });
     const rules: LintRuleConfig[] | undefined = config.lint?.rules?.map((rule) => ({
         id: rule.id,
         enabled: rule.enabled,
