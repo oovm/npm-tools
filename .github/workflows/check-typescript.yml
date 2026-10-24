@@ -23,6 +23,7 @@ jobs:
           node-version: 22
       - run: pnpm install
       - run: pnpm run build:napi
+      - run: pnpm --filter @doki-land/nifty run build
       - run: pnpm fmt:check
       - run: pnpm --filter @doki-land/nifty run typecheck
       - name: Package tests

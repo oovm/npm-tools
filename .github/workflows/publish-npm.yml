@@ -159,6 +159,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
+      - name: Build Nifty package
+        run: pnpm --filter @doki-land/nifty run build
+
       - name: Download native artifacts
         uses: actions/download-artifact@v8
         with:

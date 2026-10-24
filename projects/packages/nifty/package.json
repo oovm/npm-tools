@@ -9,20 +9,30 @@
     "description": "Gitmoji-first commit conventions and release helpers (Node-API + TypeScript)",
     "type": "module",
     "license": "MPL-2.0",
+    "types": "./dist/index.d.ts",
     "bin": {
         "nifty": "cli/nifty.mjs"
     },
     "exports": {
-        ".": "./src/index.ts",
-        "./cli": "./src/cli/index.ts"
+        ".": {
+            "types": "./dist/index.d.ts",
+            "default": "./dist/index.js"
+        },
+        "./cli": {
+            "types": "./dist/cli/index.d.ts",
+            "default": "./dist/cli/index.js"
+        }
     },
     "files": [
         "cli/nifty.mjs",
-        "locales",
-        "src"
+        "dist",
+        "locales"
     ],
     "scripts": {
+        "build": "tsc -p tsconfig.build.json",
+        "prepublishOnly": "tsc -p tsconfig.build.json",
         "typecheck": "tsc --noEmit",
+        "pretest": "tsc -p tsconfig.build.json",
         "test": "node --test tests/*.test.mjs"
     },
     "dependencies": {

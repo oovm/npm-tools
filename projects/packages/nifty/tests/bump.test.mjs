@@ -3,9 +3,8 @@ import { mkdtempSync, mkdirSync, readFileSync, rmdirSync, unlinkSync, writeFileS
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
-import { createJiti } from "jiti";
 
-const { bumpWorkspace } = await createJiti(import.meta.url, { interopDefault: true }).import("../src/cli/bump.ts");
+const { bumpWorkspace } = await import("../dist/cli/bump.js");
 
 function createWorkspace({ workspaceVersion = true } = {}) {
     const root = mkdtempSync(path.join(os.tmpdir(), "nifty-bump-workspace-"));
