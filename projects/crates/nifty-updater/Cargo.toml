@@ -13,7 +13,8 @@ edition = "2021"
 path = "src/lib.rs"
 
 [dependencies]
-dialoguer = "0.11"
+# Only `MultiSelect` is used. The default `editor` feature pulls in `tempfile`.
+dialoguer = { version = "0.11", default-features = false }
 nifty-config = { path = "../nifty-config" }
 semver = "1"
 serde = { version = "1.0", features = ["derive"] }

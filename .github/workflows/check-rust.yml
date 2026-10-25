@@ -11,6 +11,19 @@ on:
     branches: [master, dev]
 
 jobs:
+  dependency-policy:
+    name: Dependency policy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dtolnay/rust-toolchain@nightly
+      - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: rust-ci-ubuntu-latest
+          cache-on-failure: true
+      - name: Forbid infrastructure dependency families
+        run: node scripts/ci/check-rust-dependency-policy.mjs
+
   build:
     runs-on: ${{ matrix.os }}
     strategy:
