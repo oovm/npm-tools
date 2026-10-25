@@ -43,11 +43,18 @@ nifty bump --dry-run
 
 Aligns all `projects/crates/*/Cargo.toml` and `projects/packages/*/package.json` versions.
 
+## Repository policy (read first)
+
+In `npm-tools` and other VMZ-family repositories, real versions publish **only** through tag-triggered CI OIDC
+(`.github/workflows/publish-npm.yml`). Local `nifty publish` is limited to `--dry-run` and `--placeholder` (never-published
+`0.0.0` stubs). Local token/OTP auth is for `nifty trust` setup and for consumer projects that have no OIDC workflow, not
+for releasing these repositories. If the tag or CI run fails, stop and report instead of publishing locally.
+
 ## npm publish and trust
 
-**Default: publish the whole workspace.** Nifty walks packages in dependency order and **skips versions already on the
+**Default for consumer workspaces: publish the whole workspace.** Nifty walks packages in dependency order and **skips versions already on the
 registry** (cache + `npm view`). After a release you can run plain `nifty publish` again — only new or bumped packages
-are uploaded.
+are uploaded. Inside `npm-tools` itself, see the repository policy above.
 
 ```bash
 nifty publish --dry-run
@@ -78,6 +85,7 @@ GitHub Actions OIDC can publish on the next tag. `nifty trust` uses `publish.pac
 
 Local auth: `NPM_TOKEN`, `--npm-token`, `--otp`, or `--totp-secret` (see `nifty publish --help`). Trust uses the
 registry API with bearer token from `NPM_TOKEN` or `~/.npmrc`. Add OTP/TOTP on 2FA accounts when the registry asks.
+Per the repository policy above, these paths are not used for real releases in `npm-tools` or VMZ-family repos.
 
 **npm-tools CI**: tag `vX.Y.Z` triggers `.github/workflows/publish-npm.yml`. The workflow stages native artifacts into
 the platform packages and then runs `nifty publish` (OIDC, no long-lived token in YAML). Native `.node` files ship as
@@ -88,9 +96,9 @@ the platform packages and then runs `nifty publish` (OIDC, no long-lived token i
 Output is a **draft index** for hand-editing release notes — not the published GitHub Release body.
 
 ```bash
-nifty change-logs --version 0.0.3
-nifty change-logs --from v0.0.2 --to v0.0.3
-nifty change-logs --version 0.0.3 --write
+nifty change-logs --version 0.1.10
+nifty change-logs --from v0.1.9 --to v0.1.10
+nifty change-logs --version 0.1.10 --write
 nifty change-logs --tags
 nifty change-logs lookup --email you@example.com --fetch
 ```
@@ -120,7 +128,7 @@ Then `nifty publish` includes staged `@doki-land/nifty-<platform>` packages.
 1. `nifty check` on commits since last tag
 2. `nifty bump` (or explicit version)
 3. Commit version bump, tag `vX.Y.Z`, push branch + tag
-4. `nifty publish` (skips packages already at that version on npm) — or let CI publish on tag
+4. Push the tag and let CI publish (OIDC). Do not run a real-version `nifty publish` locally
 5. **`nifty trust`** for any **new** package name not yet on the Trusted Publisher list
 6. `nifty change-logs --version X.Y.Z --write` for reference draft
 7. `nifty upload --release …` when generic assets need GitHub Release upload

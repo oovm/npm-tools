@@ -15,10 +15,10 @@ Every commit **subject** (first line) must:
 2. Use an **English** imperative phrase after the gitmoji (project convention for publish repos)
 3. Match `gitmoji + body` formatting rules enforced by `nifty lint`
 
-Known gitmojis (Nifty default set):
+Known gitmojis (Nifty default set, matches `nifty-types/src/gitmoji.rs`):
 
 ```text
-✨ 🎨 🚀 🐛 🚑 🔥 💥 ♻️ 🔧 📝 👷 🧹 ⬆️ 🧪 🔨 📦 📌
+✨ 🎨 🚀 🐛 🚑 🔥 💥 ♻️ 🔧 📝 👷 🧹 ⬆️ 🧪 🔨 📦 🎂 🎉 🚧 🚫 💄 🎀 ⚡ 🔒 📌
 ```
 
 `📌` is for dependency or version pins (for example locking a site to a published npm version).
@@ -26,9 +26,9 @@ Known gitmojis (Nifty default set):
 ## Commands
 
 ```bash
-# Workspace lint (commits + optional cargo hygiene)
-nifty lint --from v0.0.1 --to HEAD
-nifty check --from origin/dev..HEAD
+# `lint` reports, `check` reports and exits non-zero on errors
+nifty lint --from v0.1.9 --to HEAD
+nifty check --from origin/dev --to HEAD
 
 # Commit-only scan/audit (gitmoji + semver/semicolon/backtick hygiene)
 nifty commit scan --from d25daeba^ --to HEAD
