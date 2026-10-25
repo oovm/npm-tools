@@ -112,12 +112,15 @@ fn response_hint(body: &str) -> String {
     if line.to_ascii_lowercase().contains("token") {
         return "registry response mentions a token".to_string();
     }
-    let mut hint = line.to_string();
-    if hint.len() > 240 {
-        hint.truncate(240);
-        hint.push_str("...");
+    truncate_chars(line, 240)
+}
+
+/** Keep the hint inside its visual budget without splitting a UTF-8 scalar. */
+fn truncate_chars(value: &str, max_chars: usize) -> String {
+    match value.char_indices().nth(max_chars) {
+        Some((boundary, _)) => format!("{}...", &value[..boundary]),
+        None => value.to_string(),
     }
-    hint
 }
 
 pub fn parse_trust_configs(body: &str) -> Result<Vec<Value>> {
@@ -247,5 +250,24 @@ mod tests {
             response_hint("npm error e401 Unauthorized\n")
         );
         assert!(message.contains("npm error e401 Unauthorized"));
+    }
+
+    #[test]
+    fn truncates_long_hints_on_a_utf8_boundary() {
+        // Byte 240 lands inside the first CJK scalar, so byte slicing would panic.
+        let body = format!("{}{}", "a".repeat(239), "中文🙂e\u{301}".repeat(20));
+        assert!(body.len() > 240);
+        let hint = response_hint(&body);
+        let base = hint.strip_suffix("...").expect("long hints keep the ellipsis");
+        assert_eq!(base.chars().count(), 240);
+        assert_eq!(base, body.chars().take(240).collect::<String>());
+        assert!(hint.chars().count() <= 243);
+        assert!(!hint.contains('\u{FFFD}'));
+        assert!(std::str::from_utf8(hint.as_bytes()).is_ok());
+    }
+
+    #[test]
+    fn keeps_short_hints_unchanged() {
+        assert_eq!(response_hint("npm error e401 Unauthorized\n"), "npm error e401 Unauthorized");
     }
 }
