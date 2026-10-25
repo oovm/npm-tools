@@ -1,4 +1,4 @@
-use oak_typescript::formatter::FormatOptions;
+use oak_typescript::formatter::{FormatOptions, QuoteStyle};
 
 /// JavaScript/TypeScript formatter style from the workspace format configuration.
 #[derive(Debug, Clone, Default)]
@@ -11,7 +11,7 @@ pub struct FormatStyleOptions {
 
 /// Default Oak formatter options.
 pub fn default_format_options() -> FormatOptions {
-    FormatOptions { indent_width: 4, line_width: 144, type_erasure: false }
+    FormatOptions { indent_width: 4, line_width: 144, type_erasure: false, quote_style: QuoteStyle::Single }
 }
 
 /// Resolve workspace style into the Oak formatter contract.
@@ -20,13 +20,17 @@ pub fn resolve_format_options(style: Option<&FormatStyleOptions>) -> Result<Form
     if matches!(style.indent_style.as_deref(), Some("tab")) {
         return Err("format.style.indentStyle=tab is not supported by Oak format".to_string());
     }
-    if matches!(style.quote_style.as_deref(), Some("double")) {
-        return Err("format.style.quoteStyle=double is not supported by Oak format".to_string());
-    }
+    let quote_style = match style.quote_style.as_deref() {
+        None => QuoteStyle::Preserve,
+        Some("single") => QuoteStyle::Single,
+        Some("double") => QuoteStyle::Double,
+        Some(other) => return Err(format!("format.style.quoteStyle={other} is not supported by Oak format")),
+    };
     Ok(FormatOptions {
         indent_width: style.indent_width.unwrap_or(4),
         line_width: usize::from(style.line_width.unwrap_or(144)),
         type_erasure: false,
+        quote_style,
     })
 }
 
@@ -45,11 +49,24 @@ mod tests {
         .expect("supported style");
         assert_eq!(options.indent_width, 2);
         assert_eq!(options.line_width, 100);
+        assert_eq!(options.quote_style, QuoteStyle::Single);
     }
 
     #[test]
-    fn rejects_styles_not_represented_by_oak() {
+    fn resolve_double_quote_style() {
         let style = FormatStyleOptions { quote_style: Some("double".to_string()), ..FormatStyleOptions::default() };
+        assert_eq!(resolve_format_options(Some(&style)).expect("supported style").quote_style, QuoteStyle::Double);
+    }
+
+    #[test]
+    fn rejects_unknown_quote_style() {
+        let style = FormatStyleOptions { quote_style: Some("backtick".to_string()), ..FormatStyleOptions::default() };
+        assert!(resolve_format_options(Some(&style)).is_err());
+    }
+
+    #[test]
+    fn rejects_tab_indentation() {
+        let style = FormatStyleOptions { indent_style: Some("tab".to_string()), ..FormatStyleOptions::default() };
         assert!(resolve_format_options(Some(&style)).is_err());
     }
 }

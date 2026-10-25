@@ -73,7 +73,7 @@ function isBumpKind(value: string): value is BumpKind {
 }
 
 function assertVersion(version: string): void {
-    if (! /^\d+\.\d+\.\d+(-[\w.-]+)?$/.test(version)) {
+    if (!/^\d+\.\d+\.\d+(-[\w.-]+)?$/.test(version)) {
         throw new Error(`invalid version ${version}, expected semver like 0.0.0`);
     }
 }

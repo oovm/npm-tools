@@ -3,7 +3,7 @@
 
 use std::path::Path;
 
-use nifty_formatter::{default_format_options, format_source_with_options};
+use nifty_formatter::{FormatStyleOptions, default_format_options, format_source_with_options, resolve_format_options};
 
 fn format_sample(path: &str, input: &str) -> String {
     format_source_with_options(Path::new(path), input, default_format_options())
@@ -217,6 +217,28 @@ fn preserves_trailing_comment_and_block_comment_in_statement() {
 fn preserves_asi_sensitive_continuation_line() {
     let input = "const total = base\n+ extra";
     assert_eq!(format_sample("sample.ts", input), input);
+}
+
+#[test]
+fn double_quote_style_is_accepted_and_keeps_literal_text() {
+    let style = FormatStyleOptions { quote_style: Some("double".to_string()), line_width: Some(100), ..FormatStyleOptions::default() };
+    let options = resolve_format_options(Some(&style)).expect("double quote style is supported");
+    let source = "const label = \"bulk\";\nconst alias = 'bulk';";
+    let output = format_source_with_options(Path::new("sample.ts"), source, options).expect("format").output;
+    assert_eq!(output, source);
+}
+
+#[test]
+fn comparisons_and_unary_signs_survive_formatting() {
+    let options = resolve_format_options(Some(&FormatStyleOptions { quote_style: Some("double".to_string()), ..FormatStyleOptions::default() })).expect("style");
+    for source in [
+        "if (\n    !Number.isInteger(parsed) ||\n    parsed < minimum ||\n    parsed > (arg === \"-n\" || arg === \"--db\" ? 15 : 65535)\n) {\n    fail();\n}\n",
+        "if (!/^-?\\d+$/.test(line)) { fail(); }",
+        "if (length < -1) { fail(); }",
+    ] {
+        let output = format_source_with_options(Path::new("sample.mjs"), source, options.clone()).expect("format").output;
+        assert_eq!(output, source, "formatter changed expression spacing: {source:?}");
+    }
 }
 
 #[test]
