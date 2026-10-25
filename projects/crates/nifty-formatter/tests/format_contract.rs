@@ -221,7 +221,8 @@ fn preserves_asi_sensitive_continuation_line() {
 
 #[test]
 fn double_quote_style_is_accepted_and_keeps_literal_text() {
-    let style = FormatStyleOptions { quote_style: Some("double".to_string()), line_width: Some(100), ..FormatStyleOptions::default() };
+    let style =
+        FormatStyleOptions { quote_style: Some("double".to_string()), line_width: Some(100), ..FormatStyleOptions::default() };
     let options = resolve_format_options(Some(&style)).expect("double quote style is supported");
     let source = "const label = \"bulk\";\nconst alias = 'bulk';";
     let output = format_source_with_options(Path::new("sample.ts"), source, options).expect("format").output;
@@ -230,7 +231,11 @@ fn double_quote_style_is_accepted_and_keeps_literal_text() {
 
 #[test]
 fn comparisons_and_unary_signs_survive_formatting() {
-    let options = resolve_format_options(Some(&FormatStyleOptions { quote_style: Some("double".to_string()), ..FormatStyleOptions::default() })).expect("style");
+    let options = resolve_format_options(Some(&FormatStyleOptions {
+        quote_style: Some("double".to_string()),
+        ..FormatStyleOptions::default()
+    }))
+    .expect("style");
     for source in [
         "if (\n    !Number.isInteger(parsed) ||\n    parsed < minimum ||\n    parsed > (arg === \"-n\" || arg === \"--db\" ? 15 : 65535)\n) {\n    fail();\n}\n",
         "if (!/^-?\\d+$/.test(line)) { fail(); }",
