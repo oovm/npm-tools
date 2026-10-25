@@ -115,7 +115,7 @@ fn response_hint(body: &str) -> String {
     truncate_chars(line, 240)
 }
 
-/** Keep the hint inside its visual budget without splitting a UTF-8 scalar. */
+/// Keep the hint inside its visual budget without splitting a UTF-8 scalar.
 fn truncate_chars(value: &str, max_chars: usize) -> String {
     match value.char_indices().nth(max_chars) {
         Some((boundary, _)) => format!("{}...", &value[..boundary]),
