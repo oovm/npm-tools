@@ -57,7 +57,7 @@ Real versions (`X.Y.Z`) are published **only** by `.github/workflows/publish-npm
 publishing path locally for this repository or another VMZ-family repository.
 
 ```bash
-nifty bump patch        # version commit only
+nifty bump --patch      # version commit only
 git push origin dev
 git tag vX.Y.Z && git push origin vX.Y.Z   # CI publishes, then verify the run
 nifty trust             # only for a newly added @doki-land/* package name

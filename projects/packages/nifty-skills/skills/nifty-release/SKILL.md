@@ -108,12 +108,13 @@ Default paths: `documentation/maintenance/author-github.json`, `documentation/ma
 ## GitHub upload
 
 ```bash
-nifty upload --release --dir dist --tag v0.0.3 --token "$GITHUB_TOKEN"
+nifty upload --release --dir dist --tag v0.1.10 --token "$GITHUB_TOKEN"
 nifty upload --pages --dir dist
 nifty upload --both --dir dist --github-action
 ```
 
-Platform `.node` binaries are **not** uploaded here — they publish via `nifty publish` / CI matrix.
+Platform `.node` binaries are **not** uploaded here — the release workflow stages them and CI publishes them with
+`nifty publish`.
 
 ## CI native staging (maintainers)
 
