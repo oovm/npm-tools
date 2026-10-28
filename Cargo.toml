@@ -10,9 +10,9 @@ exclude = [
 
 [workspace.dependencies]
 # Overlaid by local path `.cargo/config.toml` (git ignored).
-boost-fs = { git = "https://github.com/oovm/rust-boost", branch = "dev" }
-boost-log = { git = "https://github.com/oovm/rust-boost", branch = "dev" }
-boost-http = { git = "https://github.com/oovm/rust-boost", branch = "dev" }
+boost-fs = { git = "https://github.com/oovm/rust-boost", rev = "7ba022a049cafef979dfe7a8adf81d9a0d3dd373" }
+boost-log = { git = "https://github.com/oovm/rust-boost", rev = "7ba022a049cafef979dfe7a8adf81d9a0d3dd373" }
+boost-http = { git = "https://github.com/oovm/rust-boost", rev = "7ba022a049cafef979dfe7a8adf81d9a0d3dd373" }
 
 [profile.release]
 lto = true

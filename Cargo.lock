@@ -89,9 +89,9 @@ dependencies = [
 [[package]]
 name = "boost-fs"
 version = "0.1.0"
-source = "git+https://github.com/oovm/rust-boost?branch=dev#9aa52745d6eae2d7748c76e4e3e6555e1f6e4b86"
+source = "git+https://github.com/oovm/rust-boost?rev=7ba022a049cafef979dfe7a8adf81d9a0d3dd373#7ba022a049cafef979dfe7a8adf81d9a0d3dd373"
 dependencies = [
- "boost-random 0.1.0 (git+https://github.com/oovm/rust-boost?branch=dev)",
+ "boost-random 0.1.0 (git+https://github.com/oovm/rust-boost?rev=7ba022a049cafef979dfe7a8adf81d9a0d3dd373)",
 ]
 
 [[package]]
@@ -105,7 +105,7 @@ dependencies = [
 [[package]]
 name = "boost-http"
 version = "0.1.0"
-source = "git+https://github.com/oovm/rust-boost?branch=dev#9aa52745d6eae2d7748c76e4e3e6555e1f6e4b86"
+source = "git+https://github.com/oovm/rust-boost?rev=7ba022a049cafef979dfe7a8adf81d9a0d3dd373#7ba022a049cafef979dfe7a8adf81d9a0d3dd373"
 dependencies = [
  "rustls",
  "url",
@@ -115,12 +115,12 @@ dependencies = [
 [[package]]
 name = "boost-log"
 version = "0.1.0"
-source = "git+https://github.com/oovm/rust-boost?branch=dev#9aa52745d6eae2d7748c76e4e3e6555e1f6e4b86"
+source = "git+https://github.com/oovm/rust-boost?rev=7ba022a049cafef979dfe7a8adf81d9a0d3dd373#7ba022a049cafef979dfe7a8adf81d9a0d3dd373"
 
 [[package]]
 name = "boost-random"
 version = "0.1.0"
-source = "git+https://github.com/oovm/rust-boost?branch=dev#9aa52745d6eae2d7748c76e4e3e6555e1f6e4b86"
+source = "git+https://github.com/oovm/rust-boost?rev=7ba022a049cafef979dfe7a8adf81d9a0d3dd373#7ba022a049cafef979dfe7a8adf81d9a0d3dd373"
 
 [[package]]
 name = "boost-random"
@@ -1398,14 +1398,14 @@ dependencies = [
 name = "nifty-config"
 version = "0.1.9"
 dependencies = [
- "boost-fs 0.1.0 (git+https://github.com/oovm/rust-boost?branch=dev)",
+ "boost-fs 0.1.0 (git+https://github.com/oovm/rust-boost?rev=7ba022a049cafef979dfe7a8adf81d9a0d3dd373)",
 ]
 
 [[package]]
 name = "nifty-formatter"
 version = "0.1.9"
 dependencies = [
- "boost-fs 0.1.0 (git+https://github.com/oovm/rust-boost?branch=dev)",
+ "boost-fs 0.1.0 (git+https://github.com/oovm/rust-boost?rev=7ba022a049cafef979dfe7a8adf81d9a0d3dd373)",
  "nifty-config",
  "nifty-types",
  "oak-core",
@@ -1454,7 +1454,7 @@ dependencies = [
 name = "nifty-linter"
 version = "0.1.9"
 dependencies = [
- "boost-fs 0.1.0 (git+https://github.com/oovm/rust-boost?branch=dev)",
+ "boost-fs 0.1.0 (git+https://github.com/oovm/rust-boost?rev=7ba022a049cafef979dfe7a8adf81d9a0d3dd373)",
  "nifty-config",
  "nifty-formatter",
  "nifty-git",
@@ -1487,7 +1487,7 @@ dependencies = [
 name = "nifty-publisher"
 version = "0.1.9"
 dependencies = [
- "boost-fs 0.1.0 (git+https://github.com/oovm/rust-boost?branch=dev)",
+ "boost-fs 0.1.0 (git+https://github.com/oovm/rust-boost?rev=7ba022a049cafef979dfe7a8adf81d9a0d3dd373)",
  "boost-http",
  "hmac",
  "nifty-config",
@@ -1525,7 +1525,7 @@ dependencies = [
 name = "nifty-uploader"
 version = "0.1.9"
 dependencies = [
- "boost-fs 0.1.0 (git+https://github.com/oovm/rust-boost?branch=dev)",
+ "boost-fs 0.1.0 (git+https://github.com/oovm/rust-boost?rev=7ba022a049cafef979dfe7a8adf81d9a0d3dd373)",
  "boost-http",
  "nifty-config",
  "nifty-formatter",
