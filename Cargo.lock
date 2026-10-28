@@ -89,13 +89,23 @@ dependencies = [
 [[package]]
 name = "boost-fs"
 version = "0.1.0"
+source = "git+https://github.com/oovm/rust-boost?branch=dev#9aa52745d6eae2d7748c76e4e3e6555e1f6e4b86"
 dependencies = [
- "boost-random",
+ "boost-random 0.1.0 (git+https://github.com/oovm/rust-boost?branch=dev)",
+]
+
+[[package]]
+name = "boost-fs"
+version = "0.1.0"
+source = "git+https://github.com/oovm/rust-boost?rev=9aa52745d6eae2d7748c76e4e3e6555e1f6e4b86#9aa52745d6eae2d7748c76e4e3e6555e1f6e4b86"
+dependencies = [
+ "boost-random 0.1.0 (git+https://github.com/oovm/rust-boost?rev=9aa52745d6eae2d7748c76e4e3e6555e1f6e4b86)",
 ]
 
 [[package]]
 name = "boost-http"
 version = "0.1.0"
+source = "git+https://github.com/oovm/rust-boost?branch=dev#9aa52745d6eae2d7748c76e4e3e6555e1f6e4b86"
 dependencies = [
  "rustls",
  "url",
@@ -105,10 +115,17 @@ dependencies = [
 [[package]]
 name = "boost-log"
 version = "0.1.0"
+source = "git+https://github.com/oovm/rust-boost?branch=dev#9aa52745d6eae2d7748c76e4e3e6555e1f6e4b86"
 
 [[package]]
 name = "boost-random"
 version = "0.1.0"
+source = "git+https://github.com/oovm/rust-boost?branch=dev#9aa52745d6eae2d7748c76e4e3e6555e1f6e4b86"
+
+[[package]]
+name = "boost-random"
+version = "0.1.0"
+source = "git+https://github.com/oovm/rust-boost?rev=9aa52745d6eae2d7748c76e4e3e6555e1f6e4b86#9aa52745d6eae2d7748c76e4e3e6555e1f6e4b86"
 
 [[package]]
 name = "bstr"
@@ -305,9 +322,7 @@ checksum = "658bce805d770f407bc62102fca7c2c64ceef2fbcb2b8bd19d2765ce093980de"
 dependencies = [
  "console",
  "shell-words",
- "tempfile",
  "thiserror 1.0.69",
- "zeroize",
 ]
 
 [[package]]
@@ -1383,14 +1398,14 @@ dependencies = [
 name = "nifty-config"
 version = "0.1.9"
 dependencies = [
- "boost-fs",
+ "boost-fs 0.1.0 (git+https://github.com/oovm/rust-boost?branch=dev)",
 ]
 
 [[package]]
 name = "nifty-formatter"
 version = "0.1.9"
 dependencies = [
- "boost-fs",
+ "boost-fs 0.1.0 (git+https://github.com/oovm/rust-boost?branch=dev)",
  "nifty-config",
  "nifty-types",
  "oak-core",
@@ -1439,7 +1454,7 @@ dependencies = [
 name = "nifty-linter"
 version = "0.1.9"
 dependencies = [
- "boost-fs",
+ "boost-fs 0.1.0 (git+https://github.com/oovm/rust-boost?branch=dev)",
  "nifty-config",
  "nifty-formatter",
  "nifty-git",
@@ -1472,7 +1487,7 @@ dependencies = [
 name = "nifty-publisher"
 version = "0.1.9"
 dependencies = [
- "boost-fs",
+ "boost-fs 0.1.0 (git+https://github.com/oovm/rust-boost?branch=dev)",
  "boost-http",
  "hmac",
  "nifty-config",
@@ -1510,7 +1525,7 @@ dependencies = [
 name = "nifty-uploader"
 version = "0.1.9"
 dependencies = [
- "boost-fs",
+ "boost-fs 0.1.0 (git+https://github.com/oovm/rust-boost?branch=dev)",
  "boost-http",
  "nifty-config",
  "nifty-formatter",
@@ -1559,7 +1574,7 @@ dependencies = [
 name = "oak-testing"
 version = "0.0.12"
 dependencies = [
- "boost-fs",
+ "boost-fs 0.1.0 (git+https://github.com/oovm/rust-boost?rev=9aa52745d6eae2d7748c76e4e3e6555e1f6e4b86)",
  "oak-core",
  "serde",
  "serde_json",
