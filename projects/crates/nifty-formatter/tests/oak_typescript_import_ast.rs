@@ -31,10 +31,10 @@ export default class Page { x = 1; }
         .collect();
     assert_eq!(imports.len(), 4, "imports={imports:?}");
     assert_eq!(imports[0].module_specifier, "./lib", "imp0={:?}", imports[0]);
-    assert!(!imports[0].is_type_only);
+    assert!(!imports[0].is_type_only());
     assert_eq!(imports[0].specifiers.len(), 1, "specifiers={:?}", imports[0].specifiers);
     match &imports[0].specifiers[0] {
-        ImportSpecifier::Named { local, imported } => {
+        ImportSpecifier::Named { local, imported, .. } => {
             assert_eq!(local, "helper");
             assert_eq!(imported, "helper");
         }
@@ -42,7 +42,7 @@ export default class Page { x = 1; }
     }
 
     assert_eq!(imports[1].module_specifier, "@pkg/types");
-    assert!(imports[1].is_type_only);
+    assert!(imports[1].is_type_only());
 
     assert_eq!(imports[2].module_specifier, "../ns");
     assert!(matches!(&imports[2].specifiers[..], [ImportSpecifier::Namespace(n)] if n == "ns"));
@@ -87,5 +87,5 @@ export type { T } from '@pkg/types';
     assert!(exports[1].specifiers.is_empty());
 
     assert_eq!(exports[2].source.as_deref(), Some("@pkg/types"));
-    assert!(exports[2].is_type_only);
+    assert!(exports[2].is_type_only());
 }
