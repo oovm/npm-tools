@@ -22,10 +22,40 @@ export function registerPublishCommand(cli: Cli): void {
         .action(trackAction(async (options) => cmdPublish(options)));
 }
 
+/**
+ * Collect every `--package` occurrence from the raw argv.
+ *
+ * The option parser keeps only the last value of a repeated flag, so a request like
+ * `--package a --package b` used to collapse to `b` and publish less than asked while
+ * still exiting 0. Accumulating from argv keeps the full requested set.
+ */
+export function requestedPackageNames(argv: string[]): string[] {
+    const names: string[] = [];
+    for (let index = 0; index < argv.length; index += 1) {
+        const arg = argv[index];
+        if (arg === "--package") {
+            const value = argv[index + 1];
+            if (value !== undefined && !value.startsWith("-")) {
+                names.push(value);
+                index += 1;
+            }
+            continue;
+        }
+        if (arg.startsWith("--package=")) {
+            const value = arg.slice("--package=".length);
+            if (value.length > 0) {
+                names.push(value);
+            }
+        }
+    }
+    return names;
+}
+
 export async function cmdPublish(options: ParsedOptions): Promise<number> {
     await bootstrapFromOptions(options);
     const { config } = await loadInvocationConfig({ cwd: cwdFrom(options), createIfMissing: false });
-    const packages = strList(options, "package");
+    const requested = new Set([...requestedPackageNames(process.argv.slice(2)), ...strList(options, "package")]);
+    const packages = [...requested];
     const fromConfig = config.publish?.packages ?? [];
     const native = loadNiftyNative();
     const report = native.publisher["publish-workspace"]({

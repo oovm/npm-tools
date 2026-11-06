@@ -75,6 +75,7 @@ pub fn publish_workspace(options: PublishOptions) -> Result<PublishReport> {
     let by_name = packages.iter().map(|package| (package.name.clone(), package.clone())).collect::<BTreeMap<_, _>>();
     let (candidates, skipped) = resolve_candidate_packages(&packages, &by_name, &publish_targets)?;
     let order = graph::sort_packages_for_publish(&candidates, &by_name)?;
+    ensure_requested_targets_in_plan(&publish_targets, &order, &by_name)?;
 
     let access = options.access.as_deref().or(Some("public"));
     let mut skipped_versions = Vec::new();
@@ -215,10 +216,10 @@ fn resolve_candidate_packages(
             return Err(format!("workspace package not found: {target}"));
         };
         if blocked.contains(&package.name) {
-            println!(
-                "skip publish target {target} (private workspace package or depends on one — remove `private` to publish)"
-            );
-            continue;
+            return Err(format!(
+                "publish target `{}` is private or depends on a private package — remove `private` to publish it",
+                package.name
+            ));
         }
         if seen.insert(package.name.clone()) {
             candidates.push(package.clone());
@@ -244,6 +245,116 @@ fn resolve_publish_targets(options: &PublishOptions) -> Result<Vec<String>> {
         return Ok(names);
     }
     Ok(Vec::new())
+}
+
+/// Every explicitly requested target must appear in the resolved publish plan.
+///
+/// A requested package that silently disappears from the plan used to leave the CLI exit code at 0,
+/// which made a release workflow look successful while publishing nothing. Missing targets are a
+/// hard error with the package name and the reason.
+fn ensure_requested_targets_in_plan(
+    targets: &[String],
+    order: &[String],
+    by_name: &BTreeMap<String, NpmPackage>,
+) -> Result<()> {
+    use crate::workspace::find_package_by_target;
+
+    if targets.is_empty() {
+        return Ok(());
+    }
+    let planned = order.iter().collect::<BTreeSet<_>>();
+    let mut missing = Vec::new();
+    for target in targets {
+        match find_package_by_target(by_name, target) {
+            None => missing.push(format!("`{target}`: not found in this workspace")),
+            Some(package) if !planned.contains(&package.name) => {
+                missing.push(format!("`{}`: resolved out of the publish plan", package.name));
+            }
+            Some(_) => {}
+        }
+    }
+    if missing.is_empty() {
+        return Ok(());
+    }
+    Err(format!("requested publish targets are missing from the plan:\n  {}", missing.join("\n  ")))
+}
+
+#[cfg(test)]
+mod plan_guard_tests {
+    use std::{collections::BTreeMap, path::PathBuf};
+
+    use crate::workspace::{NpmPackage, PackageManifest, collect_internal_dependency_names};
+
+    use super::{ensure_requested_targets_in_plan, resolve_candidate_packages};
+
+    fn package(name: &str, dependencies: &[(&str, &str)]) -> NpmPackage {
+        let dependencies =
+            dependencies.iter().map(|(key, value)| ((*key).to_string(), (*value).to_string())).collect::<BTreeMap<_, _>>();
+        let manifest = PackageManifest {
+            name: name.to_string(),
+            version: "0.0.1".to_string(),
+            private: false,
+            dependencies: dependencies.clone(),
+            dev_dependencies: BTreeMap::new(),
+            optional_dependencies: BTreeMap::new(),
+            peer_dependencies: BTreeMap::new(),
+            os: None,
+            cpu: None,
+            publish_config: None,
+        };
+        NpmPackage {
+            name: name.to_string(),
+            version: "0.0.1".to_string(),
+            dir: PathBuf::from(name),
+            manifest_path: PathBuf::from(name).join("package.json"),
+            private: false,
+            manifest,
+        }
+    }
+
+    #[test]
+    fn a_workspace_package_that_depends_on_a_missing_package_still_fails_by_name() {
+        // `@scope/app` declares `@scope/ghost`, which is not a workspace package.
+        // Requesting `@scope/app` must not silently vanish from the plan.
+        let packages = vec![package("@scope/app", &[("@scope/ghost", "0.0.1")])];
+        let by_name = packages.iter().map(|entry| (entry.name.clone(), entry.clone())).collect::<BTreeMap<_, _>>();
+
+        assert!(collect_internal_dependency_names(&packages[0], &by_name).is_empty());
+
+        let error = ensure_requested_targets_in_plan(&["@scope/app".to_string()], &[], &by_name).expect_err("must fail");
+        assert!(error.contains("@scope/app"), "error must name the requested package: {error}");
+        assert!(error.contains("missing from the plan"), "error must explain why: {error}");
+    }
+
+    #[test]
+    fn unknown_target_is_reported_by_name() {
+        let packages = vec![package("@scope/app", &[])];
+        let by_name = packages.iter().map(|entry| (entry.name.clone(), entry.clone())).collect::<BTreeMap<_, _>>();
+        let error =
+            ensure_requested_targets_in_plan(&["@scope/ghost".to_string()], &[], &by_name).expect_err("must fail");
+        assert!(error.contains("@scope/ghost"), "error must name the unknown target: {error}");
+    }
+
+    #[test]
+    fn every_requested_target_must_be_planned() {
+        let packages = vec![package("@scope/app", &[]), package("@scope/platform", &[])];
+        let by_name = packages.iter().map(|entry| (entry.name.clone(), entry.clone())).collect::<BTreeMap<_, _>>();
+        let order = vec!["@scope/platform".to_string(), "@scope/app".to_string()];
+        ensure_requested_targets_in_plan(&["@scope/app".to_string(), "@scope/platform".to_string()], &order, &by_name)
+            .expect("all targets are planned");
+    }
+
+    #[test]
+    fn private_target_is_an_error_instead_of_a_silent_skip() {
+        let mut packages = vec![package("@scope/app", &[])];
+        packages[0].private = true;
+        packages[0].manifest.private = true;
+        let by_name = packages.iter().map(|entry| (entry.name.clone(), entry.clone())).collect::<BTreeMap<_, _>>();
+        let error = resolve_candidate_packages(&packages, &by_name, &["@scope/app".to_string()])
+            .expect_err("private target must fail");
+        assert!(error.contains("@scope/app"), "error must name the package: {error}");
+        assert!(error.contains("private"), "error must explain why: {error}");
+    }
 }
 
 #[cfg(test)]
@@ -368,13 +479,12 @@ mod publish_filter_tests {
     }
 
     #[test]
-    fn explicit_targets_skip_private_packages() {
+    fn explicit_private_target_fails_by_name() {
         let packages = vec![package("@scope/main", false), package("@scope/native", true)];
         let by_name = packages.iter().map(|package| (package.name.clone(), package.clone())).collect::<BTreeMap<_, _>>();
-        let (candidates, skipped) =
-            resolve_candidate_packages(&packages, &by_name, &["@scope/native".to_string()]).expect("resolve");
-        assert!(candidates.is_empty());
-        assert_eq!(skipped, vec!["@scope/native".to_string()]);
+        let error = resolve_candidate_packages(&packages, &by_name, &["@scope/native".to_string()])
+            .expect_err("an explicitly requested private package must fail");
+        assert!(error.contains("@scope/native"), "error must name the package: {error}");
     }
 
     #[test]
