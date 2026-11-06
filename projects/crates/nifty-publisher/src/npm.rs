@@ -217,7 +217,7 @@ fn format_npm_failure(argv: &[String], output: &NpmOutput) -> String {
     if is_oidc_auth_failure(&blob) {
         return format!(
             "npm OIDC/trusted publish failed for `{joined}` (exit {status}). \
-Configure Trusted Publisher: file=publish-npm.yml env=NPM_PUBLISH repo=oovm/npm-tools. \
+Configure a Trusted Publisher for this package name before the first OIDC publish (`nifty trust`). \
 npm output:\n{blob}"
         );
     }
