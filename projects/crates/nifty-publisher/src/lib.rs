@@ -330,8 +330,7 @@ mod plan_guard_tests {
     fn unknown_target_is_reported_by_name() {
         let packages = vec![package("@scope/app", &[])];
         let by_name = packages.iter().map(|entry| (entry.name.clone(), entry.clone())).collect::<BTreeMap<_, _>>();
-        let error =
-            ensure_requested_targets_in_plan(&["@scope/ghost".to_string()], &[], &by_name).expect_err("must fail");
+        let error = ensure_requested_targets_in_plan(&["@scope/ghost".to_string()], &[], &by_name).expect_err("must fail");
         assert!(error.contains("@scope/ghost"), "error must name the unknown target: {error}");
     }
 
@@ -350,8 +349,8 @@ mod plan_guard_tests {
         packages[0].private = true;
         packages[0].manifest.private = true;
         let by_name = packages.iter().map(|entry| (entry.name.clone(), entry.clone())).collect::<BTreeMap<_, _>>();
-        let error = resolve_candidate_packages(&packages, &by_name, &["@scope/app".to_string()])
-            .expect_err("private target must fail");
+        let error =
+            resolve_candidate_packages(&packages, &by_name, &["@scope/app".to_string()]).expect_err("private target must fail");
         assert!(error.contains("@scope/app"), "error must name the package: {error}");
         assert!(error.contains("private"), "error must explain why: {error}");
     }
