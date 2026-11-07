@@ -23,6 +23,8 @@ jobs:
           cache-on-failure: true
       - name: Forbid infrastructure dependency families
         run: node scripts/ci/check-rust-dependency-policy.mjs
+      - name: Reject a lock resolved through local paths
+        run: node scripts/ci/check-cargo-lock.mjs
 
   build:
     runs-on: ${{ matrix.os }}
@@ -38,9 +40,8 @@ jobs:
           shared-key: rust-ci-${{ matrix.os }}
           cache-on-failure: true
       - name: Build
-        run: cargo build --release --workspace
+        run: cargo build --release --workspace --locked
       - name: Tests
-        # `--no-fail-fast` keeps every crate's tests in the log: without it, a failing
-        # target stops the workspace run and later crates look green only because
-        # they never executed.
-        run: cargo test --release --workspace --no-fail-fast
+        # The script adds `--no-fail-fast` and then asserts that every member's test target
+        # emitted a `Running` line. A red job alone cannot prove the other crates executed.
+        run: node scripts/ci/run-workspace-tests.mjs

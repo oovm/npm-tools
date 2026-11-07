@@ -34,7 +34,12 @@ function findBuiltNodes(dir) {
     return readdirSync(dir).filter((name) => name.endsWith(".node"));
 }
 
-execSync("pnpm exec napi build --platform --release", { cwd: napiDir, stdio: "inherit", shell: true });
+// `--locked` keeps the shipped `.node` on the committed dependency graph instead of re-resolving it.
+execSync("pnpm exec napi build --platform --release --cargo-flags=--locked", {
+    cwd: napiDir,
+    stdio: "inherit",
+    shell: true,
+});
 
 const built = findBuiltNodes(napiDir);
 if (built.length === 0) {
