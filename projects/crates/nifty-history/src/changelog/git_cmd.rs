@@ -2,7 +2,7 @@
 
 use std::{cmp::Ordering, path::Path, process::Command};
 
-use nifty_types::RefError;
+use nifty_types::{RefDomain, RefError};
 
 use crate::{
     changelog::gitmoji::{leading_gitmoji, section_for_gitmoji, strip_gitmoji},
@@ -50,17 +50,23 @@ pub fn list_version_tags(repo_root: &Path) -> Result<Vec<String>> {
 }
 
 /// 校验 ref 指向 commit，区分「ref 不存在」与「ref 存在但不是 commit」。
-pub fn verify_commit_ref(repo_root: &Path, reference: &str) -> Result<()> {
+///
+/// 非 commit 的种类取 `git cat-file -t` 的未剥离结果，与 gix 后端读取 `Object::kind` 的口径一致。
+pub fn verify_commit_ref(repo_root: &Path, reference: &str, domain: RefDomain) -> Result<()> {
     if !git_resolves(repo_root, reference)? {
-        return Err(validation(RefError::NotFound { reference: reference.to_string() }.to_string()));
+        return Err(validation(RefError::NotFound { reference: reference.to_string(), domain }.to_string()));
     }
     if !git_resolves(repo_root, &format!("{reference}^{{commit}}"))? {
-        return Err(validation(RefError::NotCommit { reference: reference.to_string() }.to_string()));
+        let kind = git_output(repo_root, &["cat-file", "-t", reference])?;
+        return Err(validation(RefError::NotCommit { reference: reference.to_string(), kind, domain }.to_string()));
     }
     Ok(())
 }
 
 /// `git rev-parse --verify --quiet` 是否能解析该 revision。
+///
+/// 短哈希前缀歧义在这里同样解析失败，会被上游归为 `NotFound`，这是 git CLI 后端相对 gix 后端的能力差
+/// （gix 能报告 `Ambiguous` 候选列表）。不要把它当成实现 bug 反复排查。
 fn git_resolves(repo_root: &Path, spec: &str) -> Result<bool> {
     let output = Command::new("git")
         .args(["rev-parse", "--verify", "--quiet", spec])
@@ -230,7 +236,7 @@ pub fn resolve_range(
 ) -> Result<(String, Option<String>, String)> {
     if let Some(version) = version {
         let tag = version_tag(version);
-        verify_commit_ref(repo_root, &tag)?;
+        verify_commit_ref(repo_root, &tag, RefDomain::ReleaseTag)?;
         let prev = previous_version_tag(repo_root, version)?;
         return Ok((normalize_version(version), prev, tag));
     }
@@ -241,9 +247,9 @@ pub fn resolve_range(
     };
 
     let to_ref = to_ref_name(to);
-    verify_commit_ref(repo_root, &to_ref)?;
+    verify_commit_ref(repo_root, &to_ref, RefDomain::Ref)?;
     if let Some(from_ref) = from {
-        verify_commit_ref(repo_root, from_ref)?;
+        verify_commit_ref(repo_root, from_ref, RefDomain::Ref)?;
     }
 
     let version_label = regex_version_label(&to_ref).unwrap_or_else(|| to_ref.trim_start_matches('v').to_string());

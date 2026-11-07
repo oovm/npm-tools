@@ -2,6 +2,8 @@
 
 use std::path::Path;
 
+use nifty_types::RefDomain;
+
 use crate::{
     log::collect_commits,
     repo::{open_repo, verify_commit_ref},
@@ -26,7 +28,7 @@ pub fn resolve_range(repo_root: &Path, version: Option<&str>, from: Option<&str>
     if let Some(version) = version {
         let tag = version_tag(version);
         let repo = open_repo(repo_root)?;
-        verify_commit_ref(&repo, &tag)?;
+        verify_commit_ref(&repo, &tag, RefDomain::ReleaseTag)?;
         let prev = previous_version_tag(repo_root, version)?;
         return Ok(RangeInfo { version: normalize_version(version), from_ref: prev, to_ref: tag });
     }
@@ -36,9 +38,9 @@ pub fn resolve_range(repo_root: &Path, version: Option<&str>, from: Option<&str>
     };
     let to_ref = to_ref_name(to);
     let repo = open_repo(repo_root)?;
-    verify_commit_ref(&repo, &to_ref)?;
+    verify_commit_ref(&repo, &to_ref, RefDomain::Ref)?;
     if let Some(from_ref) = from {
-        verify_commit_ref(&repo, from_ref)?;
+        verify_commit_ref(&repo, from_ref, RefDomain::Ref)?;
     }
     let version_label = regex_version_label(&to_ref).unwrap_or_else(|| to_ref.trim_start_matches('v').to_string());
     Ok(RangeInfo { version: version_label, from_ref: from.map(str::to_string), to_ref })

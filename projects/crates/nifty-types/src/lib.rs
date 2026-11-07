@@ -12,4 +12,4 @@ pub use gitmoji::{
     ParsedSubject, Section, all_sections, known_gitmojis, leading_gitmoji, parse_subject, section_for_gitmoji,
     section_from_name, section_meta, section_name, strip_gitmoji, validate_subject,
 };
-pub use refs::RefError;
+pub use refs::{RefDomain, RefError};

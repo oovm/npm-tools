@@ -118,11 +118,41 @@ fn ref_errors_match_across_backends() {
     }
 
     assert_eq!(changelog(root, None, None, Some("no-such-ref")).unwrap_err(), "ref does not exist: \"no-such-ref\"");
-    assert_eq!(changelog(root, None, None, Some("treetag")).unwrap_err(), "ref is not a commit: \"treetag\"");
-    assert_eq!(changelog(root, None, None, Some("atreetag")).unwrap_err(), "ref is not a commit: \"atreetag\"");
+    assert_eq!(changelog(root, None, None, Some("treetag")).unwrap_err(), "ref is not a commit: \"treetag\" (tree)");
+    assert_eq!(changelog(root, None, None, Some("atreetag")).unwrap_err(), "ref is not a commit: \"atreetag\" (tag)");
 
     let changelog_from = changelog(root, None, Some("no-such-from"), Some("HEAD"));
     let api_from = public_api(root, None, Some("no-such-from"), Some("HEAD"));
     assert_eq!(changelog_from, api_from, "ref errors drifted for --from");
     assert_eq!(changelog_from.unwrap_err(), "ref does not exist: \"no-such-from\"");
+
+    let changelog_version = changelog(root, Some("9.9.10"), None, None);
+    let api_version = public_api(root, Some("9.9.10"), None, None);
+    assert_eq!(changelog_version, api_version, "version errors drifted");
+    assert_eq!(changelog_version.unwrap_err(), "release tag does not exist: \"v9.9.10\"");
+}
+
+/// Write blobs until two object ids share their first four hex chars.
+fn ambiguous_prefix(repo: &gix::Repository) -> String {
+    let mut seen = std::collections::HashMap::new();
+    for index in 0..4096 {
+        let id = repo.write_blob(format!("nifty-ambiguity-{index}\n")).expect("write probe blob");
+        let oid = id.to_string();
+        let prefix = oid[..4].to_string();
+        if seen.insert(prefix.clone(), index).is_some() {
+            return prefix;
+        }
+    }
+    panic!("no four-hex collision after 4096 blobs");
+}
+
+#[test]
+fn ambiguous_prefix_keeps_candidates() {
+    let dir = probe_repo();
+    let root = dir.path();
+    let repo = nifty_git::open_repo(root).expect("open probe repo");
+    let prefix = ambiguous_prefix(&repo);
+    let err = nifty_git::resolve_rev(&repo, &prefix).unwrap_err();
+    assert!(err.contains(&format!("Short id {prefix} is ambiguous")), "{err}");
+    assert!(err.contains("Candidates are:"), "{err}");
 }
