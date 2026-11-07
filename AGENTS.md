@@ -7,7 +7,7 @@ This repository ships [**Nifty**](https://www.npmjs.com/package/@doki-land/nifty
 1. This file: repository layout, build, release policy.
 2. `projects/packages/nifty-skills/skills/nifty/SKILL.md`: command map and boundaries.
 3. Only the one task skill you need (`nifty-commit`, `nifty-release`, `nifty-git-history`).
-4. Public `Readme.md` and crate Readmes are product documentation. Read them only when changing published API or
+4. Public `readme.md` and crate Readmes are product documentation. Read them only when changing published API or
    description, never as design truth for implementation.
 
 `documentation/maintenance/releases/` holds per-release notes; it is history, not current design.

@@ -5,7 +5,7 @@ authors = ["Aster <192607617@qq.com>"]
 description = "Nifty formatting: gitmoji subjects, release bullets, and changelog sections"
 repository = "https://github.com/oovm/npm-tools"
 documentation = "https://docs.rs/nifty-formatter"
-readme = "Readme.md"
+readme = "readme.md"
 license = "MPL-2.0"
 edition = "2021"
 

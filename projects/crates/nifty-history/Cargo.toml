@@ -5,7 +5,7 @@ authors = ["Aster <192607617@qq.com>"]
 description = "Commit reword/retime and release reference changelog for Nifty"
 repository = "https://github.com/oovm/npm-tools"
 documentation = "https://docs.rs/nifty-history"
-readme = "Readme.md"
+readme = "readme.md"
 license = "MPL-2.0"
 edition = "2021"
 

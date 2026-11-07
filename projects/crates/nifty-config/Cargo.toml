@@ -5,7 +5,7 @@ authors = ["Aster <192607617@qq.com>"]
 description = "Discover and resolve Nifty project configuration files"
 repository = "https://github.com/oovm/npm-tools"
 documentation = "https://docs.rs/nifty-config"
-readme = "Readme.md"
+readme = "readme.md"
 license = "MPL-2.0"
 edition = "2021"
 
