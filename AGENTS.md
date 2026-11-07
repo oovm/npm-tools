@@ -67,6 +67,30 @@ nifty trust             # only for a newly added @doki-land/* package name
 stubs that configure Trusted Publisher, never for a real release. If the tag or CI fails, stop and report. Do not
 switch to a local publish to finish the task.
 
+`nifty bump` does not rewrite `Cargo.lock`. Member versions are recorded there, so the bumped tree fails `--locked`
+until the lock is refreshed. Refresh it in a clean clone (`cargo metadata --offline`, then check that the diff is only
+the member versions) and ship it in the same commit as the manifests.
+
+### Pinned toolchain
+
+`rust-toolchain.toml` and every workflow pin `nightly-2026-11-07` (`rustc 1.101.0-nightly`). Nightly is required, not
+cosmetic: the pinned `oak` revision uses `#![feature(new_range_api)]`, so stable cannot build the workspace.
+
+Update the pin deliberately, never as a side effect of another change:
+
+- Who: the maintainer cutting the next release.
+- When: at most once per release cycle, and only with a green `check-rust` matrix on the resulting commit.
+- Trigger: an `oak` revision bump that needs newer syntax, or a compiler fix we need. A stale pin is harmless, a
+  floating `nightly` is not — a bad nightly would break the release chain with no commit to point at.
+
+`npm install -g npm@12.2.2` in `publish-npm.yml` is the version that carried the last successful publish. Trusted
+Publishing only requires `>= 11.5.1`, so the pin tracks the newest major already proven in this repository rather than
+the floor.
+
+`napi build --cargo-flags=--locked` does not fail closed: `napi` runs an unlocked `cargo metadata` first, so a stale
+`Cargo.lock` is rewritten before the build starts. `ci-gate` is what actually pins the graph — it requires `check-rust`
+green with `--locked` on the same commit, so a stale lock blocks the release instead of shipping a re-resolved build.
+
 ## Commit messages
 
 Gitmoji-first, English subject and body, identifiers in backticks. See `nifty-commit` skill for lint rules. Release
