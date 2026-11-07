@@ -12,8 +12,13 @@ const PACKAGE_BY_ASSET: Record<string, string> = {
     "nifty-darwin-arm64.node": "nifty-darwin-arm64",
 };
 
-/** Matrix platforms that must be present after install (matches publish-npm.yml). */
-const REQUIRED_PACKAGES = ["nifty-win32-x64", "nifty-linux-x64", "nifty-darwin-arm64"];
+/**
+ * Every platform in the publish matrix must be staged. A platform that is merely
+ * skipped here still passes for "staged" while the meta package ships a dangling
+ * optional dependency, so the required set is derived from the asset mapping
+ * instead of a hand-maintained subset.
+ */
+const REQUIRED_PACKAGES = Object.values(PACKAGE_BY_ASSET);
 
 export type InstallNativeOptions = {
     /** Downloaded CI artifact tree (walked recursively for .node files). */
