@@ -1,4 +1,5 @@
 import { readFile, writeFile } from "node:fs/promises";
+import { isAbsolute, resolve } from "node:path";
 
 import type { Cli, ParsedOptions } from "@vmz/commander";
 
@@ -49,7 +50,7 @@ export function registerCommitCommand(cli: Cli): void {
 export async function cmdCommitExport(options: ParsedOptions): Promise<number> {
     await bootstrapFromOptions(options);
     const base = requireStr(options, "base");
-    const path = str(options, "path") ?? "commit.pending.json";
+    const path = historyPath(options, "commit.pending.json");
     const native = loadNiftyNative();
     const report = native.history["commit-export"]({
         cwd: cwdFrom(options),
@@ -80,7 +81,7 @@ export async function cmdCommitExport(options: ParsedOptions): Promise<number> {
 export async function cmdCommitApply(options: ParsedOptions): Promise<number> {
     await bootstrapFromOptions(options);
     const base = requireStr(options, "base");
-    const path = requireStr(options, "path");
+    const path = historyPath(options);
     const dryRun = flag(options, "dry-run");
     const native = loadNiftyNative();
     const report = native.history["commit-apply"]({
@@ -223,4 +224,16 @@ function requireStr(options: ParsedOptions, key: string): string {
         throw new Error(`missing required --${key}`);
     }
     return value;
+}
+
+/** Resolve a history file against the invocation root (`-C`), not the caller's process cwd. */
+function historyPath(options: ParsedOptions, fallback?: string): string {
+    const raw = str(options, "path") ?? fallback;
+    if (!raw) {
+        throw new Error("missing required --path");
+    }
+    if (isAbsolute(raw)) {
+        return raw;
+    }
+    return resolve(cwdFrom(options) ?? process.cwd(), raw);
 }
