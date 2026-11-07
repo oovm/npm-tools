@@ -195,3 +195,105 @@ fn publish_workspace_dry_run_restores_manifest() {
     let after = fs::read_to_string(&main_manifest).expect("read manifest");
     assert_eq!(before, after);
 }
+
+/// Native platform package (os + cpu) with no staged `.node` yet.
+fn write_native_package(root: &std::path::Path) {
+    let dir = root.join("projects").join("packages").join("native");
+    fs::create_dir_all(&dir).expect("mkdir native");
+    fs::write(
+        dir.join("package.json"),
+        r#"{
+    "name": "@scope/native",
+    "version": "0.0.0",
+    "os": ["linux"],
+    "cpu": ["x64"]
+}"#,
+    )
+    .expect("write native package.json");
+    let dir = root.join("projects").join("packages").join("main");
+    fs::create_dir_all(&dir).expect("mkdir main");
+    fs::write(
+        dir.join("package.json"),
+        r#"{
+    "name": "@scope/main",
+    "version": "0.0.0",
+    "optionalDependencies": { "@scope/native": "0.0.0" }
+}"#,
+    )
+    .expect("write main package.json");
+}
+
+fn fake_npm(root: &std::path::Path) -> std::path::PathBuf {
+    let npm = write_fake_npm(root);
+    let bin = npm.parent().expect("fake npm dir");
+    fs::write(bin.join("fail-package.txt"), "none").expect("fail package");
+    fs::write(bin.join("staged-package.txt"), "none").expect("staged package");
+    npm
+}
+
+#[test]
+fn missing_native_binary_fails_before_publishing_dependents() {
+    if !node_available() {
+        return;
+    }
+
+    let root = create_folder().expect("tempdir");
+    write_workspace_skeleton(root.path());
+    write_native_package(root.path());
+
+    let error = publish_workspace(PublishOptions {
+        cwd: Some(root.path().to_path_buf()),
+        dry_run: false,
+        refresh: false,
+        placeholder: false,
+        tag: None,
+        access: Some("public".to_string()),
+        npm: Some(fake_npm(root.path())),
+        otp: OtpOverrides::default(),
+        trust: None,
+        only: None,
+        packages: None,
+        version: None,
+    })
+    .expect_err("a platform package without a staged binary must fail the publish");
+
+    assert!(error.contains("@scope/native"), "error must name the platform package: {error}");
+    assert!(error.contains("install-native"), "error must name the staging step: {error}");
+    assert!(
+        !root.path().join("projects/packages/main/published.marker").exists(),
+        "the dependent package must not be published after a missing native binary"
+    );
+}
+
+#[test]
+fn staged_native_binary_publishes_the_workspace() {
+    if !node_available() {
+        return;
+    }
+
+    let root = create_folder().expect("tempdir");
+    write_workspace_skeleton(root.path());
+    write_native_package(root.path());
+    let lib = root.path().join("projects/packages/native/lib");
+    fs::create_dir_all(&lib).expect("mkdir lib");
+    fs::write(lib.join("addon.node"), b"bin").expect("write addon");
+
+    let report = publish_workspace(PublishOptions {
+        cwd: Some(root.path().to_path_buf()),
+        dry_run: false,
+        refresh: false,
+        placeholder: false,
+        tag: None,
+        access: Some("public".to_string()),
+        npm: Some(fake_npm(root.path())),
+        otp: OtpOverrides::default(),
+        trust: None,
+        only: None,
+        packages: None,
+        version: None,
+    })
+    .expect("publish");
+
+    assert_eq!(report.published.len(), 2, "both packages must be published: {report:?}");
+    assert!(root.path().join("projects/packages/main/published.marker").is_file());
+}

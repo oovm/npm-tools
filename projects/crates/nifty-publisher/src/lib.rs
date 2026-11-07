@@ -119,7 +119,10 @@ pub fn publish_workspace(options: PublishOptions) -> Result<PublishReport> {
             }
         }
         if is_native_binary_package(package) && !has_staged_native_binary(package) && !options.placeholder {
-            println!("skip publish {name} (no staged native binary)");
+            if !options.dry_run {
+                return Err(unstaged_native_error(&registry));
+            }
+            println!("skip publish {name} (dry run: no staged native binary)");
             continue;
         }
         println!("publishing {registry}@{publish_version}");
@@ -167,6 +170,18 @@ pub fn publish_workspace(options: PublishOptions) -> Result<PublishReport> {
 fn is_native_binary_package(package: &NpmPackage) -> bool {
     package.manifest.os.as_ref().is_some_and(|os| !os.is_empty())
         && package.manifest.cpu.as_ref().is_some_and(|cpu| !cpu.is_empty())
+}
+
+/// A native platform package that would be skipped for a missing `.node`.
+///
+/// The meta package lists these platform packages as optional dependencies, so a
+/// release that silently drops one installs without native bindings on that
+/// platform. Publishing stops before the dependent packages are reached, because
+/// the plan always orders platform packages first.
+fn unstaged_native_error(registry: &str) -> String {
+    format!(
+        "missing staged native binary for {registry} — stage every platform with `nifty install-native --from-artifacts` before publishing"
+    )
 }
 
 fn has_staged_native_binary(package: &NpmPackage) -> bool {
@@ -362,7 +377,7 @@ mod native_binary_tests {
 
     use boost_fs::temp::create_folder;
 
-    use super::{has_staged_native_binary, is_native_binary_package};
+    use super::{has_staged_native_binary, is_native_binary_package, unstaged_native_error};
     use crate::workspace::{NpmPackage, PackageManifest};
 
     fn package_with_dir(name: &str, dir: PathBuf, os: Option<Vec<String>>, cpu: Option<Vec<String>>) -> NpmPackage {
@@ -421,6 +436,13 @@ mod native_binary_tests {
         assert!(!has_staged_native_binary(&root_pkg));
         fs::write(root_pkg.dir.join("addon.node"), b"bin").expect("write root addon");
         assert!(has_staged_native_binary(&root_pkg));
+    }
+
+    #[test]
+    fn missing_staged_binary_fails_a_real_publish() {
+        let error = unstaged_native_error("@scope/native");
+        assert!(error.contains("@scope/native"), "error must name the platform package: {error}");
+        assert!(error.contains("install-native"), "error must name the staging step: {error}");
     }
 }
 
