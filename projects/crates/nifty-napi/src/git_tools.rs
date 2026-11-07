@@ -207,12 +207,13 @@ fn to_planned_change(change: nifty_history::commit::PlannedChange) -> CommitPlan
 
 #[napi]
 pub fn git_tools_commit_export(options: CommitExportOptions) -> Result<CommitExportReport> {
-    let repo = open_repo_at(options.cwd)?;
+    let root = repo_root_from_cwd(options.cwd)?;
+    let repo = map_err(open(&root))?;
     let ref_name = options.r#ref.as_deref().unwrap_or("HEAD");
     let exclusive_base = map_err(resolve_rev(&repo, &options.base))?;
     let tip = map_err(resolve_ref_tip(&repo, ref_name))?;
     let count = map_err(reword_collect_commits(&repo, exclusive_base, tip))?.len();
-    let path = PathBuf::from(&options.path);
+    let path = resolve_input_path(&root, &options.path);
     map_err(export_map(&repo, exclusive_base, tip, &path))?;
     Ok(CommitExportReport { count: count as u32, path: path.display().to_string() })
 }
@@ -342,6 +343,12 @@ fn default_releases_dir(repo_root: &Path) -> PathBuf {
     repo_root.join("documentation/maintenance/releases")
 }
 
+/// Resolve a user-supplied path against the repository named by `-C`, not the process cwd.
+fn resolve_input_path(repo_root: &Path, value: &str) -> PathBuf {
+    let path = PathBuf::from(value);
+    if path.is_absolute() { path } else { repo_root.join(path) }
+}
+
 #[napi]
 pub fn git_tools_changelog_render(options: ChangelogRenderOptions) -> Result<ChangelogRenderReport> {
     let repo_root = repo_root_from_cwd(options.cwd)?;
@@ -360,8 +367,16 @@ pub fn git_tools_changelog_render(options: ChangelogRenderOptions) -> Result<Cha
     }
 
     let github_repo = resolve_github_repo(&repo_root, options.repo.as_deref())?;
-    let author_map_path = options.author_map.map(PathBuf::from).unwrap_or_else(|| default_author_map_path(&repo_root));
-    let releases_dir = options.releases_dir.map(PathBuf::from).unwrap_or_else(|| default_releases_dir(&repo_root));
+    let author_map_path = options
+        .author_map
+        .as_deref()
+        .map(|value| resolve_input_path(&repo_root, value))
+        .unwrap_or_else(|| default_author_map_path(&repo_root));
+    let releases_dir = options
+        .releases_dir
+        .as_deref()
+        .map(|value| resolve_input_path(&repo_root, value))
+        .unwrap_or_else(|| default_releases_dir(&repo_root));
     let author_map = load_author_map(&author_map_path);
 
     let (version, from_ref, to_ref) = map_err(changelog_resolve_range(
@@ -406,7 +421,11 @@ pub fn git_tools_changelog_render(options: ChangelogRenderOptions) -> Result<Cha
 #[napi]
 pub fn git_tools_changelog_lookup(options: ChangelogLookupOptions) -> Result<ChangelogGithubAuthor> {
     let repo_root = repo_root_from_cwd(options.cwd)?;
-    let map_path = options.map.map(PathBuf::from).unwrap_or_else(|| default_author_map_path(&repo_root));
+    let map_path = options
+        .map
+        .as_deref()
+        .map(|value| resolve_input_path(&repo_root, value))
+        .unwrap_or_else(|| default_author_map_path(&repo_root));
     let map = load_author_map(&map_path);
     let token = options.github_token.as_deref();
     let fetch = options.fetch.unwrap_or(false);
