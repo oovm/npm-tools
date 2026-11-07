@@ -4,14 +4,25 @@ use nifty_linter::{
 use std::{
     fs,
     path::{Path, PathBuf},
+    process::Command,
 };
 
+fn git(dir: &Path, args: &[&str]) {
+    let status = Command::new("git").args(args).current_dir(dir).status().expect("run git");
+    assert!(status.success(), "git {args:?} failed");
+}
+
+/// `-C` decides which repository is linted, so every scratch project must be a real repository.
 fn scratch(name: &str) -> PathBuf {
     let dir = std::env::temp_dir().join(format!("nifty-linter-{name}-{}", std::process::id()));
     if dir.exists() {
         fs::remove_dir_all(&dir).expect("reset scratch dir");
     }
     fs::create_dir_all(&dir).expect("create scratch dir");
+    git(&dir, &["init", "-q"]);
+    git(&dir, &["config", "user.email", "probe@example.com"]);
+    git(&dir, &["config", "user.name", "Probe"]);
+    git(&dir, &["commit", "-q", "--allow-empty", "-m", "🎂 Project initialized!"]);
     dir
 }
 

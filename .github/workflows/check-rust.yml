@@ -40,4 +40,7 @@ jobs:
       - name: Build
         run: cargo build --release --workspace
       - name: Tests
-        run: cargo test --release --workspace
+        # `--no-fail-fast` keeps every crate's tests in the log: without it, a failing
+        # target stops the workspace run and later crates look green only because
+        # they never executed.
+        run: cargo test --release --workspace --no-fail-fast
