@@ -1,6 +1,6 @@
 //! 只读 git 子进程与 tag 区间解析。
 
-use std::{path::Path, process::Command};
+use std::{cmp::Ordering, path::Path, process::Command};
 
 use crate::{
     changelog::gitmoji::{leading_gitmoji, section_for_gitmoji, strip_gitmoji},
@@ -67,31 +67,69 @@ pub fn version_tag(version: &str) -> String {
 pub fn previous_version_tag(repo_root: &Path, version: &str) -> Result<Option<String>> {
     let target = version_tag(version);
     let tags = list_version_tags(repo_root)?;
-    if let Some(index) = tags.iter().position(|tag| tag == &target) {
-        if index > 0 {
-            return Ok(Some(tags[index - 1].clone()));
-        }
+    if !tags.iter().any(|tag| tag == &target) {
         return Ok(None);
     }
+    Ok(select_previous_tag(&tags, &target))
+}
 
-    let normalized = normalize_version(version);
-    let parts: Vec<&str> = normalized.split('.').collect();
-    if parts.len() != 3 {
-        return Ok(None);
-    }
-    let numbers: Option<Vec<u32>> = parts.iter().map(|part| part.parse().ok()).collect();
-    let Some(numbers) = numbers
-    else {
-        return Ok(None);
-    };
-    if numbers[2] > 0 {
-        let prev = format!("{}.{}.{}", numbers[0], numbers[1], numbers[2] - 1);
-        let tag = version_tag(&prev);
-        if tags.iter().any(|existing| existing == &tag) {
-            return Ok(Some(tag));
+/// Greatest release tag below `target` by semver precedence.
+///
+/// `git tag --sort=version:refname` puts `v0.1.2` before `v0.1.2-beta.1`, so plain positional
+/// lookup would treat the stable release as the predecessor of its own pre-release.
+fn select_previous_tag(tags: &[String], target: &str) -> Option<String> {
+    let target_key = parse_version_key(target)?;
+    tags.iter()
+        .filter(|tag| tag.as_str() != target)
+        .filter_map(|tag| parse_version_key(tag).map(|key| (tag, key)))
+        .filter(|(_, key)| compare_version_keys(key, &target_key) == Ordering::Less)
+        .max_by(|(_, left), (_, right)| compare_version_keys(left, right))
+        .map(|(tag, _)| tag.clone())
+}
+
+struct VersionKey {
+    core: (u64, u64, u64),
+    pre: Option<Vec<String>>,
+}
+
+fn parse_version_key(tag: &str) -> Option<VersionKey> {
+    static VERSION_TAG: std::sync::OnceLock<regex::Regex> = std::sync::OnceLock::new();
+    let re = VERSION_TAG.get_or_init(|| regex::Regex::new(r"^v?(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z.-]+))?$").unwrap());
+    let caps = re.captures(tag)?;
+    let core = (caps.get(1)?.as_str().parse().ok()?, caps.get(2)?.as_str().parse().ok()?, caps.get(3)?.as_str().parse().ok()?);
+    let pre = caps.get(4).map(|value| value.as_str().split('.').map(str::to_string).collect());
+    Some(VersionKey { core, pre })
+}
+
+fn compare_version_keys(left: &VersionKey, right: &VersionKey) -> Ordering {
+    left.core.cmp(&right.core).then_with(|| compare_pre(left.pre.as_deref(), right.pre.as_deref()))
+}
+
+/// Semver precedence: a release sorts above any of its pre-releases.
+fn compare_pre(left: Option<&[String]>, right: Option<&[String]>) -> Ordering {
+    match (left, right) {
+        (None, None) => Ordering::Equal,
+        (None, Some(_)) => Ordering::Greater,
+        (Some(_), None) => Ordering::Less,
+        (Some(left), Some(right)) => {
+            for (left_id, right_id) in left.iter().zip(right.iter()) {
+                let order = compare_pre_id(left_id, right_id);
+                if order != Ordering::Equal {
+                    return order;
+                }
+            }
+            left.len().cmp(&right.len())
         }
     }
-    Ok(None)
+}
+
+fn compare_pre_id(left: &str, right: &str) -> Ordering {
+    match (left.parse::<u64>(), right.parse::<u64>()) {
+        (Ok(left), Ok(right)) => left.cmp(&right),
+        (Ok(_), Err(_)) => Ordering::Less,
+        (Err(_), Ok(_)) => Ordering::Greater,
+        (Err(_), Err(_)) => left.cmp(right),
+    }
 }
 
 /// 列出 tag 与短 hash（`--tags` 子命令输出）。
@@ -149,7 +187,7 @@ pub fn resolve_range(
 ) -> Result<(String, Option<String>, String)> {
     if let Some(version) = version {
         let tag = version_tag(version);
-        verify_commit_ref(repo_root, &tag)?;
+        verify_commit_ref(repo_root, &tag).map_err(|_| validation_with_input("release tag does not exist", tag.as_str()))?;
         let prev = previous_version_tag(repo_root, version)?;
         return Ok((normalize_version(version), prev, tag));
     }
@@ -160,9 +198,9 @@ pub fn resolve_range(
     };
 
     let to_ref = to_ref_name(to);
-    verify_commit_ref(repo_root, &to_ref)?;
+    verify_commit_ref(repo_root, &to_ref).map_err(|_| validation_with_input("ref is not a commit", to_ref.as_str()))?;
     if let Some(from_ref) = from {
-        verify_commit_ref(repo_root, from_ref)?;
+        verify_commit_ref(repo_root, from_ref).map_err(|_| validation_with_input("ref is not a commit", from_ref))?;
     }
 
     let version_label = regex_version_label(&to_ref).unwrap_or_else(|| to_ref.trim_start_matches('v').to_string());
@@ -182,17 +220,17 @@ fn regex_version_label(reference: &str) -> Option<String> {
     re.captures(reference).and_then(|caps| caps.get(1).map(|m| m.as_str().to_string()))
 }
 
-/// Display name of a rendered release: versions gain a `v` prefix, plain refs stay as-is.
+/// Display name of a rendered release: versions stay prefixed with `v`, plain refs stay as-is.
 ///
 /// A branch range such as `v0.1.0..dev` is not a release version, so `vdev` must never appear
 /// in the heading or in the suggested release-note file name.
 pub fn release_name(label: &str) -> String {
-    if regex_version_label(label).is_some() { format!("v{label}") } else { label.to_string() }
+    if label.starts_with(|c: char| c.is_ascii_digit()) { format!("v{label}") } else { label.to_string() }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{release_name, to_ref_name};
+    use super::{release_name, select_previous_tag, to_ref_name};
 
     #[test]
     fn bare_version_gains_a_v_prefix() {
@@ -209,10 +247,33 @@ mod tests {
     }
 
     #[test]
-    fn release_name_only_prefixes_versions() {
+    fn release_name_prefixes_versions_and_keeps_refs() {
         assert_eq!(release_name("0.1.1"), "v0.1.1");
+        assert_eq!(release_name("0.1.2-beta.1"), "v0.1.2-beta.1");
         assert_eq!(release_name("dev"), "dev");
         assert_eq!(release_name("origin/dev"), "origin/dev");
+    }
+
+    #[test]
+    fn previous_tag_never_picks_the_release_of_a_prerelease() {
+        let tags: Vec<String> = ["v0.1.0", "v0.1.1", "v0.1.2", "v0.1.2-beta.1"].map(str::to_string).to_vec();
+        assert_eq!(select_previous_tag(&tags, "v0.1.2-beta.1"), Some("v0.1.1".to_string()));
+        assert_eq!(select_previous_tag(&tags, "v0.1.2"), Some("v0.1.2-beta.1".to_string()));
+        assert_eq!(select_previous_tag(&tags, "v0.1.0"), None);
+    }
+
+    #[test]
+    fn previous_tag_orders_prerelease_identifiers() {
+        let tags: Vec<String> = ["v1.0.0-alpha.1", "v1.0.0-alpha.2", "v1.0.0-beta.1", "v1.0.0"].map(str::to_string).to_vec();
+        assert_eq!(select_previous_tag(&tags, "v1.0.0"), Some("v1.0.0-beta.1".to_string()));
+        assert_eq!(select_previous_tag(&tags, "v1.0.0-beta.1"), Some("v1.0.0-alpha.2".to_string()));
+        assert_eq!(select_previous_tag(&tags, "v1.0.0-alpha.2"), Some("v1.0.0-alpha.1".to_string()));
+    }
+
+    #[test]
+    fn previous_tag_skips_non_version_tags() {
+        let tags: Vec<String> = ["v0.1.0", "vnightly"].map(str::to_string).to_vec();
+        assert_eq!(select_previous_tag(&tags, "v0.1.0"), None);
     }
 }
 
