@@ -6,6 +6,7 @@
     },
     "scripts": {
         "build": "cargo build --release",
+        "build:ci": "cargo build --release --locked",
         "build:napi": "node scripts/build-napi.mjs",
         "test": "cargo test --release --workspace --no-fail-fast",
         "test:ci": "cargo test --release --workspace --no-fail-fast --locked",

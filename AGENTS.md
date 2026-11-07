@@ -48,6 +48,10 @@ pnpm --filter @doki-land/nifty run build
 pnpm exec nifty --help
 ```
 
+`build:napi` runs `cargo metadata --locked` first and refuses to compile when `Cargo.lock` is out of sync, so a local
+Oak overlay has to be off for it. `pnpm run build` (plain `cargo build --release`) stays patch-friendly, and
+`pnpm run build:ci` reproduces the CI `--locked` flags.
+
 Hybrid monorepo layout: `projects/crates/` (Rust), `projects/packages/` (npm).
 
 ## Release policy
@@ -87,9 +91,10 @@ Update the pin deliberately, never as a side effect of another change:
 Publishing only requires `>= 11.5.1`, so the pin tracks the newest major already proven in this repository rather than
 the floor.
 
-`napi build --cargo-flags=--locked` does not fail closed: `napi` runs an unlocked `cargo metadata` first, so a stale
-`Cargo.lock` is rewritten before the build starts. `ci-gate` is what actually pins the graph — it requires `check-rust`
-green with `--locked` on the same commit, so a stale lock blocks the release instead of shipping a re-resolved build.
+`napi build --cargo-flags=--locked` is not the drift guard: `napi` runs an unlocked `cargo metadata` first, so a stale
+`Cargo.lock` would be rewritten before the build starts. `build:napi` therefore checks `cargo metadata --locked` before
+anything compiles and exits non-zero on a mismatch. `ci-gate` remains the real pin for the published graph — it requires
+`check-rust` green with `--locked` on the same commit — and the pre-check only keeps this build honest.
 
 ## Commit messages
 

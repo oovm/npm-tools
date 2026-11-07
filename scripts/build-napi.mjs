@@ -1,4 +1,4 @@
-import { execSync } from "node:child_process";
+import { execFileSync, execSync } from "node:child_process";
 import { copyFileSync, mkdirSync, readdirSync, unlinkSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -34,7 +34,23 @@ function findBuiltNodes(dir) {
     return readdirSync(dir).filter((name) => name.endsWith(".node"));
 }
 
-// `--locked` keeps the shipped `.node` on the committed dependency graph instead of re-resolving it.
+// `napi` runs an unlocked `cargo metadata` of its own before the locked build, so a stale
+// `Cargo.lock` would be rewritten and the build would carry on. Check it here, before anything
+// compiles, and fail loudly instead. `--cargo-flags=--locked` is not the drift guard: `ci-gate`
+// is what pins the published graph, and this check only keeps this build honest.
+try {
+    execFileSync("cargo", ["metadata", "--format-version", "1", "--locked"], {
+        cwd: root,
+        encoding: "utf8",
+        stdio: ["ignore", "ignore", "pipe"],
+    });
+} catch (error) {
+    console.error("Cargo.lock does not match the workspace manifests.");
+    console.error(String(error.stderr ?? "").trim() || error.message);
+    console.error("Refresh the lock where the local Oak overlay is off, then rebuild.");
+    process.exit(1);
+}
+
 execSync("pnpm exec napi build --platform --release --cargo-flags=--locked", {
     cwd: napiDir,
     stdio: "inherit",
