@@ -46,6 +46,13 @@ Flat `{ "abc12345": "message" }` is also accepted.
 
 Hash prefixes must be **unique** within the rewrite range.
 
+### Tags are never moved
+
+`commit apply` does not retarget tags. When a tag points inside the rewritten range, the command prints a warning
+listing every such tag, and the tag keeps pointing at the pre-rewrite commit. Re-create or manually review those tags
+before drafting release notes — otherwise `nifty change-logs` may miss rewritten commits. There is no implicit tag
+migration and no `tag retarget` command today.
+
 ## Retime
 
 Spread author and committer timestamps across a window. Writes a **new branch** (default `time-travel`); current branch
@@ -80,5 +87,6 @@ commit apply/retime use gix object writes.
 | `--dry-run` before `commit apply`          | Force-push without user consent                                |
 | Explicit `--ref` when HEAD is detached     | Use `git rebase -i` when user asked for Nifty tools            |
 | Explain parent relink-only rows in dry-run | Amend commits with `git commit --amend` for bulk history fixes |
+| Re-point affected tags manually after apply | Assume tags follow rewritten commits                          |
 
 After apply, the user must force-update the target ref if it was already published.

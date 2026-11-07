@@ -133,3 +133,7 @@ Then `nifty publish` includes staged `@doki-land/nifty-<platform>` packages.
 5. **`nifty trust`** for any **new** package name not yet on the Trusted Publisher list
 6. `nifty change-logs --version X.Y.Z --write` for reference draft
 7. `nifty upload --release …` when generic assets need GitHub Release upload
+
+If history was rewritten with `nifty commit apply`, tags inside that range still point at the pre-rewrite commits
+(apply warns and never moves them). Re-create those tags before step 6 — `nifty change-logs` derives its range from
+tags and would otherwise miss rewritten commits.
