@@ -10,7 +10,7 @@ use napi_derive::napi;
 use nifty_history::{
     changelog::{
         collect_commits as changelog_collect_commits, collect_contributors_from_commits, detect_github_repo,
-        fetch_github_user_by_login, format_tag_list, group_commits, load_author_map, lookup_github_user_by_email,
+        fetch_github_user_by_login, format_tag_list, group_commits, load_author_map, lookup_github_user_by_email, release_name,
         render_contributor_wall, render_reference, resolve_range as changelog_resolve_range,
     },
     commit::{
@@ -386,7 +386,8 @@ pub fn git_tools_changelog_render(options: ChangelogRenderOptions) -> Result<Cha
     let mut written_path = None;
     if options.write.unwrap_or(false) {
         std::fs::create_dir_all(&releases_dir).map_err(|err| Error::from_reason(err.to_string()))?;
-        let out_path = releases_dir.join(format!("v{version}.reference.md"));
+        let release = release_name(&version);
+        let out_path = releases_dir.join(format!("{release}.reference.md"));
         std::fs::write(&out_path, &notes).map_err(|err| Error::from_reason(err.to_string()))?;
         written_path = Some(out_path.strip_prefix(&repo_root).unwrap_or(&out_path).display().to_string());
     }

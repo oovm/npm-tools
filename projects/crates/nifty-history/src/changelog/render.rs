@@ -97,11 +97,12 @@ pub fn render_reference(
         Some(from) => format!("{from}..{to_ref}"),
         None => to_ref.to_string(),
     };
+    let name = super::git_cmd::release_name(version);
     let mut lines = vec![
-        format!("# Reference: v{version} (`{range_label}`)"),
+        format!("# Reference: {name} (`{range_label}`)"),
         String::new(),
         format!(
-            "> Commit index for drafting `documentation/maintenance/releases/v{version}.md`. Temporary file — do not commit or publish as the GitHub Release body."
+            "> Commit index for drafting `documentation/maintenance/releases/{name}.md`. Temporary file — do not commit or publish as the GitHub Release body."
         ),
         String::new(),
     ];

@@ -159,7 +159,7 @@ pub fn resolve_range(
         return Err(crate::error::validation("need --version=X.Y.Z or --to=REF (optional --from=REF)"));
     };
 
-    let to_ref = if to.starts_with('v') || is_hex_oid(to) { to.to_string() } else { version_tag(to) };
+    let to_ref = to_ref_name(to);
     verify_commit_ref(repo_root, &to_ref)?;
     if let Some(from_ref) = from {
         verify_commit_ref(repo_root, from_ref)?;
@@ -169,14 +169,51 @@ pub fn resolve_range(
     Ok((version_label, from.map(str::to_string), to_ref))
 }
 
-fn is_hex_oid(value: &str) -> bool {
-    value.len() >= 7 && value.len() <= 40 && value.chars().all(|ch| ch.is_ascii_hexdigit())
+/// `--to` accepts both a bare version (`0.1.1` → `v0.1.1`) and any git ref.
+///
+/// Branch names such as `dev` must stay untouched instead of being turned into `vdev`.
+fn to_ref_name(to: &str) -> String {
+    if regex_version_label(to).is_some() { version_tag(to) } else { to.to_string() }
 }
 
 fn regex_version_label(reference: &str) -> Option<String> {
     static VERSION: std::sync::OnceLock<regex::Regex> = std::sync::OnceLock::new();
     let re = VERSION.get_or_init(|| regex::Regex::new(r"^v?(\d+\.\d+\.\d+)$").unwrap());
     re.captures(reference).and_then(|caps| caps.get(1).map(|m| m.as_str().to_string()))
+}
+
+/// Display name of a rendered release: versions gain a `v` prefix, plain refs stay as-is.
+///
+/// A branch range such as `v0.1.0..dev` is not a release version, so `vdev` must never appear
+/// in the heading or in the suggested release-note file name.
+pub fn release_name(label: &str) -> String {
+    if regex_version_label(label).is_some() { format!("v{label}") } else { label.to_string() }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{release_name, to_ref_name};
+
+    #[test]
+    fn bare_version_gains_a_v_prefix() {
+        assert_eq!(to_ref_name("0.1.1"), "v0.1.1");
+    }
+
+    #[test]
+    fn version_tags_and_refs_are_kept() {
+        assert_eq!(to_ref_name("v0.1.1"), "v0.1.1");
+        assert_eq!(to_ref_name("dev"), "dev");
+        assert_eq!(to_ref_name("origin/dev"), "origin/dev");
+        assert_eq!(to_ref_name("HEAD~2"), "HEAD~2");
+        assert_eq!(to_ref_name("4efe948"), "4efe948");
+    }
+
+    #[test]
+    fn release_name_only_prefixes_versions() {
+        assert_eq!(release_name("0.1.1"), "v0.1.1");
+        assert_eq!(release_name("dev"), "dev");
+        assert_eq!(release_name("origin/dev"), "origin/dev");
+    }
 }
 
 /// 从 `origin` remote URL 解析 `owner/repo`。
