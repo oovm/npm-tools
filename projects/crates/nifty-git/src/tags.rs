@@ -27,6 +27,9 @@ pub fn list_tag_infos(repo_root: &Path) -> Result<Vec<TagInfo>> {
     let mut names = Vec::new();
     for reference in repo.references().map_err(|err| err.to_string())?.all().map_err(|err| err.to_string())? {
         let reference = reference.map_err(|err| err.to_string())?;
+        if reference.name().category() != Some(gix::refs::Category::Tag) {
+            continue;
+        }
         let name = reference.name().shorten().to_string();
         if name.starts_with('v') {
             names.push(name);
@@ -78,22 +81,5 @@ pub fn version_tag(version: &str) -> String {
 pub fn previous_version_tag(repo_root: &Path, version: &str) -> Result<Option<String>> {
     let target = version_tag(version);
     let tags = list_version_tags(repo_root)?;
-    if let Some(index) = tags.iter().position(|tag| tag == &target) {
-        if index > 0 {
-            return Ok(Some(tags[index - 1].clone()));
-        }
-        return Ok(None);
-    }
-    let normalized = normalize_version(version);
-    let parsed = Version::parse(&normalized).ok();
-    if let Some(current) = parsed {
-        if current.patch > 0 {
-            let prev = format!("{}.{}.{}", current.major, current.minor, current.patch - 1);
-            let tag = version_tag(&prev);
-            if tags.iter().any(|existing| existing == &tag) {
-                return Ok(Some(tag));
-            }
-        }
-    }
-    Ok(None)
+    Ok(tags.iter().position(|tag| tag == &target).and_then(|index| index.checked_sub(1)).map(|index| tags[index].clone()))
 }

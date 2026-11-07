@@ -233,11 +233,12 @@ pub fn resolve_range(
     Ok((version_label, from.map(str::to_string), to_ref))
 }
 
-/// `--to` accepts both a bare version (`0.1.1` → `v0.1.1`) and any git ref.
+/// `--to` accepts both a bare version (`0.1.1` → `v0.1.1`, `0.1.2-beta.1` → `v0.1.2-beta.1`) and any git ref.
 ///
 /// Branch names such as `dev` must stay untouched instead of being turned into `vdev`.
 fn to_ref_name(to: &str) -> String {
-    if regex_version_label(to).is_some() { version_tag(to) } else { to.to_string() }
+    let candidate = to.strip_prefix('v').unwrap_or(to);
+    if semver::Version::parse(candidate).is_ok() { version_tag(to) } else { to.to_string() }
 }
 
 fn regex_version_label(reference: &str) -> Option<String> {
@@ -261,6 +262,8 @@ mod tests {
     #[test]
     fn bare_version_gains_a_v_prefix() {
         assert_eq!(to_ref_name("0.1.1"), "v0.1.1");
+        assert_eq!(to_ref_name("0.1.2-beta.1"), "v0.1.2-beta.1");
+        assert_eq!(to_ref_name("v0.1.2-beta.1"), "v0.1.2-beta.1");
     }
 
     #[test]

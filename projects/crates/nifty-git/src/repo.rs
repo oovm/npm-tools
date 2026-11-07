@@ -17,9 +17,12 @@ pub fn open_repo(start: &Path) -> Result<Repository> {
     gix::discover(start).map_err(|err| err.to_string())
 }
 
-/// 将 revision 解析为 commit OID。
+/// 将 revision 解析为 commit OID，annotated tag 会被剥离到它指向的 commit。
 pub fn resolve_rev(repo: &Repository, reference: &str) -> Result<ObjectId> {
-    Ok(repo.rev_parse_single(reference).map_err(|err| err.to_string())?.detach())
+    let id = repo.rev_parse_single(reference).map_err(|err| err.to_string())?;
+    let object = id.object().map_err(|err| err.to_string())?;
+    let commit = object.peel_to_commit().map_err(|err| err.to_string())?;
+    Ok(commit.id)
 }
 
 /// 校验 ref 可解析为 commit。

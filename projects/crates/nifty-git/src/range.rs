@@ -34,7 +34,7 @@ pub fn resolve_range(repo_root: &Path, version: Option<&str>, from: Option<&str>
     else {
         return Err("need version=X.Y.Z or to=REF (optional from=REF)".to_string());
     };
-    let to_ref = if to.starts_with('v') || is_hex_oid(to) { to.to_string() } else { version_tag(to) };
+    let to_ref = to_ref_name(to);
     let repo = open_repo(repo_root)?;
     verify_commit_ref(&repo, &to_ref)?;
     if let Some(from_ref) = from {
@@ -44,8 +44,10 @@ pub fn resolve_range(repo_root: &Path, version: Option<&str>, from: Option<&str>
     Ok(RangeInfo { version: version_label, from_ref: from.map(str::to_string), to_ref })
 }
 
-fn is_hex_oid(value: &str) -> bool {
-    value.len() >= 7 && value.len() <= 40 && value.chars().all(|ch| ch.is_ascii_hexdigit())
+/// Bare versions (`0.1.1`, `v0.1.2-beta.1`) become `vX.Y.Z`. Every other value is a git ref and is kept as written.
+fn to_ref_name(to: &str) -> String {
+    let candidate = to.strip_prefix('v').unwrap_or(to);
+    if semver::Version::parse(candidate).is_ok() { version_tag(to) } else { to.to_string() }
 }
 
 fn regex_version_label(reference: &str) -> Option<String> {
