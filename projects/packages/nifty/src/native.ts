@@ -77,6 +77,8 @@ export type RewordRewriteReport = {
     newTip?: string;
     refName: string;
     dryRun: boolean;
+    /** Tags inside the rewritten range. Rewrites never move them. */
+    affectedTags: string[];
 };
 
 export type HistoryExports = {
@@ -342,6 +344,7 @@ type NativeBinding = {
         newTip?: string | null;
         refName: string;
         dryRun: boolean;
+        affectedTags: string[];
     };
     gitToolsRewordExport: (options: {
         cwd?: string | null;
@@ -367,6 +370,7 @@ type NativeBinding = {
         newTip?: string | null;
         refName: string;
         dryRun: boolean;
+        affectedTags: string[];
     };
     gitToolsRetimeRange: (options: {
         cwd?: string | null;
@@ -593,6 +597,7 @@ function wrapBinding(binding: NativeBinding): NiftyNative {
                     newTip: report.newTip ?? undefined,
                     refName: report.refName,
                     dryRun: report.dryRun,
+                    affectedTags: report.affectedTags,
                 };
             },
             "reword-export": (options) =>
@@ -616,6 +621,7 @@ function wrapBinding(binding: NativeBinding): NiftyNative {
                     newTip: report.newTip ?? undefined,
                     refName: report.refName,
                     dryRun: report.dryRun,
+                    affectedTags: report.affectedTags,
                 };
             },
             "retime-range": (options) =>

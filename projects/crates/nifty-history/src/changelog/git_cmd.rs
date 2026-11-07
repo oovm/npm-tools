@@ -53,6 +53,32 @@ pub fn verify_commit_ref(repo_root: &Path, reference: &str) -> Result<()> {
     Ok(())
 }
 
+/// Tag names whose target commit belongs to `commits` (full 40-hex OIDs).
+///
+/// Rewriting history never moves tags, so callers warn when a tag in the rewritten range
+/// still points at a pre-rewrite object.
+pub fn tags_in_range(repo_root: &Path, commits: &[String]) -> Result<Vec<String>> {
+    let out = git_output(repo_root, &["for-each-ref", "--format=%(refname:short) %(objectname) %(*objectname)", "refs/tags"])?;
+    if out.is_empty() {
+        return Ok(Vec::new());
+    }
+    let mut tags = Vec::new();
+    for line in out.lines() {
+        let mut fields = line.split_whitespace();
+        let Some(name) = fields.next()
+        else {
+            continue;
+        };
+        let object = fields.next().unwrap_or_default();
+        let peeled = fields.next().unwrap_or_default();
+        let target = if peeled.is_empty() { object } else { peeled };
+        if commits.iter().any(|oid| oid == target) {
+            tags.push(name.to_string());
+        }
+    }
+    Ok(tags)
+}
+
 /// 去掉可选 `v` 前缀。
 pub fn normalize_version(version: &str) -> String {
     version.trim_start_matches('v').to_string()

@@ -106,6 +106,11 @@ export async function cmdCommitApply(options: ParsedOptions): Promise<number> {
             }
             console.log();
         }
+        if (report.affectedTags.length > 0) {
+            console.log(
+                `dry-run: ${report.affectedTags.length} tag(s) inside the rewritten range would keep pointing at pre-rewrite commits: ${report.affectedTags.join(", ")}`,
+            );
+        }
         return 0;
     }
 
@@ -114,6 +119,13 @@ export async function cmdCommitApply(options: ParsedOptions): Promise<number> {
     );
     for (const change of report.changes) {
         console.log(`  ${change.oldOid}  ${change.newSubject}`);
+    }
+    if (report.affectedTags.length > 0) {
+        console.log();
+        console.log(
+            `warning: ${report.affectedTags.length} tag(s) inside the rewritten range were not moved: ${report.affectedTags.join(", ")}`,
+        );
+        console.log("warning: release notes for these tags may miss rewritten commits, confirm or re-create them manually");
     }
     return 0;
 }

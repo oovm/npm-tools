@@ -11,6 +11,6 @@ pub use author::{
 };
 pub use git_cmd::{
     CommitEntry, collect_commits, detect_github_repo, format_tag_list, list_version_tags, normalize_version,
-    parse_github_remote_repo, previous_version_tag, release_name, resolve_range, verify_commit_ref, version_tag,
+    parse_github_remote_repo, previous_version_tag, release_name, resolve_range, tags_in_range, verify_commit_ref, version_tag,
 };
 pub use render::{collect_contributors_from_commits, group_commits, render_contributor_wall, render_reference};

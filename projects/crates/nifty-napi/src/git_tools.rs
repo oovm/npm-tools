@@ -11,7 +11,7 @@ use nifty_history::{
     changelog::{
         collect_commits as changelog_collect_commits, collect_contributors_from_commits, detect_github_repo,
         fetch_github_user_by_login, format_tag_list, group_commits, load_author_map, lookup_github_user_by_email, release_name,
-        render_contributor_wall, render_reference, resolve_range as changelog_resolve_range,
+        render_contributor_wall, render_reference, resolve_range as changelog_resolve_range, tags_in_range,
     },
     commit::{
         RetimeOptions, RetimeRootOptions, collect_commits as reword_collect_commits, dry_run_plan, export_map, head_ref_name,
@@ -61,6 +61,8 @@ pub struct CommitApplyReport {
     pub new_tip: Option<String>,
     pub ref_name: String,
     pub dry_run: bool,
+    /// Tags pointing at commits in the rewritten range. History rewriting never moves them.
+    pub affected_tags: Vec<String>,
 }
 
 #[napi(object)]
@@ -102,6 +104,8 @@ pub struct RewordRewriteReport {
     pub new_tip: Option<String>,
     pub ref_name: String,
     pub dry_run: bool,
+    /// Tags pointing at commits in the rewritten range. History rewriting never moves them.
+    pub affected_tags: Vec<String>,
 }
 
 #[napi(object)]
@@ -220,12 +224,15 @@ pub fn git_tools_commit_export(options: CommitExportOptions) -> Result<CommitExp
 
 #[napi]
 pub fn git_tools_commit_apply(options: CommitApplyOptions) -> Result<CommitApplyReport> {
-    let repo = open_repo_at(options.cwd)?;
+    let root = repo_root_from_cwd(options.cwd)?;
+    let repo = map_err(open(&root))?;
     let ref_name_input = options.r#ref.as_deref().unwrap_or("HEAD");
     let dry_run = options.dry_run.unwrap_or(false);
     let exclusive_base = map_err(resolve_rev(&repo, &options.base))?;
     let tip = map_err(resolve_ref_tip(&repo, ref_name_input))?;
     let chain = map_err(reword_collect_commits(&repo, exclusive_base, tip))?;
+    let chain_oids: Vec<String> = chain.iter().map(ToString::to_string).collect();
+    let affected_tags = map_err(tags_in_range(&root, &chain_oids))?;
     let entries = map_err(parse_map(Path::new(&options.path)))?;
     let updates = map_err(resolve_map(entries, &chain))?;
     let ref_name = normalize_ref_name(&repo, ref_name_input)?;
@@ -238,6 +245,7 @@ pub fn git_tools_commit_apply(options: CommitApplyOptions) -> Result<CommitApply
             new_tip: None,
             ref_name,
             dry_run: true,
+            affected_tags,
         });
     }
 
@@ -253,6 +261,7 @@ pub fn git_tools_commit_apply(options: CommitApplyOptions) -> Result<CommitApply
         new_tip: Some(short(new_tip)),
         ref_name,
         dry_run: false,
+        affected_tags,
     })
 }
 
@@ -292,6 +301,7 @@ pub fn git_tools_reword_rewrite(options: RewordRewriteOptions) -> Result<RewordR
         new_tip: report.new_tip,
         ref_name: report.ref_name,
         dry_run: report.dry_run,
+        affected_tags: report.affected_tags,
     })
 }
 
