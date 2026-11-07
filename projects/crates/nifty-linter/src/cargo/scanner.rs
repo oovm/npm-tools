@@ -165,16 +165,27 @@ fn scan_readme_case(root: &Path) -> Vec<CargoFinding> {
         if !entry.is_file() {
             continue;
         }
-        if entry.file_name() == "README.md" {
+        let name = entry.file_name().to_string_lossy();
+        if name.eq_ignore_ascii_case("readme.md") && name != "readme.md" {
             findings.push(CargoFinding {
                 kind: CargoFindingKind::ReadmeCase,
                 path: entry.path().to_path_buf(),
                 line: None,
-                message: "'README.md' 文件名应当全小写为 'readme.md'".into(),
+                message: format!("'{name}' 文件名应当全小写为 'readme.md'"),
             });
         }
     }
     findings
+}
+
+fn has_readme(package: &Path) -> bool {
+    fs::read_dir(package)
+        .map(|entries| {
+            entries
+                .filter_map(|entry| entry.ok())
+                .any(|entry| entry.file_name().to_string_lossy().eq_ignore_ascii_case("readme.md"))
+        })
+        .unwrap_or(false)
 }
 
 fn scan_package_integrity(package: &Path) -> Vec<CargoFinding> {
@@ -184,6 +195,9 @@ fn scan_package_integrity(package: &Path) -> Vec<CargoFinding> {
     let value = toml::from_str::<Value>(&content).unwrap_or(Value::Table(toml::map::Map::new()));
 
     if value.get("package").is_none() {
+        if value.get("workspace").is_some() {
+            return findings;
+        }
         findings.push(CargoFinding {
             kind: CargoFindingKind::PackageSection,
             path: manifest_path.clone(),
@@ -193,7 +207,7 @@ fn scan_package_integrity(package: &Path) -> Vec<CargoFinding> {
         return findings;
     }
 
-    if !package.join("readme.md").is_file() {
+    if !has_readme(package) {
         findings.push(CargoFinding {
             kind: CargoFindingKind::ReadmeMissing,
             path: package.to_path_buf(),
