@@ -68,11 +68,7 @@ fn load_commits(options: &LintOptions, subject_only: bool) -> Result<Vec<CommitI
     // `-C` must decide which history is linted. Falling back to the process cwd here
     // silently lints the caller's repository whenever a range is requested.
     let start = || {
-        options
-            .repo_root
-            .clone()
-            .or_else(|| options.cwd.clone())
-            .unwrap_or_else(|| std::env::current_dir().unwrap_or_default())
+        options.repo_root.clone().or_else(|| options.cwd.clone()).unwrap_or_else(|| std::env::current_dir().unwrap_or_default())
     };
 
     if options.repo_root.is_some() || options.cwd.is_some() || options.from_ref.is_some() || options.to_ref.is_some() {
