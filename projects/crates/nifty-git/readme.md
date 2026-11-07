@@ -7,9 +7,11 @@ Depend on `@doki-land/nifty` unless you need this crate directly.
 ## Example
 
 ```rust
+use std::path::Path;
+
 use nifty_git::{collect_commits, discover_root, resolve_range};
 
-let root = discover_root(".")?;
+let root = discover_root(Path::new("."))?;
 let range = resolve_range(&root, Some("0.1.0"), None, None)?;
 let commits = collect_commits(&root, range.from_ref.as_deref(), &range.to_ref)?;
 ```

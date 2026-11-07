@@ -13,6 +13,7 @@ use nifty_formatter::{run_format, RunFormatOptions};
 let report = run_format(RunFormatOptions {
     check: true,
     cwd: None,
+    ..Default::default()
 })?;
 ```
 
