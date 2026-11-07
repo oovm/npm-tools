@@ -20,4 +20,5 @@ serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 boost-log = { workspace = true }
 boost-http = { workspace = true }
+nifty-types = { path = "../nifty-types" }
 urlencoding = "2.1"

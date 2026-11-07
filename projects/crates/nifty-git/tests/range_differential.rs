@@ -21,7 +21,7 @@ fn commit(root: &Path, file: &str, message: &str) {
 }
 
 /// Repository with `v0.1.0`, `v0.1.1`, `v0.1.2-beta.1` tags, a `dev` branch, a remote-tracking
-/// `origin/dev` and a `v9.9.9` branch that is not a tag.
+/// `origin/dev`, a `v9.9.9` branch that is not a tag, and two tags that point at a tree.
 fn probe_repo() -> boost_fs::temp::TempFolder {
     let dir = boost_fs::temp::create_folder().expect("tempdir");
     let root = dir.path().to_path_buf();
@@ -36,6 +36,9 @@ fn probe_repo() -> boost_fs::temp::TempFolder {
     git(&root, &["tag", "v0.1.2-beta.1"]);
     commit(&root, "d.txt", "📝 Add gamma");
     git(&root, &["tag", "-a", "v0.1.3", "-m", "nifty range test"]);
+    let tree = git(&root, &["rev-parse", "HEAD^{tree}"]);
+    git(&root, &["tag", "treetag", &tree]);
+    git(&root, &["tag", "-a", "atreetag", "-m", "nifty tree tag", &tree]);
     git(&root, &["update-ref", "refs/remotes/origin/dev", "HEAD"]);
     git(&root, &["branch", "v9.9.9", "HEAD"]);
     dir
@@ -99,4 +102,27 @@ fn branch_names_are_not_release_tags() {
     let changelog_tags = changelog_list_version_tags(root).expect("changelog tag list");
     assert_eq!(public_tags, ["v0.1.0", "v0.1.1", "v0.1.2-beta.1", "v0.1.3"].map(str::to_string).to_vec());
     assert_eq!(changelog_tags, public_tags);
+}
+
+#[test]
+fn ref_errors_match_across_backends() {
+    let dir = probe_repo();
+    let root = dir.path();
+
+    let cases = ["no-such-ref", "treetag", "atreetag"];
+    for to in cases {
+        let changelog_range = changelog(root, None, None, Some(to));
+        let api_range = public_api(root, None, None, Some(to));
+        assert_eq!(changelog_range, api_range, "ref errors drifted for --to {to}");
+        assert!(changelog_range.is_err(), "--to {to} must fail");
+    }
+
+    assert_eq!(changelog(root, None, None, Some("no-such-ref")).unwrap_err(), "ref does not exist: \"no-such-ref\"");
+    assert_eq!(changelog(root, None, None, Some("treetag")).unwrap_err(), "ref is not a commit: \"treetag\"");
+    assert_eq!(changelog(root, None, None, Some("atreetag")).unwrap_err(), "ref is not a commit: \"atreetag\"");
+
+    let changelog_from = changelog(root, None, Some("no-such-from"), Some("HEAD"));
+    let api_from = public_api(root, None, Some("no-such-from"), Some("HEAD"));
+    assert_eq!(changelog_from, api_from, "ref errors drifted for --from");
+    assert_eq!(changelog_from.unwrap_err(), "ref does not exist: \"no-such-from\"");
 }

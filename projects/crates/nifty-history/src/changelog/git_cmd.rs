@@ -2,6 +2,8 @@
 
 use std::{cmp::Ordering, path::Path, process::Command};
 
+use nifty_types::RefError;
+
 use crate::{
     changelog::gitmoji::{leading_gitmoji, section_for_gitmoji, strip_gitmoji},
     error::{Result, validation, validation_with_input},
@@ -47,10 +49,25 @@ pub fn list_version_tags(repo_root: &Path) -> Result<Vec<String>> {
     Ok(if out.is_empty() { Vec::new() } else { out.lines().map(str::to_string).collect() })
 }
 
-/// 校验 ref 指向 commit。
+/// 校验 ref 指向 commit，区分「ref 不存在」与「ref 存在但不是 commit」。
 pub fn verify_commit_ref(repo_root: &Path, reference: &str) -> Result<()> {
-    git_output(repo_root, &["rev-parse", "--verify", &format!("{reference}^{{commit}}")])?;
+    if !git_resolves(repo_root, reference)? {
+        return Err(validation(RefError::NotFound { reference: reference.to_string() }.to_string()));
+    }
+    if !git_resolves(repo_root, &format!("{reference}^{{commit}}"))? {
+        return Err(validation(RefError::NotCommit { reference: reference.to_string() }.to_string()));
+    }
     Ok(())
+}
+
+/// `git rev-parse --verify --quiet` 是否能解析该 revision。
+fn git_resolves(repo_root: &Path, spec: &str) -> Result<bool> {
+    let output = Command::new("git")
+        .args(["rev-parse", "--verify", "--quiet", spec])
+        .current_dir(repo_root)
+        .output()
+        .map_err(|err| validation(format!("spawn git: {err}")))?;
+    Ok(output.status.success())
 }
 
 /// Tag names whose target commit belongs to `commits` (full 40-hex OIDs).
@@ -213,7 +230,7 @@ pub fn resolve_range(
 ) -> Result<(String, Option<String>, String)> {
     if let Some(version) = version {
         let tag = version_tag(version);
-        verify_commit_ref(repo_root, &tag).map_err(|_| validation_with_input("release tag does not exist", tag.as_str()))?;
+        verify_commit_ref(repo_root, &tag)?;
         let prev = previous_version_tag(repo_root, version)?;
         return Ok((normalize_version(version), prev, tag));
     }
@@ -224,9 +241,9 @@ pub fn resolve_range(
     };
 
     let to_ref = to_ref_name(to);
-    verify_commit_ref(repo_root, &to_ref).map_err(|_| validation_with_input("ref is not a commit", to_ref.as_str()))?;
+    verify_commit_ref(repo_root, &to_ref)?;
     if let Some(from_ref) = from {
-        verify_commit_ref(repo_root, from_ref).map_err(|_| validation_with_input("ref is not a commit", from_ref))?;
+        verify_commit_ref(repo_root, from_ref)?;
     }
 
     let version_label = regex_version_label(&to_ref).unwrap_or_else(|| to_ref.trim_start_matches('v').to_string());
