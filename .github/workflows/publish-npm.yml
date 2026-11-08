@@ -215,18 +215,7 @@ jobs:
           done
 
       - name: Verify tag version matches workspace manifests
-        shell: bash
-        run: |
-          set -euo pipefail
-          tag="${{ needs.provenance.outputs.version }}"
-          for pkg in nifty nifty-skills nifty-win32-x64 nifty-linux-x64 nifty-linux-arm64 nifty-darwin-arm64 nifty-darwin-x64; do
-            manifest="projects/packages/$pkg/package.json"
-            version="$(node -p "require('./$manifest').version")"
-            if [[ "$version" != "$tag" ]]; then
-              echo "$manifest version $version != tag $tag" >&2
-              exit 1
-            fi
-          done
+        run: node scripts/ci/check-publish-versions.mjs --version=${{ needs.provenance.outputs.version }}
 
       - name: Publish packages to npm
         run: node projects/packages/nifty/cli/nifty.mjs publish --access public
