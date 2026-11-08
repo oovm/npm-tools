@@ -36,7 +36,7 @@ pub struct TrustReport {
 pub fn trust_workspace(options: TrustOptions) -> Result<TrustReport> {
     let cwd = options.cwd.clone().unwrap_or_else(|| std::env::current_dir().expect("current dir"));
     let root = find_workspace_root(&cwd)?;
-    let expect = resolve_trust_expect(&root, options.trust.as_ref());
+    let expect = resolve_trust_expect(&root, options.trust.as_ref())?;
     let names = resolve_trust_package_names(&root, &options)?;
     let auth = OtpAuth::load(&root, options.otp);
     let client = RegistryTrustClient::from_workspace(&auth, &root)?;
