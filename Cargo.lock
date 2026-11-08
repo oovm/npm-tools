@@ -1530,6 +1530,7 @@ dependencies = [
 [[package]]
 name = "oak-core"
 version = "0.0.12"
+source = "git+https://github.com/yggdrasil-language/oaks.git?rev=913678aa1b36fd2cc9e4c3fdd46eeda2ee0dc366#913678aa1b36fd2cc9e4c3fdd46eeda2ee0dc366"
 dependencies = [
  "serde",
  "smallvec",
@@ -1540,6 +1541,7 @@ dependencies = [
 [[package]]
 name = "oak-formatter"
 version = "0.0.12"
+source = "git+https://github.com/yggdrasil-language/oaks.git?rev=913678aa1b36fd2cc9e4c3fdd46eeda2ee0dc366#913678aa1b36fd2cc9e4c3fdd46eeda2ee0dc366"
 dependencies = [
  "oak-core",
 ]
@@ -1547,6 +1549,7 @@ dependencies = [
 [[package]]
 name = "oak-javascript"
 version = "0.0.12"
+source = "git+https://github.com/yggdrasil-language/oaks.git?rev=913678aa1b36fd2cc9e4c3fdd46eeda2ee0dc366#913678aa1b36fd2cc9e4c3fdd46eeda2ee0dc366"
 dependencies = [
  "oak-core",
  "oak-typescript",
@@ -1556,6 +1559,7 @@ dependencies = [
 [[package]]
 name = "oak-testing"
 version = "0.0.12"
+source = "git+https://github.com/yggdrasil-language/oaks.git?rev=913678aa1b36fd2cc9e4c3fdd46eeda2ee0dc366#913678aa1b36fd2cc9e4c3fdd46eeda2ee0dc366"
 dependencies = [
  "boost-fs 0.1.0 (git+https://github.com/oovm/rust-boost?rev=9aa52745d6eae2d7748c76e4e3e6555e1f6e4b86)",
  "oak-core",
@@ -1567,6 +1571,7 @@ dependencies = [
 [[package]]
 name = "oak-typescript"
 version = "0.0.12"
+source = "git+https://github.com/yggdrasil-language/oaks.git?rev=913678aa1b36fd2cc9e4c3fdd46eeda2ee0dc366#913678aa1b36fd2cc9e4c3fdd46eeda2ee0dc366"
 dependencies = [
  "oak-core",
  "oak-formatter",
