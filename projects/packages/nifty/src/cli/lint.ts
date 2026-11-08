@@ -22,14 +22,6 @@ type LintRuleConfig = {
     severity?: "error" | "warning" | "info";
 };
 
-export async function runLint(argv: string[], check: boolean): Promise<void> {
-    const options = parseLintArgs(argv);
-    const errorCount = await lintCommits(options, check);
-    if (check && errorCount > 0) {
-        throw new Error(`found ${errorCount} lint error(s)`);
-    }
-}
-
 export async function lintCommits(
     options: LintOptions,
     check: boolean,
@@ -91,23 +83,4 @@ function printWorkspaceDiagnostic(item: LintDiagnostic): void {
             : undefined;
     const suffix = location ? ` @ ${location}` : "";
     console.log(`${prefix} [${item.rule}] ${item.message}${suffix}`);
-}
-
-function parseLintArgs(argv: string[]): LintOptions {
-    const options: LintOptions = { subjects: [] };
-    for (let i = 0; i < argv.length; i += 1) {
-        const arg = argv[i];
-        if (arg === "--from") {
-            options.from = argv[++i];
-        } else if (arg === "--to") {
-            options.to = argv[++i];
-        } else if (arg === "-C" || arg === "--cwd") {
-            options.cwd = argv[++i];
-        } else if (arg === "-s" || arg === "--subject") {
-            options.subjects.push(argv[++i]);
-        } else if (arg === "--no-cargo") {
-            options.scanCargo = false;
-        }
-    }
-    return options;
 }

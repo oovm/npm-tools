@@ -29,10 +29,6 @@ type GithubRelease = {
     id: number;
 };
 
-export async function runUpload(argv: string[]): Promise<void> {
-    await uploadFromOptions(parseUploadArgs(argv));
-}
-
 export async function uploadFromOptions(options: UploadOptions): Promise<void> {
     if (options.githubAction) {
         applyGithubActionDefaults(options);
@@ -68,42 +64,6 @@ export async function uploadFromOptions(options: UploadOptions): Promise<void> {
     if (target === "pages" || target === "both") {
         await deployGithubPages(repo, token, options.dir);
     }
-}
-
-function parseUploadArgs(argv: string[]): UploadOptions {
-    const options: UploadOptions = {
-        release: false,
-        pages: false,
-        both: false,
-        dir: "dist",
-        draft: false,
-        generateNotes: true,
-        githubAction: false,
-    };
-
-    for (let i = 0; i < argv.length; i += 1) {
-        const arg = argv[i];
-        if (arg === "--release") options.release = true;
-        else if (arg === "--pages") options.pages = true;
-        else if (arg === "--both") options.both = true;
-        else if (arg === "-d" || arg === "--dir") options.dir = argv[++i];
-        else if (arg === "-h" || arg === "--help") {
-            printUploadHelp();
-            process.exit(0);
-        }
-        else if (arg === "-t" || arg === "--tag") options.tag = argv[++i];
-        else if (arg === "--repo") options.repo = argv[++i];
-        else if (arg === "--token") options.token = argv[++i];
-        else if (arg === "--name") options.name = argv[++i];
-        else if (arg === "--notes") options.notes = argv[++i];
-        else if (arg === "--notes-file") options.notesFile = argv[++i];
-        else if (arg === "--draft") options.draft = true;
-        else if (arg === "--no-generate-notes") options.generateNotes = false;
-        else if (arg === "--github-action") options.githubAction = true;
-        else if (arg === "-C" || arg === "--cwd") options.cwd = argv[++i];
-    }
-
-    return options;
 }
 
 function parseTarget(options: UploadOptions): "release" | "pages" | "both" {
@@ -158,24 +118,6 @@ async function uploadReleaseAssets(
         await apiUploadAsset(owner, name, release.id, asset, file, token);
         console.log(`release: uploaded ${asset}`);
     }
-}
-
-function printUploadHelp(): void {
-    console.log(`nifty upload — GitHub Release assets and/or GitHub Pages
-
-Usage:
-  nifty upload --release [--dir dist] [--tag vX.Y.Z]
-  nifty upload --pages --dir dist
-  nifty upload --both --dir dist
-  nifty upload --release --github-action
-
-Options:
-  --release         upload files from --dir to the GitHub Release for --tag
-  --pages           push --dir to gh-pages
-  --both            release + pages
-  -d, --dir <path>  directory tree for --release/--pages (default: dist)
-  --github-action   read GITHUB_TOKEN, GITHUB_REPOSITORY, GITHUB_REF_NAME
-`);
 }
 
 async function deployGithubPages(repo: string, token: string, dir: string): Promise<void> {

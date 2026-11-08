@@ -27,58 +27,10 @@ export type BumpReport = {
 
 const DEFAULT_KIND: BumpKind = "patch";
 
-export async function runBump(argv: string[]): Promise<void> {
-    const options = parseBumpArgs(argv);
-    const report = await bumpWorkspaceWithConfig(options);
-    printBumpReport(report, options.dryRun);
-}
-
 /** Load `publish.packages` so `bump` versions only the packages `publish` can ship. */
 export async function bumpWorkspaceWithConfig(options: BumpOptions): Promise<BumpReport> {
     const { config } = await loadInvocationConfig({ cwd: options.cwd ?? process.cwd(), createIfMissing: false });
     return bumpWorkspace({ ...options, ...(config.publish?.packages ? { packages: config.publish.packages } : {}) });
-}
-
-function parseBumpArgs(argv: string[]): BumpOptions {
-    let version: string | undefined;
-    let kind: BumpKind = DEFAULT_KIND;
-    let cwd: string | undefined;
-    let dryRun = false;
-
-    for (let i = 0; i < argv.length; i += 1) {
-        const arg = argv[i];
-        if (arg === "--dry-run") {
-            dryRun = true;
-        } else if (arg === "-C" || arg === "--cwd") {
-            cwd = argv[++i];
-        } else if (arg === "--version" || arg === "-v") {
-            version = argv[++i];
-        } else if (arg === "--patch") {
-            kind = "patch";
-        } else if (arg === "--minor") {
-            kind = "minor";
-        } else if (arg === "--major") {
-            kind = "major";
-        } else if (arg === "-h" || arg === "--help") {
-            printBumpHelp();
-            process.exit(0);
-        } else if (!arg.startsWith("-")) {
-            if (isBumpKind(arg)) {
-                kind = arg;
-            } else {
-                version = arg;
-            }
-        }
-    }
-
-    if (version) {
-        assertVersion(version);
-    }
-    return { version, kind, cwd, dryRun };
-}
-
-function isBumpKind(value: string): value is BumpKind {
-    return value === "patch" || value === "minor" || value === "major";
 }
 
 function assertVersion(version: string): void {
@@ -329,22 +281,4 @@ export function printBumpReport(report: BumpReport, dryRun?: boolean): void {
     for (const path of report.npm) {
         console.log(`  npm: ${path}`);
     }
-}
-
-function printBumpHelp(): void {
-    console.log(`nifty bump — align crate and publishable package versions in the workspace
-
-Usage:
-  nifty bump                 # bump patch (default)
-  nifty bump patch
-  nifty bump minor
-  nifty bump major
-  nifty bump 1.2.3           # set explicit version
-  nifty bump --version 1.2.3
-  nifty bump --dry-run
-  nifty bump -C <cwd>
-
-Cargo members using version.workspace = true are updated through the root [workspace.package].version.
-Packages marked private or left out of publish.packages keep their current version.
-`);
 }
