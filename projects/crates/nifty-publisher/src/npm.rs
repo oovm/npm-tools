@@ -96,14 +96,23 @@ impl NpmRunner {
 fn pack_plan_from_json(stdout: &str, dir: &Path) -> Result<Vec<String>> {
     let plan: serde_json::Value = serde_json::from_str(stdout)
         .map_err(|err| format!("npm pack --dry-run in {} did not return JSON: {err}", dir.display()))?;
-    let entry = plan
-        .as_array()
-        .and_then(|items| items.first())
-        .and_then(|item| item.get("files"))
-        .and_then(|files| files.as_array())
-        .ok_or_else(|| format!("npm pack --dry-run in {} returned no file list", dir.display()))?;
+    // npm 11 prints an array of package entries, npm 12 prints an object keyed by package name.
+    let files = match &plan {
+        serde_json::Value::Array(items) => items.first().and_then(|item| item.get("files")),
+        serde_json::Value::Object(entries) => entries.values().find_map(|entry| entry.get("files")),
+        _ => None,
+    }
+    .and_then(|files| files.as_array())
+    .ok_or_else(|| {
+        let echo = stdout.trim();
+        format!(
+            "npm pack --dry-run in {} returned no file list: {}",
+            dir.display(),
+            if echo.is_empty() { "(empty stdout)".to_string() } else { echo.chars().take(200).collect() }
+        )
+    })?;
     let mut paths = Vec::new();
-    for file in entry {
+    for file in files {
         let path = file
             .get("path")
             .and_then(|path| path.as_str())
@@ -296,4 +305,34 @@ fn npm_next_to_node(node: &str) -> PathBuf {
     let node_path = PathBuf::from(node);
     let dir = node_path.parent().unwrap_or_else(|| Path::new("."));
     if cfg!(windows) { dir.join("npm.cmd") } else { dir.join("npm") }
+}
+
+#[cfg(test)]
+mod pack_plan_tests {
+    use std::path::Path;
+
+    use super::pack_plan_from_json;
+
+    const DIR: &str = "pkg";
+
+    #[test]
+    fn reads_the_npm_11_array_shape() {
+        let paths = pack_plan_from_json(r#"[{"files":[{"path":"package.json"},{"path":"./lib/addon.node"}]}]"#, Path::new(DIR))
+            .expect("plan");
+        assert_eq!(paths, vec!["package.json".to_string(), "lib/addon.node".to_string()]);
+    }
+
+    #[test]
+    fn reads_the_npm_12_object_shape() {
+        let paths =
+            pack_plan_from_json(r#"{"@scope/pkg":{"files":[{"path":"lib/addon.node"}]}}"#, Path::new(DIR)).expect("plan");
+        assert_eq!(paths, vec!["lib/addon.node".to_string()]);
+    }
+
+    #[test]
+    fn reports_the_output_when_no_file_list_is_present() {
+        let error = pack_plan_from_json(r#"{"error":"missing files"}"#, Path::new(DIR)).expect_err("no file list");
+        assert!(error.contains("returned no file list"), "unexpected error: {error}");
+        assert!(error.contains("missing files"), "error must echo the npm output: {error}");
+    }
 }
