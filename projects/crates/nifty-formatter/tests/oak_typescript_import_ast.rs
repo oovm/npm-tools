@@ -1,7 +1,7 @@
 use oak_core::{Builder, ParseSession, SourceText};
 use oak_typescript::{
     TypeScriptBuilder, TypeScriptLanguage,
-    ast::{ImportSpecifier, Statement},
+    ast::{ExportSpecifier, ImportSpecifier, Statement},
 };
 
 #[test]
@@ -30,7 +30,7 @@ export default class Page { x = 1; }
         })
         .collect();
     assert_eq!(imports.len(), 4, "imports={imports:?}");
-    assert_eq!(imports[0].module_specifier, "./lib", "imp0={:?}", imports[0]);
+    assert_eq!(imports[0].module_specifier.value, "./lib", "imp0={:?}", imports[0]);
     assert!(!imports[0].is_type_only());
     assert_eq!(imports[0].specifiers.len(), 1, "specifiers={:?}", imports[0].specifiers);
     match &imports[0].specifiers[0] {
@@ -41,14 +41,14 @@ export default class Page { x = 1; }
         other => panic!("expected Named helper, got {other:?}"),
     }
 
-    assert_eq!(imports[1].module_specifier, "@pkg/types");
+    assert_eq!(imports[1].module_specifier.value, "@pkg/types");
     assert!(imports[1].is_type_only());
 
-    assert_eq!(imports[2].module_specifier, "../ns");
-    assert!(matches!(&imports[2].specifiers[..], [ImportSpecifier::Namespace(n)] if n == "ns"));
+    assert_eq!(imports[2].module_specifier.value, "../ns");
+    assert!(matches!(&imports[2].specifiers[..], [ImportSpecifier::Namespace { local, .. }] if local == "ns"));
 
-    assert_eq!(imports[3].module_specifier, "./def");
-    assert!(matches!(&imports[3].specifiers[..], [ImportSpecifier::Default(n)] if n == "def"));
+    assert_eq!(imports[3].module_specifier.value, "./def");
+    assert!(matches!(&imports[3].specifiers[..], [ImportSpecifier::Default { local, .. }] if local == "def"));
 }
 
 #[test]
@@ -76,16 +76,18 @@ export type { T } from '@pkg/types';
         .collect();
     assert_eq!(exports.len(), 3, "exports={exports:?}");
 
-    assert_eq!(exports[0].source.as_deref(), Some("./mod"));
+    assert_eq!(exports[0].source.as_ref().map(|s| s.value.as_str()), Some("./mod"));
     assert_eq!(exports[0].specifiers.len(), 2);
-    assert_eq!(exports[0].specifiers[0].local, "a");
-    assert_eq!(exports[0].specifiers[0].exported, "a");
-    assert_eq!(exports[0].specifiers[1].local, "b");
-    assert_eq!(exports[0].specifiers[1].exported, "c");
+    assert!(
+        matches!(&exports[0].specifiers[0], ExportSpecifier::Named { local, exported, .. } if local == "a" && exported == "a")
+    );
+    assert!(
+        matches!(&exports[0].specifiers[1], ExportSpecifier::Named { local, exported, .. } if local == "b" && exported == "c")
+    );
 
-    assert_eq!(exports[1].source.as_deref(), Some("../star"));
-    assert!(exports[1].specifiers.is_empty());
+    assert_eq!(exports[1].source.as_ref().map(|s| s.value.as_str()), Some("../star"));
+    assert!(matches!(&exports[1].specifiers[..], [ExportSpecifier::All { .. }]));
 
-    assert_eq!(exports[2].source.as_deref(), Some("@pkg/types"));
+    assert_eq!(exports[2].source.as_ref().map(|s| s.value.as_str()), Some("@pkg/types"));
     assert!(exports[2].is_type_only());
 }
