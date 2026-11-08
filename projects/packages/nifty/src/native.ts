@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import type {
     CommitRecord,
@@ -475,13 +476,34 @@ type NativeBinding = {
     };
 };
 
-const PLATFORM_PACKAGES: Record<string, string> = {
-    "win32-x64": "@doki-land/nifty-win32-x64",
-    "linux-x64": "@doki-land/nifty-linux-x64",
-    "linux-arm64": "@doki-land/nifty-linux-arm64",
-    "darwin-x64": "@doki-land/nifty-darwin-x64",
-    "darwin-arm64": "@doki-land/nifty-darwin-arm64",
-};
+/** Platform coverage of a published shard, read from its manifest. */
+export type PlatformShard = { name: string; os: string[]; cpu: string[] };
+
+/**
+ * The `optionalDependencies` of the published package are the platform shards. Their manifests
+ * are the single source of truth for platform coverage: `os` + `cpu` mark a native package,
+ * the same rule `install-native` and `build-napi` apply to the workspace. Shards that npm skipped
+ * during install are not resolvable and therefore absent from the result.
+ */
+export function listPlatformShards(): PlatformShard[] {
+    const require = createRequire(import.meta.url);
+    const manifest = require("../package.json") as { optionalDependencies?: Record<string, string> };
+    const shards: PlatformShard[] = [];
+    for (const name of Object.keys(manifest.optionalDependencies ?? {})) {
+        let manifestPath: string;
+        try {
+            manifestPath = require.resolve(`${name}/package.json`);
+        } catch {
+            continue;
+        }
+        const shard = JSON.parse(readFileSync(manifestPath, "utf8")) as { os?: string[]; cpu?: string[] };
+        if (!Array.isArray(shard.os) || shard.os.length === 0 || !Array.isArray(shard.cpu) || shard.cpu.length === 0) {
+            continue;
+        }
+        shards.push({ name, os: shard.os, cpu: shard.cpu });
+    }
+    return shards;
+}
 
 function mapAuthor(raw: GithubAuthor | null | undefined): GithubAuthor | undefined {
     if (!raw) {
@@ -745,20 +767,23 @@ function wrapBinding(binding: NativeBinding): NiftyNative {
 
 let cached: NiftyNative | undefined;
 
-/** Load the platform-specific Node-API binary from `@doki-land/nifty-<platform>`. */
+/** Load the platform-specific Node-API binary from the matching `@doki-land/nifty-<platform>` shard. */
 export function loadNiftyNative(): NiftyNative {
     if (cached) {
         return cached;
     }
-    const key = `${process.platform}-${process.arch}`;
-    const pkg = PLATFORM_PACKAGES[key];
-    if (!pkg) {
-        throw new Error(`Unsupported platform for Nifty native bindings: ${key}`);
+    const platform = process.platform;
+    const arch = process.arch;
+    const shard = listPlatformShards().find((candidate) => candidate.os.includes(platform) && candidate.cpu.includes(arch));
+    if (!shard) {
+        throw new Error(
+            `Unsupported platform for Nifty native bindings: ${platform}-${arch}. No installed optional dependency declares that platform`,
+        );
     }
     const require = createRequire(import.meta.url);
     // The platform package declares its Node-API addon as `main`, so `require` returns the
     // binding exports directly.
-    const binding = require(pkg) as NativeBinding;
+    const binding = require(shard.name) as NativeBinding;
     cached = wrapBinding(binding);
     return cached;
 }
