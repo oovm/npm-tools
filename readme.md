@@ -77,6 +77,12 @@ export default defineConfig({
 | Draft release notes | `nifty change-logs --from v0.1.0 --to HEAD` |
 | Publish npm packages | `nifty publish` (after `nifty trust` for new names) |
 
+## Known boundaries
+
+- **Internal dependency specs** — publish rewrites `workspace:*` and `file:` specs to the version being published.
+  Exact semver pins and ranges are published as written, so keep internal dependencies on `workspace:*`. A stale
+  exact pin fails the publish preflight instead of shipping a dependency on an older release.
+
 Package-level export maps, native sidecars, and programmatic APIs live in the [@doki-land/nifty](https://www.npmjs.com/package/@doki-land/nifty) readme.
 
 ## 📜 License

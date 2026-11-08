@@ -205,6 +205,34 @@ fn publish_workspace_dry_run_restores_manifest() {
     assert_eq!(before, after);
 }
 
+#[test]
+fn stale_exact_internal_pin_fails_before_publishing() {
+    let root = create_folder().expect("tempdir");
+    write_workspace_skeleton(root.path());
+    write_package(root.path(), "platform", "@scope/platform", false, "{}");
+    write_package(root.path(), "main", "@scope/main", false, r#"{ "@scope/platform": "9.9.9" }"#);
+
+    let error = publish_workspace(PublishOptions {
+        cwd: Some(root.path().to_path_buf()),
+        dry_run: true,
+        refresh: false,
+        placeholder: false,
+        tag: None,
+        access: Some("public".to_string()),
+        npm: None,
+        otp: OtpOverrides::default(),
+        trust: None,
+        only: None,
+        packages: None,
+        version: None,
+    })
+    .expect_err("a stale exact pin must fail the publish");
+
+    assert!(error.contains("@scope/platform"), "{error}");
+    assert!(error.contains("9.9.9"), "{error}");
+    assert!(error.contains("workspace:*"), "{error}");
+}
+
 /// Native platform package (os + cpu) with no staged `.node` yet.
 fn write_native_package(root: &std::path::Path) {
     let dir = root.join("projects").join("packages").join("native");

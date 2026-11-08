@@ -86,6 +86,53 @@ fn patch_dependency_entries(
     Ok(next)
 }
 
+/// Reject exact internal dependency pins that publish would ship pointing at an older version.
+///
+/// Publish rewrites `workspace:` and `file:` specs to the released version. Exact pins and
+/// ranges are left untouched, so a package that pins an internal dependency must then carry
+/// the version the dependency is published as. Failing here keeps a stale pin from silently
+/// shipping a package that resolves to the previous release.
+pub fn verify_publish_dependency_pins(
+    package: &NpmPackage,
+    by_name: &BTreeMap<String, NpmPackage>,
+    publish_version: Option<&str>,
+) -> Result<()> {
+    let fields = [
+        ("dependencies", &package.manifest.dependencies),
+        ("optionalDependencies", &package.manifest.optional_dependencies),
+        ("peerDependencies", &package.manifest.peer_dependencies),
+    ];
+    for (field, entries) in fields {
+        for (name, spec) in entries {
+            if !is_exact_version(spec) {
+                continue;
+            }
+            let Some(target) = by_name.get(name)
+            else {
+                continue;
+            };
+            let expected = publish_version.unwrap_or(target.version.as_str());
+            if spec != expected {
+                return Err(format!(
+                    "`{}` declares `{name}` as the exact pin `{spec}` in `{field}`, but publish ships `{name}` as {expected}. Exact pins are not rewritten — use `workspace:*` for internal dependencies",
+                    package.name
+                ));
+            }
+        }
+    }
+    Ok(())
+}
+
+fn is_exact_version(spec: &str) -> bool {
+    let core = spec.split(['-', '+']).next().unwrap_or(spec);
+    let mut parts = core.split('.');
+    let (Some(major), Some(minor), Some(patch), None) = (parts.next(), parts.next(), parts.next(), parts.next())
+    else {
+        return false;
+    };
+    [major, minor, patch].iter().all(|part| !part.is_empty() && part.chars().all(|ch| ch.is_ascii_digit()))
+}
+
 fn resolve_workspace_dependency<'a>(
     name: &str,
     spec: &str,
@@ -111,8 +158,22 @@ mod tests {
         path::PathBuf,
     };
 
-    use super::{PatchPublishOptions, patch_manifest_for_publish};
+    use super::{PatchPublishOptions, patch_manifest_for_publish, verify_publish_dependency_pins};
     use crate::workspace::{NpmPackage, PackageManifest};
+
+    fn from_manifest(json: &str) -> NpmPackage {
+        let manifest: PackageManifest = serde_json::from_str(json).expect("manifest json");
+        let name = manifest.name.clone();
+        let version = manifest.version.clone();
+        NpmPackage {
+            dir: PathBuf::from(&name),
+            manifest_path: PathBuf::from(&name).join("package.json"),
+            private: manifest.private,
+            name,
+            version,
+            manifest,
+        }
+    }
 
     fn pkg(name: &str, version: &str) -> NpmPackage {
         let manifest = PackageManifest {
@@ -199,5 +260,63 @@ mod tests {
         let value: serde_json::Value = serde_json::from_str(&patched).expect("json");
         assert!(value.get("repository").is_none(), "{patched}");
         assert_eq!(value["publishConfig"]["access"], "public");
+    }
+
+    #[test]
+    fn stale_exact_pin_blocks_publish() {
+        let main = from_manifest(
+            r#"{
+  "name": "@scope/main",
+  "version": "0.2.0",
+  "dependencies": {
+    "@scope/platform": "0.1.4"
+  }
+}"#,
+        );
+        let platform = pkg("@scope/platform", "0.2.0");
+        let by_name = BTreeMap::from([("@scope/main".to_string(), main.clone()), ("@scope/platform".to_string(), platform)]);
+        let error = verify_publish_dependency_pins(&main, &by_name, None).expect_err("stale pin must fail");
+        assert!(error.contains("@scope/platform"), "{error}");
+        assert!(error.contains("0.1.4"), "{error}");
+        assert!(error.contains("0.2.0"), "{error}");
+        assert!(error.contains("workspace:*"), "{error}");
+    }
+
+    #[test]
+    fn matching_pins_workspace_specs_and_ranges_pass() {
+        let main = from_manifest(
+            r#"{
+  "name": "@scope/main",
+  "version": "0.2.0",
+  "dependencies": {
+    "@scope/platform": "0.2.0"
+  },
+  "optionalDependencies": {
+    "@scope/platform": "workspace:*"
+  },
+  "peerDependencies": {
+    "@scope/platform": "^0.1.4"
+  }
+}"#,
+        );
+        let platform = pkg("@scope/platform", "0.2.0");
+        let by_name = BTreeMap::from([("@scope/main".to_string(), main.clone()), ("@scope/platform".to_string(), platform)]);
+        verify_publish_dependency_pins(&main, &by_name, None).expect("matching pins and workspace/range specs are allowed");
+    }
+
+    #[test]
+    fn publish_version_override_makes_a_manifest_pin_stale() {
+        let main = from_manifest(r#"{"name":"@scope/main","version":"0.2.0","dependencies":{"@scope/platform":"0.2.0"}}"#);
+        let platform = pkg("@scope/platform", "0.2.0");
+        let by_name = BTreeMap::from([("@scope/main".to_string(), main.clone()), ("@scope/platform".to_string(), platform)]);
+        let error = verify_publish_dependency_pins(&main, &by_name, Some("0.2.1")).expect_err("override makes the pin stale");
+        assert!(error.contains("0.2.1"), "{error}");
+    }
+
+    #[test]
+    fn pins_outside_the_workspace_are_ignored() {
+        let main = from_manifest(r#"{"name":"@scope/main","version":"0.2.0","dependencies":{"react":"18.2.0"}}"#);
+        let by_name = BTreeMap::from([("@scope/main".to_string(), main.clone())]);
+        verify_publish_dependency_pins(&main, &by_name, None).expect("registry dependencies keep their pin");
     }
 }

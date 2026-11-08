@@ -65,6 +65,11 @@ nifty trust --dry-run
 nifty trust
 ```
 
+**Internal dependency specs**: publish rewrites `workspace:*` and `file:` specs to the version being published and
+does **not** rewrite exact pins or ranges. Keep internal dependencies on `workspace:*`. A package whose exact pin
+still points at an older version of another workspace package fails the publish preflight instead of silently
+shipping a dependency on the previous release.
+
 **`--placeholder`**: for each publishable workspace package with **no version on the registry**, publish
 workspace contents as **`0.0.0`** (claim the name / prep Trusted Publisher). Packages that already exist on
 npm are skipped. Publishable means `private` is **not** set (or `false`) in `package.json`; dependents with a
