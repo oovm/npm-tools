@@ -1,4 +1,7 @@
-use std::{collections::BTreeMap, path::Path};
+use std::{
+    collections::{BTreeMap, BTreeSet},
+    path::Path,
+};
 
 use serde_json::Value;
 
@@ -95,6 +98,7 @@ fn patch_dependency_entries(
 pub fn verify_publish_dependency_pins(
     package: &NpmPackage,
     by_name: &BTreeMap<String, NpmPackage>,
+    publish_plan: &BTreeSet<String>,
     publish_version: Option<&str>,
 ) -> Result<()> {
     let fields = [
@@ -111,7 +115,13 @@ pub fn verify_publish_dependency_pins(
             else {
                 continue;
             };
-            let expected = publish_version.unwrap_or(target.version.as_str());
+            // Only a dependency that is part of this publish takes the `--version` override.
+            let expected = if publish_plan.contains(name) {
+                publish_version.unwrap_or(target.version.as_str())
+            }
+            else {
+                target.version.as_str()
+            };
             if spec != expected {
                 return Err(format!(
                     "`{}` declares `{name}` as the exact pin `{spec}` in `{field}`, but publish ships `{name}` as {expected}. Exact pins are not rewritten — use `workspace:*` for internal dependencies",
@@ -275,7 +285,8 @@ mod tests {
         );
         let platform = pkg("@scope/platform", "0.2.0");
         let by_name = BTreeMap::from([("@scope/main".to_string(), main.clone()), ("@scope/platform".to_string(), platform)]);
-        let error = verify_publish_dependency_pins(&main, &by_name, None).expect_err("stale pin must fail");
+        let plan = BTreeSet::from(["@scope/main".to_string(), "@scope/platform".to_string()]);
+        let error = verify_publish_dependency_pins(&main, &by_name, &plan, None).expect_err("stale pin must fail");
         assert!(error.contains("@scope/platform"), "{error}");
         assert!(error.contains("0.1.4"), "{error}");
         assert!(error.contains("0.2.0"), "{error}");
@@ -301,7 +312,9 @@ mod tests {
         );
         let platform = pkg("@scope/platform", "0.2.0");
         let by_name = BTreeMap::from([("@scope/main".to_string(), main.clone()), ("@scope/platform".to_string(), platform)]);
-        verify_publish_dependency_pins(&main, &by_name, None).expect("matching pins and workspace/range specs are allowed");
+        let plan = BTreeSet::from(["@scope/main".to_string(), "@scope/platform".to_string()]);
+        verify_publish_dependency_pins(&main, &by_name, &plan, None)
+            .expect("matching pins and workspace/range specs are allowed");
     }
 
     #[test]
@@ -309,14 +322,27 @@ mod tests {
         let main = from_manifest(r#"{"name":"@scope/main","version":"0.2.0","dependencies":{"@scope/platform":"0.2.0"}}"#);
         let platform = pkg("@scope/platform", "0.2.0");
         let by_name = BTreeMap::from([("@scope/main".to_string(), main.clone()), ("@scope/platform".to_string(), platform)]);
-        let error = verify_publish_dependency_pins(&main, &by_name, Some("0.2.1")).expect_err("override makes the pin stale");
+        let plan = BTreeSet::from(["@scope/main".to_string(), "@scope/platform".to_string()]);
+        let error =
+            verify_publish_dependency_pins(&main, &by_name, &plan, Some("0.2.1")).expect_err("override makes the pin stale");
         assert!(error.contains("0.2.1"), "{error}");
+    }
+
+    #[test]
+    fn publish_version_override_spares_dependencies_outside_the_plan() {
+        let main = from_manifest(r#"{"name":"@scope/main","version":"0.2.0","dependencies":{"@scope/platform":"0.2.0"}}"#);
+        let platform = pkg("@scope/platform", "0.2.0");
+        let by_name = BTreeMap::from([("@scope/main".to_string(), main.clone()), ("@scope/platform".to_string(), platform)]);
+        let plan = BTreeSet::from(["@scope/main".to_string()]);
+        verify_publish_dependency_pins(&main, &by_name, &plan, Some("0.3.0"))
+            .expect("a dependency outside the plan keeps its own workspace version");
     }
 
     #[test]
     fn pins_outside_the_workspace_are_ignored() {
         let main = from_manifest(r#"{"name":"@scope/main","version":"0.2.0","dependencies":{"react":"18.2.0"}}"#);
         let by_name = BTreeMap::from([("@scope/main".to_string(), main.clone())]);
-        verify_publish_dependency_pins(&main, &by_name, None).expect("registry dependencies keep their pin");
+        let plan = BTreeSet::from(["@scope/main".to_string()]);
+        verify_publish_dependency_pins(&main, &by_name, &plan, None).expect("registry dependencies keep their pin");
     }
 }

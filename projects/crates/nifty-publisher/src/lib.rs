@@ -74,8 +74,9 @@ pub fn publish_workspace(options: PublishOptions) -> Result<PublishReport> {
     let packages = list_workspace_packages(&root)?;
     let by_name = packages.iter().map(|package| (package.name.clone(), package.clone())).collect::<BTreeMap<_, _>>();
     let (candidates, skipped) = resolve_candidate_packages(&packages, &by_name, &publish_targets)?;
+    let publish_plan = candidates.iter().map(|package| package.name.clone()).collect::<BTreeSet<_>>();
     for package in &candidates {
-        manifest::verify_publish_dependency_pins(package, &by_name, options.version.as_deref())?;
+        manifest::verify_publish_dependency_pins(package, &by_name, &publish_plan, options.version.as_deref())?;
     }
     let order = graph::sort_packages_for_publish(&candidates, &by_name)?;
     ensure_requested_targets_in_plan(&publish_targets, &order, &by_name)?;
