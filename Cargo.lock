@@ -1375,14 +1375,14 @@ dependencies = [
 
 [[package]]
 name = "nifty-config"
-version = "0.1.11"
+version = "0.1.12"
 dependencies = [
  "boost-fs 0.1.0 (git+https://github.com/oovm/rust-boost?rev=7ba022a049cafef979dfe7a8adf81d9a0d3dd373)",
 ]
 
 [[package]]
 name = "nifty-formatter"
-version = "0.1.11"
+version = "0.1.12"
 dependencies = [
  "boost-fs 0.1.0 (git+https://github.com/oovm/rust-boost?rev=7ba022a049cafef979dfe7a8adf81d9a0d3dd373)",
  "nifty-config",
@@ -1396,7 +1396,7 @@ dependencies = [
 
 [[package]]
 name = "nifty-git"
-version = "0.1.11"
+version = "0.1.12"
 dependencies = [
  "boost-fs 0.1.0 (git+https://github.com/oovm/rust-boost?rev=7ba022a049cafef979dfe7a8adf81d9a0d3dd373)",
  "gix",
@@ -1407,7 +1407,7 @@ dependencies = [
 
 [[package]]
 name = "nifty-github"
-version = "0.1.11"
+version = "0.1.12"
 dependencies = [
  "boost-http",
  "nifty-types",
@@ -1417,7 +1417,7 @@ dependencies = [
 
 [[package]]
 name = "nifty-history"
-version = "0.1.11"
+version = "0.1.12"
 dependencies = [
  "boost-http",
  "boost-log",
@@ -1435,7 +1435,7 @@ dependencies = [
 
 [[package]]
 name = "nifty-linter"
-version = "0.1.11"
+version = "0.1.12"
 dependencies = [
  "boost-fs 0.1.0 (git+https://github.com/oovm/rust-boost?rev=7ba022a049cafef979dfe7a8adf81d9a0d3dd373)",
  "nifty-config",
@@ -1449,7 +1449,7 @@ dependencies = [
 
 [[package]]
 name = "nifty-napi"
-version = "0.1.11"
+version = "0.1.12"
 dependencies = [
  "gix",
  "napi",
@@ -1468,7 +1468,7 @@ dependencies = [
 
 [[package]]
 name = "nifty-publisher"
-version = "0.1.11"
+version = "0.1.12"
 dependencies = [
  "boost-fs 0.1.0 (git+https://github.com/oovm/rust-boost?rev=7ba022a049cafef979dfe7a8adf81d9a0d3dd373)",
  "boost-http",
@@ -1484,7 +1484,7 @@ dependencies = [
 
 [[package]]
 name = "nifty-types"
-version = "0.1.11"
+version = "0.1.12"
 dependencies = [
  "serde",
  "serde_json",
@@ -1492,7 +1492,7 @@ dependencies = [
 
 [[package]]
 name = "nifty-updater"
-version = "0.1.11"
+version = "0.1.12"
 dependencies = [
  "boost-http",
  "dialoguer",
@@ -1506,7 +1506,7 @@ dependencies = [
 
 [[package]]
 name = "nifty-uploader"
-version = "0.1.11"
+version = "0.1.12"
 dependencies = [
  "boost-fs 0.1.0 (git+https://github.com/oovm/rust-boost?rev=7ba022a049cafef979dfe7a8adf81d9a0d3dd373)",
  "boost-http",
