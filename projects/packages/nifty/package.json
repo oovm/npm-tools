@@ -5,7 +5,7 @@
         "url": "git+https://github.com/oovm/npm-tools.git",
         "directory": "projects/packages/nifty"
     },
-    "version": "0.1.11",
+    "version": "0.1.12",
     "description": "Gitmoji-first commit conventions and release helpers (Node-API + TypeScript)",
     "type": "module",
     "engines": {
