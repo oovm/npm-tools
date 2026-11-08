@@ -1,6 +1,6 @@
 import type { Cli, ParsedOptions } from "@vmz/commander";
 
-import { bumpWorkspace, printBumpReport, type BumpKind, type BumpOptions } from "./bump.js";
+import { bumpWorkspaceWithConfig, printBumpReport, type BumpKind, type BumpOptions } from "./bump.js";
 import { bootstrapFromOptions, trackAction } from "./context.js";
 import { cwdFrom, flag, str } from "./options.js";
 
@@ -17,7 +17,7 @@ export function registerBumpCommand(cli: Cli): void {
 export async function cmdBump(options: ParsedOptions): Promise<number> {
     await bootstrapFromOptions(options);
     const bumpOptions = bumpOptionsFromParsed(options);
-    const report = bumpWorkspace(bumpOptions);
+    const report = await bumpWorkspaceWithConfig(bumpOptions);
     printBumpReport(report, bumpOptions.dryRun);
     return 0;
 }

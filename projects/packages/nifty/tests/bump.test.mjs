@@ -4,7 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 
-const { bumpWorkspace } = await import("../dist/cli/bump.js");
+const { bumpWorkspace, bumpWorkspaceWithConfig } = await import("../dist/cli/bump.js");
 
 function createWorkspace({ workspaceVersion = true } = {}) {
     const root = mkdtempSync(path.join(os.tmpdir(), "nifty-bump-workspace-"));
@@ -84,6 +84,69 @@ test("rejects inherited Cargo versions without changing the workspace", () => {
         assert.equal(JSON.parse(readFileSync(packagePath, "utf8")).version, "0.1.2");
         assert.match(readFileSync(path.join(workspace.explicitCrate, "Cargo.toml"), "utf8"), /version = "0\.1\.2"/);
     } finally {
+        removeWorkspace(workspace);
+    }
+});
+
+function addPackage(root, dirName, manifest) {
+    const directory = path.join(root, "projects", "packages", dirName);
+    mkdirSync(directory, { recursive: true });
+    const manifestPath = path.join(directory, "package.json");
+    writeFileSync(manifestPath, `${JSON.stringify(manifest)}\n`);
+    return { directory, manifestPath };
+}
+
+function removePackage({ directory, manifestPath }) {
+    unlinkSync(manifestPath);
+    rmdirSync(directory);
+}
+
+test("leaves private packages out of the bump", () => {
+    const workspace = createWorkspace();
+    const app = addPackage(workspace.root, "app", { name: "@example/app", version: "0.0.1", private: true });
+    try {
+        const options = { cwd: workspace.root, kind: "patch" };
+        const report = bumpWorkspace({ ...options, dryRun: true });
+        assert.ok(!report.npm.includes(app.manifestPath), "private package must not be bumped");
+        assert.equal(report.from, "0.1.2", "private versions must not join the shared version check");
+
+        bumpWorkspace(options);
+        assert.deepEqual(JSON.parse(readFileSync(app.manifestPath, "utf8")), { name: "@example/app", version: "0.0.1", private: true });
+        assert.equal(JSON.parse(readFileSync(path.join(workspace.npmPackage, "package.json"), "utf8")).version, "0.1.3");
+    } finally {
+        removePackage(app);
+        removeWorkspace(workspace);
+    }
+});
+
+test("leaves packages outside publish.packages out of the bump", () => {
+    const workspace = createWorkspace();
+    const tool = addPackage(workspace.root, "tool", { name: "@example/tool", version: "0.1.2" });
+    try {
+        const options = { cwd: workspace.root, kind: "patch", packages: ["@example/nifty"] };
+        const report = bumpWorkspace({ ...options, dryRun: true });
+        assert.ok(!report.npm.includes(tool.manifestPath), "package outside publish.packages must not be bumped");
+
+        bumpWorkspace(options);
+        assert.equal(JSON.parse(readFileSync(tool.manifestPath, "utf8")).version, "0.1.2");
+        assert.equal(JSON.parse(readFileSync(path.join(workspace.root, "projects", "packages", "nifty", "package.json"), "utf8")).version, "0.1.3");
+    } finally {
+        removePackage(tool);
+        removeWorkspace(workspace);
+    }
+});
+
+test("reads the publish allowlist from nifty.config", async () => {
+    const workspace = createWorkspace();
+    const tool = addPackage(workspace.root, "tool", { name: "@example/tool", version: "0.1.2" });
+    const configPath = path.join(workspace.root, "nifty.config.mts");
+    writeFileSync(configPath, 'export default { publish: { packages: ["@example/nifty"] } };\n');
+    try {
+        const report = await bumpWorkspaceWithConfig({ cwd: workspace.root, kind: "patch", dryRun: true });
+        assert.ok(!report.npm.includes(tool.manifestPath), "nifty.config publish.packages must narrow the bump");
+    } finally {
+        unlinkSync(configPath);
+        removePackage(tool);
         removeWorkspace(workspace);
     }
 });

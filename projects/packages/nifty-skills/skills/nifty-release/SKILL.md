@@ -41,7 +41,8 @@ nifty bump --version 0.0.3
 nifty bump --dry-run
 ```
 
-Aligns all `projects/crates/*/Cargo.toml` and `projects/packages/*/package.json` versions.
+Aligns all `projects/crates/*/Cargo.toml` and every publishable `projects/packages/*/package.json` version. Packages
+that are `private: true` or left out of `publish.packages` keep their current version.
 
 ## Repository policy (read first)
 

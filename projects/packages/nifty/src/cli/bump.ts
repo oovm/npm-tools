@@ -1,6 +1,7 @@
 import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
+import { loadInvocationConfig } from "./context.js";
 import { findWorkspaceRoot } from "./workspace.js";
 
 export type BumpKind = "patch" | "minor" | "major";
@@ -11,6 +12,8 @@ export type BumpOptions = {
     kind?: BumpKind;
     cwd?: string;
     dryRun?: boolean;
+    /** Publish allowlist from `publish.packages`. Empty or omitted means every non-private package. */
+    packages?: string[];
 };
 
 export type BumpReport = {
@@ -26,8 +29,14 @@ const DEFAULT_KIND: BumpKind = "patch";
 
 export async function runBump(argv: string[]): Promise<void> {
     const options = parseBumpArgs(argv);
-    const report = bumpWorkspace(options);
+    const report = await bumpWorkspaceWithConfig(options);
     printBumpReport(report, options.dryRun);
+}
+
+/** Load `publish.packages` so `bump` versions only the packages `publish` can ship. */
+export async function bumpWorkspaceWithConfig(options: BumpOptions): Promise<BumpReport> {
+    const { config } = await loadInvocationConfig({ cwd: options.cwd ?? process.cwd(), createIfMissing: false });
+    return bumpWorkspace({ ...options, ...(config.publish?.packages ? { packages: config.publish.packages } : {}) });
 }
 
 function parseBumpArgs(argv: string[]): BumpOptions {
@@ -84,7 +93,7 @@ export function bumpWorkspace(options: BumpOptions): BumpReport {
     const packagesDir = join(root, "projects", "packages");
 
     const cargoPaths = collectCargoManifests(cratesDir);
-    const npmPaths = collectPackageManifests(packagesDir);
+    const npmPaths = collectPackageManifests(packagesDir, options.packages);
     const from = readWorkspaceVersion(root, cargoPaths, npmPaths);
     const to = options.version ?? bumpSemver(from, options.kind ?? DEFAULT_KIND);
     assertVersion(to);
@@ -187,14 +196,28 @@ function collectCargoManifests(cratesDir: string): string[] {
         .filter((path) => existsSync(path));
 }
 
-function collectPackageManifests(packagesDir: string): string[] {
+function collectPackageManifests(packagesDir: string, publishable?: string[]): string[] {
     if (!existsSync(packagesDir)) {
         return [];
     }
+    const allowlist = publishable && publishable.length > 0 ? new Set(publishable) : undefined;
     return readdirSync(packagesDir, { withFileTypes: true })
         .filter((entry) => entry.isDirectory() && entry.name !== "node_modules")
         .map((entry) => join(packagesDir, entry.name, "package.json"))
-        .filter((path) => existsSync(path));
+        .filter((path) => existsSync(path))
+        .filter((path) => isReleaseManifest(path, allowlist));
+}
+
+/** `bump` versions only the packages `publish` can ship: non-private and inside `publish.packages`. */
+function isReleaseManifest(manifestPath: string, allowlist?: Set<string>): boolean {
+    const manifest = JSON.parse(readFileSync(manifestPath, "utf8")) as { name?: string; private?: boolean };
+    if (!manifest.name) {
+        throw new Error(`no name field in ${manifestPath}`);
+    }
+    if (manifest.private === true) {
+        return false;
+    }
+    return allowlist === undefined || allowlist.has(manifest.name);
 }
 
 function prepareCargoUpdates(root: string, cargoPaths: string[], version: string): FileUpdate[] {
@@ -309,7 +332,7 @@ export function printBumpReport(report: BumpReport, dryRun?: boolean): void {
 }
 
 function printBumpHelp(): void {
-    console.log(`nifty bump — align all crate and package versions in the workspace
+    console.log(`nifty bump — align crate and publishable package versions in the workspace
 
 Usage:
   nifty bump                 # bump patch (default)
@@ -322,5 +345,6 @@ Usage:
   nifty bump -C <cwd>
 
 Cargo members using version.workspace = true are updated through the root [workspace.package].version.
+Packages marked private or left out of publish.packages keep their current version.
 `);
 }
