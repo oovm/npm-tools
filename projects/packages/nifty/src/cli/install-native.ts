@@ -1,29 +1,22 @@
-import { copyFileSync, existsSync, mkdirSync, readdirSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, unlinkSync } from "node:fs";
 import { basename, dirname, join, relative, resolve } from "node:path";
 
 import { detectProjectLayout } from "../config/detectProject.js";
-
-/** Basename of a built .node file → platform package directory under projects/packages/. */
-const PACKAGE_BY_ASSET: Record<string, string> = {
-    "nifty-win32-x64-msvc.node": "nifty-win32-x64",
-    "nifty-linux-x64-gnu.node": "nifty-linux-x64",
-    "nifty-linux-arm64-gnu.node": "nifty-linux-arm64",
-    "nifty-darwin-x64.node": "nifty-darwin-x64",
-    "nifty-darwin-arm64.node": "nifty-darwin-arm64",
-};
-
-/**
- * Every platform in the publish matrix must be staged. A platform that is merely
- * skipped here still passes for "staged" while the meta package ships a dangling
- * optional dependency, so the required set is derived from the asset mapping
- * instead of a hand-maintained subset.
- */
-const REQUIRED_PACKAGES = Object.values(PACKAGE_BY_ASSET);
 
 export type InstallNativeOptions = {
     /** Downloaded CI artifact tree (walked recursively for .node files). */
     from: string;
     cwd?: string;
+};
+
+type NativePackage = {
+    /** Directory name under `projects/packages`, used in diagnostics. */
+    dirName: string;
+    /** Package name from the manifest, used in diagnostics. */
+    name: string;
+    dir: string;
+    /** Manifest `main`, relative to `dir`. */
+    main: string;
 };
 
 function walkNodes(dir: string): string[] {
@@ -42,8 +35,53 @@ function walkNodes(dir: string): string[] {
     return out;
 }
 
-function libHasNode(libDir: string): boolean {
-    return existsSync(libDir) && readdirSync(libDir).some((name) => name.endsWith(".node"));
+/**
+ * The platform package manifests are the staging contract: `os` + `cpu` mark a native package,
+ * `main` names the addon that has to be in the tarball. Every native package must be staged, so
+ * the required set is derived from the workspace instead of a hand-maintained subset.
+ */
+function listNativePackages(root: string): NativePackage[] {
+    const packagesDir = join(root, "projects/packages");
+    const packages: NativePackage[] = [];
+    for (const entry of readdirSync(packagesDir, { withFileTypes: true })) {
+        if (!entry.isDirectory()) {
+            continue;
+        }
+        const dir = join(packagesDir, entry.name);
+        const manifestPath = join(dir, "package.json");
+        if (!existsSync(manifestPath)) {
+            continue;
+        }
+        const manifest = JSON.parse(readFileSync(manifestPath, "utf8")) as {
+            name?: string;
+            os?: string[];
+            cpu?: string[];
+            main?: string;
+        };
+        const native =
+            Array.isArray(manifest.os) && manifest.os.length > 0 && Array.isArray(manifest.cpu) && manifest.cpu.length > 0;
+        if (!native) {
+            continue;
+        }
+        const main = manifest.main;
+        if (typeof main !== "string" || !main.endsWith(".node")) {
+            throw new Error(`install-native: ${entry.name}/package.json must declare its addon as "main", got ${main}`);
+        }
+        packages.push({ dirName: entry.name, name: manifest.name ?? entry.name, dir, main });
+    }
+    return packages;
+}
+
+function stageNativeBinary(root: string, pkg: NativePackage, source: string): void {
+    const dest = join(pkg.dir, pkg.main);
+    const libDir = dirname(dest);
+    mkdirSync(libDir, { recursive: true });
+    // An addon left by an earlier run would ship instead of this build's artifact.
+    for (const name of readdirSync(libDir).filter((entry) => entry.endsWith(".node"))) {
+        unlinkSync(join(libDir, name));
+    }
+    copyFileSync(source, dest);
+    console.log(`installed ${relative(root, dest)}`);
 }
 
 /** Copy matrix .node artifacts into platform package lib dirs for npm publish. */
@@ -55,31 +93,36 @@ export function installNativeFromOptions(options: InstallNativeOptions): void {
         throw new Error(`install-native: no .node files under ${artifactRoot}`);
     }
 
-    let installed = 0;
+    const packages = listNativePackages(layout.root);
+    if (packages.length === 0) {
+        throw new Error("install-native: no platform package declares os/cpu under projects/packages");
+    }
+
+    const byArtifact = new Map(packages.map((pkg) => [basename(pkg.main), pkg]));
+    const staged = new Set<string>();
     for (const file of nodes) {
-        const base = basename(file);
-        const packageDir = PACKAGE_BY_ASSET[base];
-        if (!packageDir) {
+        const artifact = basename(file);
+        const pkg = byArtifact.get(artifact);
+        if (!pkg) {
             console.log(`skip unmapped artifact ${relative(artifactRoot, file)}`);
             continue;
         }
-        const dest = join(layout.root, "projects/packages", packageDir, "lib", base);
-        mkdirSync(dirname(dest), { recursive: true });
-        copyFileSync(file, dest);
-        console.log(`installed ${relative(layout.root, dest)}`);
-        installed += 1;
-    }
-
-    if (installed === 0) {
-        throw new Error("install-native: no mapped platform .node files installed");
-    }
-
-    for (const packageDir of REQUIRED_PACKAGES) {
-        const libDir = join(layout.root, "projects/packages", packageDir, "lib");
-        if (!libHasNode(libDir)) {
-            throw new Error(`install-native: missing .node under ${packageDir}/lib`);
+        if (staged.has(pkg.dirName)) {
+            console.log(`skip duplicate artifact ${artifact}`);
+            continue;
         }
+        stageNativeBinary(layout.root, pkg, file);
+        staged.add(pkg.dirName);
     }
 
-    console.log(`install-native: ${installed} native binary(ies) ready for npm publish`);
+    const missing = packages.filter((pkg) => !staged.has(pkg.dirName));
+    if (missing.length > 0) {
+        throw new Error(
+            `install-native: missing native binary for ${missing
+                .map((pkg) => `${pkg.name} (${basename(pkg.main)})`)
+                .join(", ")}`,
+        );
+    }
+
+    console.log(`install-native: ${staged.size} native binary(ies) ready for npm publish`);
 }

@@ -73,6 +73,44 @@ impl NpmRunner {
         let version = output.stdout.trim();
         if version.is_empty() { Ok(None) } else { Ok(Some(version.to_string())) }
     }
+
+    /// Files npm would put in the tarball, read from `npm pack --dry-run --json`.
+    ///
+    /// npm computes this list with the same packing pipeline as `npm publish`, so
+    /// a native package can be checked against the archive it will actually ship.
+    pub fn pack_plan(&self, dir: &Path) -> Result<Vec<String>> {
+        let output = self.run(&["pack", "--dry-run", "--json"], Some(dir))?;
+        if output.status != 0 {
+            return Err(format!(
+                "npm pack --dry-run failed in {} (exit {}):\n{}{}",
+                dir.display(),
+                output.status,
+                output.stdout,
+                output.stderr
+            ));
+        }
+        pack_plan_from_json(&output.stdout, dir)
+    }
+}
+
+fn pack_plan_from_json(stdout: &str, dir: &Path) -> Result<Vec<String>> {
+    let plan: serde_json::Value = serde_json::from_str(stdout)
+        .map_err(|err| format!("npm pack --dry-run in {} did not return JSON: {err}", dir.display()))?;
+    let entry = plan
+        .as_array()
+        .and_then(|items| items.first())
+        .and_then(|item| item.get("files"))
+        .and_then(|files| files.as_array())
+        .ok_or_else(|| format!("npm pack --dry-run in {} returned no file list", dir.display()))?;
+    let mut paths = Vec::new();
+    for file in entry {
+        let path = file
+            .get("path")
+            .and_then(|path| path.as_str())
+            .ok_or_else(|| format!("npm pack --dry-run in {} returned a file without `path`", dir.display()))?;
+        paths.push(path.trim_start_matches("./").to_string());
+    }
+    Ok(paths)
 }
 
 pub fn run_npm_publish(

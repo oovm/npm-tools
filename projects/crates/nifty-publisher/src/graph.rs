@@ -78,6 +78,7 @@ mod tests {
             peer_dependencies: BTreeMap::new(),
             os: None,
             cpu: None,
+            main: None,
             publish_config: None,
         };
         NpmPackage {

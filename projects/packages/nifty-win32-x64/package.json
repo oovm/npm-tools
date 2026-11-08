@@ -9,9 +9,8 @@
     "description": "Nifty Node-API binary for Windows x64 (MSVC)",
     "type": "module",
     "license": "MPL-2.0",
-    "main": "./index.js",
+    "main": "./lib/index.win32-x64-msvc.node",
     "files": [
-        "index.js",
         "lib"
     ],
     "os": [

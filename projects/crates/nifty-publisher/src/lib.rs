@@ -118,12 +118,8 @@ pub fn publish_workspace(options: PublishOptions) -> Result<PublishReport> {
                 continue;
             }
         }
-        if is_native_binary_package(package) && !has_staged_native_binary(package) && !options.placeholder {
-            if !options.dry_run {
-                return Err(unstaged_native_error(&registry));
-            }
-            println!("skip publish {name} (dry run: no staged native binary)");
-            continue;
+        if !options.placeholder && is_native_binary_package(package) {
+            verify_native_release(package, &registry, &runner)?;
         }
         println!("publishing {registry}@{publish_version}");
         let attempt = match publish_package(
@@ -172,28 +168,54 @@ fn is_native_binary_package(package: &NpmPackage) -> bool {
         && package.manifest.cpu.as_ref().is_some_and(|cpu| !cpu.is_empty())
 }
 
-/// A native platform package that would be skipped for a missing `.node`.
+/// A native platform package must stage exactly the addon its manifest ships.
 ///
 /// The meta package lists these platform packages as optional dependencies, so a
 /// release that silently drops one installs without native bindings on that
 /// platform. Publishing stops before the dependent packages are reached, because
 /// the plan always orders platform packages first.
-fn unstaged_native_error(registry: &str) -> String {
-    format!(
-        "missing staged native binary for {registry} — stage every platform with `nifty install-native --from-artifacts` before publishing"
-    )
+fn verify_native_release(package: &NpmPackage, registry: &str, runner: &npm::NpmRunner) -> Result<()> {
+    let entry = native_entry(package, registry)?;
+    let relative =
+        entry.strip_prefix(&package.dir).map_err(|_| format!("native entry for {registry} escapes its package directory"))?;
+    if !entry.is_file() {
+        return Err(format!(
+            "missing staged native binary `{}` for {registry} — stage every platform with `nifty install-native --from-artifacts` before publishing",
+            relative.display()
+        ));
+    }
+    let plan = runner.pack_plan(&package.dir)?;
+    let relative = relative.to_string_lossy().replace('\\', "/");
+    if !plan.iter().any(|path| path == &relative) {
+        return Err(format!(
+            "native binary `{relative}` for {registry} is not included in the tarball — check `files` and `.npmignore` before publishing"
+        ));
+    }
+    Ok(())
 }
 
-fn has_staged_native_binary(package: &NpmPackage) -> bool {
-    let has_node = |dir: &Path| {
-        fs::read_dir(dir)
-            .map(|entries| {
-                entries.filter_map(|entry| entry.ok()).any(|entry| entry.path().extension().is_some_and(|ext| ext == "node"))
-            })
-            .unwrap_or(false)
-    };
-    // Two shipped layouts: `lib/<addon>.node` (nifty) and `<addon>.node` at the package root (vmz).
-    has_node(&package.dir.join("lib")) || has_node(&package.dir)
+/// Expected native entry, derived from the package manifest `main`.
+///
+/// Native packages ship the addon itself as their module entry, so `main` is the
+/// single source for the staged path, the tarball check and the runtime loader.
+fn native_entry(package: &NpmPackage, registry: &str) -> Result<PathBuf> {
+    let main = package
+        .manifest
+        .main
+        .as_deref()
+        .ok_or_else(|| format!("native package {registry} must declare its addon as `main`"))?;
+    if !main.ends_with(".node") {
+        return Err(format!("native package {registry} must declare a `.node` entry as `main`, got `{main}`"));
+    }
+    let relative = Path::new(main);
+    if relative.is_absolute()
+        || !relative
+            .components()
+            .all(|component| matches!(component, std::path::Component::Normal(_) | std::path::Component::CurDir))
+    {
+        return Err(format!("native package {registry} has an invalid `main` path `{main}`"));
+    }
+    Ok(package.dir.join(relative))
 }
 
 pub fn trust_workspace(options: TrustOptions) -> Result<TrustReport> {
@@ -315,6 +337,7 @@ mod plan_guard_tests {
             peer_dependencies: BTreeMap::new(),
             os: None,
             cpu: None,
+            main: None,
             publish_config: None,
         };
         NpmPackage {
@@ -373,14 +396,13 @@ mod plan_guard_tests {
 
 #[cfg(test)]
 mod native_binary_tests {
-    use std::{collections::BTreeMap, fs, path::PathBuf};
+    use std::{collections::BTreeMap, path::PathBuf};
 
-    use boost_fs::temp::create_folder;
-
-    use super::{has_staged_native_binary, is_native_binary_package, unstaged_native_error};
+    use super::{is_native_binary_package, native_entry};
     use crate::workspace::{NpmPackage, PackageManifest};
 
-    fn package_with_dir(name: &str, dir: PathBuf, os: Option<Vec<String>>, cpu: Option<Vec<String>>) -> NpmPackage {
+    fn package(name: &str, os: Option<Vec<String>>, cpu: Option<Vec<String>>, main: Option<&str>) -> NpmPackage {
+        let dir = PathBuf::from(name);
         let manifest = PackageManifest {
             name: name.to_string(),
             version: "0.0.0".to_string(),
@@ -391,6 +413,7 @@ mod native_binary_tests {
             peer_dependencies: BTreeMap::new(),
             os,
             cpu,
+            main: main.map(str::to_string),
             publish_config: None,
         };
         NpmPackage {
@@ -403,46 +426,37 @@ mod native_binary_tests {
         }
     }
 
-    fn package(name: &str, os: Option<Vec<String>>, cpu: Option<Vec<String>>) -> NpmPackage {
-        package_with_dir(name, PathBuf::from(name), os, cpu)
+    fn shard(main: Option<&str>) -> NpmPackage {
+        package("@doki-land/nifty-win32-x64", Some(vec!["win32".to_string()]), Some(vec!["x64".to_string()]), main)
     }
 
     #[test]
     fn skills_is_not_native_binary_package() {
-        assert!(!is_native_binary_package(&package("@doki-land/nifty-skills", None, None)));
+        assert!(!is_native_binary_package(&package("@doki-land/nifty-skills", None, None, None)));
     }
 
     #[test]
     fn platform_shard_requires_os_and_cpu() {
-        assert!(is_native_binary_package(&package(
-            "@doki-land/nifty-win32-x64",
-            Some(vec!["win32".to_string()]),
-            Some(vec!["x64".to_string()]),
-        )));
+        assert!(is_native_binary_package(&shard(Some("./lib/index.win32-x64-msvc.node"))));
     }
 
     #[test]
-    fn staged_native_binary_supports_lib_and_root_layouts() {
-        let root = create_folder().expect("tempdir");
-        let lib_pkg = package_with_dir("lib", root.path().join("lib-pkg"), None, None);
-        fs::create_dir_all(&lib_pkg.dir).expect("mkdir");
-        assert!(!has_staged_native_binary(&lib_pkg));
-        fs::create_dir_all(lib_pkg.dir.join("lib")).expect("mkdir lib");
-        fs::write(lib_pkg.dir.join("lib").join("addon.node"), b"bin").expect("write lib addon");
-        assert!(has_staged_native_binary(&lib_pkg));
-
-        let root_pkg = package_with_dir("root", root.path().join("root-pkg"), None, None);
-        fs::create_dir_all(&root_pkg.dir).expect("mkdir");
-        assert!(!has_staged_native_binary(&root_pkg));
-        fs::write(root_pkg.dir.join("addon.node"), b"bin").expect("write root addon");
-        assert!(has_staged_native_binary(&root_pkg));
+    fn native_entry_comes_from_the_manifest_main() {
+        let entry = native_entry(&shard(Some("./lib/index.win32-x64-msvc.node")), "@doki-land/nifty-win32-x64")
+            .expect("declared addon");
+        assert_eq!(entry, PathBuf::from("@doki-land/nifty-win32-x64").join("lib").join("index.win32-x64-msvc.node"));
     }
 
     #[test]
-    fn missing_staged_binary_fails_a_real_publish() {
-        let error = unstaged_native_error("@scope/native");
-        assert!(error.contains("@scope/native"), "error must name the platform package: {error}");
-        assert!(error.contains("install-native"), "error must name the staging step: {error}");
+    fn native_entry_must_be_a_declared_node_addon() {
+        let missing = native_entry(&shard(None), "@doki-land/nifty-win32-x64").expect_err("main is required");
+        assert!(missing.contains("`main`"), "error must point at the manifest entry: {missing}");
+
+        let script = native_entry(&shard(Some("./lib/index.js")), "@doki-land/nifty-win32-x64").expect_err("addon only");
+        assert!(script.contains(".node"), "error must explain the addon requirement: {script}");
+
+        let escaping = native_entry(&shard(Some("../addon.node")), "@doki-land/nifty-win32-x64").expect_err("relative only");
+        assert!(escaping.contains("../addon.node"), "error must name the invalid path: {escaping}");
     }
 }
 
@@ -464,6 +478,7 @@ mod publish_filter_tests {
             peer_dependencies: BTreeMap::new(),
             os: None,
             cpu: None,
+            main: None,
             publish_config: None,
         };
         NpmPackage {

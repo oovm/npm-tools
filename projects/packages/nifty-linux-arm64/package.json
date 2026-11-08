@@ -9,9 +9,8 @@
     "description": "Nifty Node-API binary for Linux arm64 (glibc)",
     "type": "module",
     "license": "MPL-2.0",
-    "main": "./index.js",
+    "main": "./lib/index.linux-arm64-gnu.node",
     "files": [
-        "index.js",
         "lib"
     ],
     "os": [

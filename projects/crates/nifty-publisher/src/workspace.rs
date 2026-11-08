@@ -32,6 +32,9 @@ pub struct PackageManifest {
     pub os: Option<Vec<String>>,
     #[serde(default)]
     pub cpu: Option<Vec<String>>,
+    /// Module entry. Native packages must point it at their staged `.node` addon.
+    #[serde(default)]
+    pub main: Option<String>,
     #[serde(rename = "publishConfig", default)]
     pub publish_config: Option<PublishConfig>,
 }

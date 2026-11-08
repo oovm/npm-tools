@@ -9,9 +9,8 @@
     "description": "Nifty Node-API binary for macOS x64",
     "type": "module",
     "license": "MPL-2.0",
-    "main": "./index.js",
+    "main": "./lib/index.darwin-x64.node",
     "files": [
-        "index.js",
         "lib"
     ],
     "os": [

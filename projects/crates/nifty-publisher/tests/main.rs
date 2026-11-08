@@ -67,6 +67,15 @@ if (args[0] === "view") {
 const dir = process.cwd();
 const manifest = JSON.parse(fs.readFileSync(path.join(dir, "package.json"), "utf8"));
 const configured = (file) => fs.readFileSync(path.join(__dirname, file), "utf8").trim();
+if (args[0] === "pack") {
+    const main = (manifest.main || "").replace(/^\.\//, "");
+    const files = [{ path: "package.json" }];
+    if (main && manifest.name !== configured("pack-omit.txt")) {
+        files.push({ path: main });
+    }
+    console.log(JSON.stringify([{ files }]));
+    process.exit(0);
+}
 if (manifest.name === configured("fail-package.txt")) {
     console.error("npm error code E401");
     console.error("npm error 401 Unauthorized - PUT https://registry.npmjs.org/" + manifest.name);
@@ -205,6 +214,7 @@ fn write_native_package(root: &std::path::Path) {
         r#"{
     "name": "@scope/native",
     "version": "0.0.0",
+    "main": "lib/addon.node",
     "os": ["linux"],
     "cpu": ["x64"]
 }"#,
@@ -228,6 +238,7 @@ fn fake_npm(root: &std::path::Path) -> std::path::PathBuf {
     let bin = npm.parent().expect("fake npm dir");
     fs::write(bin.join("fail-package.txt"), "none").expect("fail package");
     fs::write(bin.join("staged-package.txt"), "none").expect("staged package");
+    fs::write(bin.join("pack-omit.txt"), "none").expect("pack omit package");
     npm
 }
 
@@ -296,4 +307,69 @@ fn staged_native_binary_publishes_the_workspace() {
 
     assert_eq!(report.published.len(), 2, "both packages must be published: {report:?}");
     assert!(root.path().join("projects/packages/main/published.marker").is_file());
+}
+
+#[test]
+fn dry_run_uses_the_same_native_eligibility_as_a_real_publish() {
+    if !node_available() {
+        return;
+    }
+
+    let root = create_folder().expect("tempdir");
+    write_workspace_skeleton(root.path());
+    write_native_package(root.path());
+
+    let error = publish_workspace(PublishOptions {
+        cwd: Some(root.path().to_path_buf()),
+        dry_run: true,
+        refresh: false,
+        placeholder: false,
+        tag: None,
+        access: Some("public".to_string()),
+        npm: Some(fake_npm(root.path())),
+        otp: OtpOverrides::default(),
+        trust: None,
+        only: None,
+        packages: None,
+        version: None,
+    })
+    .expect_err("a dry run must not report a release that a real publish would reject");
+
+    assert!(error.contains("@scope/native"), "error must name the platform package: {error}");
+    assert!(error.contains("install-native"), "error must name the staging step: {error}");
+}
+
+#[test]
+fn native_binary_missing_from_the_tarball_fails_publish() {
+    if !node_available() {
+        return;
+    }
+
+    let root = create_folder().expect("tempdir");
+    write_workspace_skeleton(root.path());
+    write_native_package(root.path());
+    let lib = root.path().join("projects/packages/native/lib");
+    fs::create_dir_all(&lib).expect("mkdir lib");
+    fs::write(lib.join("addon.node"), b"bin").expect("write addon");
+    let npm = fake_npm(root.path());
+    fs::write(npm.parent().expect("fake npm dir").join("pack-omit.txt"), "@scope/native").expect("omit native binary");
+
+    let error = publish_workspace(PublishOptions {
+        cwd: Some(root.path().to_path_buf()),
+        dry_run: false,
+        refresh: false,
+        placeholder: false,
+        tag: None,
+        access: Some("public".to_string()),
+        npm: Some(npm),
+        otp: OtpOverrides::default(),
+        trust: None,
+        only: None,
+        packages: None,
+        version: None,
+    })
+    .expect_err("a staged binary outside the tarball must fail the publish");
+
+    assert!(error.contains("lib/addon.node"), "error must name the expected entry: {error}");
+    assert!(error.contains("not included in the tarball"), "error must explain the tarball check: {error}");
 }

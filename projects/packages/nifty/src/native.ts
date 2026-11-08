@@ -756,7 +756,9 @@ export function loadNiftyNative(): NiftyNative {
         throw new Error(`Unsupported platform for Nifty native bindings: ${key}`);
     }
     const require = createRequire(import.meta.url);
-    const binding = require(pkg).default as NativeBinding;
+    // The platform package declares its Node-API addon as `main`, so `require` returns the
+    // binding exports directly.
+    const binding = require(pkg) as NativeBinding;
     cached = wrapBinding(binding);
     return cached;
 }

@@ -198,25 +198,8 @@ jobs:
           pattern: native-*
           path: dist/native-artifacts
 
-      - name: Normalize artifact layout
-        shell: bash
-        run: |
-          set -euo pipefail
-          mkdir -p dist/native-flat
-          for d in dist/native-artifacts/native-* dist/native-artifacts/*; do
-            [[ -d "$d" ]] || continue
-            base="$(basename "$d")"
-            short="${base#native-}"
-            mkdir -p "dist/native-flat/$short"
-            cp -r "$d"/. "dist/native-flat/$short/" || true
-          done
-          find dist/native-flat -type f -print
-          for short in win32-x64 linux-x64 linux-arm64 darwin-arm64 darwin-x64; do
-            if ! find "dist/native-flat/$short" -name 'nifty*.node' -type f | grep -q .; then
-              echo "missing native binary for $short under dist/native-flat" >&2
-              exit 1
-            fi
-          done
+      - name: Stage native artifacts into platform packages
+        run: node projects/packages/nifty/cli/nifty.mjs install-native --from dist/native-artifacts
 
       - name: Strip token-style npmrc (OIDC only)
         shell: bash
