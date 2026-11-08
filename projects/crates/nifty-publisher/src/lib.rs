@@ -180,7 +180,7 @@ fn verify_native_release(package: &NpmPackage, registry: &str, runner: &npm::Npm
         entry.strip_prefix(&package.dir).map_err(|_| format!("native entry for {registry} escapes its package directory"))?;
     if !entry.is_file() {
         return Err(format!(
-            "missing staged native binary `{}` for {registry} — stage every platform with `nifty install-native --from-artifacts` before publishing",
+            "missing staged native binary `{}` for {registry} — stage every platform with `nifty install-native --from <dir>` before publishing",
             relative.display()
         ));
     }

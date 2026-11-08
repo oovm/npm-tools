@@ -214,15 +214,6 @@ jobs:
             fi
           done
 
-      - name: Stage native artifacts into platform packages
-        shell: bash
-        run: |
-          set -euo pipefail
-          for short in win32-x64 linux-x64 linux-arm64 darwin-arm64 darwin-x64; do
-            mkdir -p "projects/packages/nifty-$short/lib"
-            cp -r "dist/native-flat/$short"/. "projects/packages/nifty-$short/lib/"
-          done
-
       - name: Verify tag version matches workspace manifests
         shell: bash
         run: |

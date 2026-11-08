@@ -119,7 +119,7 @@ Platform `.node` binaries are **not** uploaded here — the release workflow sta
 ## CI native staging (maintainers)
 
 ```bash
-nifty install-native --from-artifacts path/to/native-artifacts
+nifty install-native --from path/to/native-artifacts
 ```
 
 Then `nifty publish` includes staged `@doki-land/nifty-<platform>` packages.
