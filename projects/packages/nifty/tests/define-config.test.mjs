@@ -3,35 +3,37 @@ import path from "node:path";
 import test from "node:test";
 import ts from "typescript";
 
-test("reports one direct object-shape error and contextually types config factories", () => {
-    const fixture = path.resolve("tests/fixtures/define-config-invalid.ts");
-    const options = {
-        module: ts.ModuleKind.NodeNext,
-        moduleResolution: ts.ModuleResolutionKind.NodeNext,
-        noEmit: true,
-        skipLibCheck: true,
-        strict: true,
-        target: ts.ScriptTarget.ES2022,
-    };
-    const program = ts.createProgram([fixture], options);
-    const diagnostics = ts.getPreEmitDiagnostics(program);
+const OPTIONS = {
+    module: ts.ModuleKind.NodeNext,
+    moduleResolution: ts.ModuleResolutionKind.NodeNext,
+    noEmit: true,
+    skipLibCheck: true,
+    strict: true,
+    target: ts.ScriptTarget.ES2022,
+};
 
-    assert.equal(diagnostics.length, 1);
-    assert.equal(diagnostics[0].code, 2322);
-    assert.match(ts.flattenDiagnosticMessageText(diagnostics[0].messageText, " "), /not assignable to type 'never'/);
-    assert.equal(ts.getLineAndCharacterOfPosition(diagnostics[0].file, diagnostics[0].start).line + 1, 5);
+function fixtureDiagnostics(name) {
+    const program = ts.createProgram([path.resolve("tests/fixtures", name)], OPTIONS);
+    return ts.getPreEmitDiagnostics(program).map((diagnostic) => ({
+        code: diagnostic.code,
+        line: diagnostic.file && diagnostic.start != null ? ts.getLineAndCharacterOfPosition(diagnostic.file, diagnostic.start).line + 1 : null,
+        message: ts.flattenDiagnosticMessageText(diagnostic.messageText, " "),
+    }));
+}
+
+test("names the offending key and call form instead of collapsing to never", () => {
+    const diagnostics = fixtureDiagnostics("define-config-invalid.ts");
+
+    assert.deepEqual(
+        diagnostics.map((diagnostic) => diagnostic.code),
+        [2353, 2345],
+    );
+    assert.match(diagnostics[0].message, /'unknownOption' does not exist in type 'NiftyConfigExport'/);
+    assert.equal(diagnostics[0].line, 5);
+    assert.match(diagnostics[1].message, /not assignable to parameter of type 'NiftyConfigExport'/);
+    assert.equal(diagnostics[1].line, 8);
 });
 
-test("preserves the exact return type for object and factory configs", () => {
-    const fixture = path.resolve("tests/fixtures/define-config-valid.ts");
-    const options = {
-        module: ts.ModuleKind.NodeNext,
-        moduleResolution: ts.ModuleResolutionKind.NodeNext,
-        noEmit: true,
-        skipLibCheck: true,
-        strict: true,
-        target: ts.ScriptTarget.ES2022,
-    };
-    const program = ts.createProgram([fixture], options);
-    assert.equal(ts.getPreEmitDiagnostics(program).length, 0);
+test("accepts object and factory configs with contextual typing", () => {
+    assert.deepEqual(fixtureDiagnostics("define-config-valid.ts"), []);
 });

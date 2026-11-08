@@ -5,6 +5,4 @@ defineConfig({
     unknownOption: {},
 });
 
-defineConfig(({ mode }) => ({
-    format: { preset: mode === "production" ? "nifty" : "default" },
-}));
+defineConfig("nifty");
