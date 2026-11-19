@@ -55,7 +55,7 @@ export default defineConfig({
 - **Gitmoji-first commits** — lint subjects, bodies, semver bans, and scoped package naming in one pass (`nifty lint`, `nifty check`).
 - **Hybrid versioning** — bump shared `workspace.package` versions and explicit crate / package manifests together (`nifty bump`).
 - **Ordered npm publish** — topological workspace publish with dependency patching (`nifty publish`).
-- **Oak-backed formatting** — `cargo fmt` for Rust and Oak CST formatting for TypeScript / JavaScript (`nifty format`).
+- **Boost-backed formatting** — `cargo fmt` for Rust and `data.text` CST formatting for TypeScript / JavaScript (`nifty format`).
 - **gix-powered git reads** — tag ranges, commit walks, and gitmoji parsing without a `git` subprocess for core APIs.
 - **Trusted Publisher aware** — `nifty trust` helpers for npm OIDC after first publish of a new package name.
 

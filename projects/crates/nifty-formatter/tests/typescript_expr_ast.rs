@@ -1,12 +1,12 @@
-//! Moved from `oak-typescript/src/print/expr.rs`.
+//! Ported from `data-text-typescript/src/print/expr.rs`.
 
-use oak_core::{Builder, ParseSession, SourceText};
-use oak_typescript::{
+use data_text_core::{Builder, ParseSession, SourceText};
+use data_text_typescript::{
     TypeScriptBuilder, TypeScriptLanguage,
     ast::{ExpressionKind, Statement},
 };
 
-fn parse_expr_snippet(trimmed: &str) -> Option<oak_typescript::ast::Expression> {
+fn parse_expr_snippet(trimmed: &str) -> Option<data_text_typescript::ast::Expression> {
     let source = SourceText::new(trimmed);
     let language = TypeScriptLanguage::default();
     let builder = TypeScriptBuilder::new(&language);
@@ -23,7 +23,7 @@ fn parse_expr_snippet(trimmed: &str) -> Option<oak_typescript::ast::Expression> 
 #[test]
 fn prints_binary_with_spacing_via_formatter() {
     let out =
-        oak_typescript::formatter::format_source("a+b", &oak_typescript::formatter::FormatOptions::default()).expect("format");
+        data_text_typescript::formatter::format_source("a+b", &data_text_typescript::formatter::FormatOptions::default()).expect("format");
     assert_eq!(out, "a + b");
 }
 

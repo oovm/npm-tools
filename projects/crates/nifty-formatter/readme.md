@@ -2,7 +2,7 @@
 
 Workspace formatter and release-note helpers for the [Nifty](https://www.npmjs.com/package/@doki-land/nifty) stack. Depend on `@doki-land/nifty` unless you need this crate directly.
 
-- **`nifty format`** — `cargo fmt` for Rust; Oak CST formatting for TypeScript / JavaScript
+- **`nifty format`** — `cargo fmt` for Rust; `data.text` CST formatting for TypeScript / JavaScript
 - **Release bullets** — gitmoji subjects, author mentions, grouped changelog sections
 
 ## Example

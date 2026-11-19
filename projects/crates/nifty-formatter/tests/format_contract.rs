@@ -1,5 +1,5 @@
-//! Shared Oak `format` contract through the Nifty workspace adapter.
-//! Conformance matrix: `projects/packages/nifty-skills` Oak formatter fixtures and this test suite.
+//! Shared text `format` contract through the Nifty workspace adapter.
+//! Conformance matrix: `projects/packages/nifty-skills` formatter fixtures and this test suite.
 
 use std::path::Path;
 
@@ -167,8 +167,8 @@ fn preserves_regex_bodies_and_distinguishes_division() {
 
 #[test]
 fn workspace_typescript_formatting_preserves_every_token() {
-    use oak_core::{Lexer, ParseSession, SourceText};
-    use oak_typescript::{TypeScriptLanguage, TypeScriptLexer, TypeScriptTokenType};
+    use data_text_core::{Lexer, ParseSession, SourceText};
+    use data_text_typescript::{TypeScriptLanguage, TypeScriptLexer, TypeScriptTokenType};
 
     let language = TypeScriptLanguage::default();
     let lexer = TypeScriptLexer::new(&language);

@@ -1,5 +1,5 @@
-use oak_core::{Builder, ParseSession, SourceText};
-use oak_typescript::{
+use data_text_core::{Builder, ParseSession, SourceText};
+use data_text_typescript::{
     TypeScriptBuilder, TypeScriptLanguage,
     ast::{ExpressionKind, Statement},
 };

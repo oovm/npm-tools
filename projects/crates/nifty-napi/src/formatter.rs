@@ -1,4 +1,4 @@
-//! Node-API bindings for workspace formatting through Oak and cargo fmt.
+//! Node-API bindings for workspace formatting through `data.text` and cargo fmt.
 
 use napi::bindgen_prelude::*;
 use napi_derive::napi;

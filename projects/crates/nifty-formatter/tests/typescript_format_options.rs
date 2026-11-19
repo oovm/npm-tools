@@ -1,6 +1,6 @@
-//! Moved from `oak-typescript/src/formatter/cst_options.rs`.
+//! Ported from `data-text-typescript/src/formatter/cst_options.rs`.
 
-use oak_typescript::formatter::{FormatOptions, QuoteStyle};
+use data_text_typescript::formatter::{FormatOptions, QuoteStyle};
 
 #[test]
 fn maps_indent_and_line_width() {

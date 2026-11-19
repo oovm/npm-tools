@@ -2,7 +2,7 @@
 
 [![npm version](https://img.shields.io/npm/v/@doki-land/nifty.svg)](https://www.npmjs.com/package/@doki-land/nifty)
 
-Programmatic and CLI surface for **Nifty** — gitmoji commit lint, hybrid Cargo + npm bumps, Oak formatting, workspace publish, and gix-backed git helpers. Product overview: [npm-tools readme](https://github.com/oovm/npm-tools#readme).
+Programmatic and CLI surface for **Nifty** — gitmoji commit lint, hybrid Cargo + npm bumps, `data.text` formatting, workspace publish, and gix-backed git helpers. Product overview: [npm-tools readme](https://github.com/oovm/npm-tools#readme).
 
 ## Exports
 

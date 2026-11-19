@@ -1,6 +1,6 @@
-//! Moved from `oak-typescript/src/formatter/red_tree/mod.rs` — public formatter entry only.
+//! Ported from `data-text-typescript/src/formatter/red_tree/mod.rs` — public formatter entry only.
 
-use oak_typescript::formatter::{FormatOptions, format_source};
+use data_text_typescript::formatter::{FormatOptions, format_source};
 
 #[test]
 fn variable_declaration_rule_normalizes_spacing() {

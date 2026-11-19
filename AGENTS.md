@@ -49,7 +49,7 @@ pnpm exec nifty --help
 ```
 
 `build:napi` runs `cargo metadata --locked` first and refuses to compile when `Cargo.lock` is out of sync, so a local
-Oak overlay has to be off for it. `pnpm run build` (plain `cargo build --release`) stays patch-friendly, and
+Boost overlay has to be off for it. `pnpm run build` (plain `cargo build --release`) stays patch-friendly, and
 `pnpm run build:ci` reproduces the CI `--locked` flags.
 
 Hybrid monorepo layout: `projects/crates/` (Rust), `projects/packages/` (npm).
@@ -81,13 +81,13 @@ the member versions) and ship it in the same commit as the manifests.
 ### Pinned toolchain
 
 `rust-toolchain.toml` and every workflow pin `nightly-2026-11-07` (`rustc 1.101.0-nightly`). Nightly is required, not
-cosmetic: the pinned `oak` revision uses `#![feature(new_range_api)]`, so stable cannot build the workspace.
+cosmetic: the pinned `data-text` revision uses `#![feature(new_range_api)]`, so stable cannot build the workspace.
 
 Update the pin deliberately, never as a side effect of another change:
 
 - Who: the maintainer cutting the next release.
 - When: at most once per release cycle, and only with a green `check-rust` matrix on the resulting commit.
-- Trigger: an `oak` revision bump that needs newer syntax, or a compiler fix we need. A stale pin is harmless, a
+- Trigger: a `data-text` revision bump that needs newer syntax, or a compiler fix we need. A stale pin is harmless, a
   floating `nightly` is not — a bad nightly would break the release chain with no commit to point at.
 
 `npm install -g npm@12.2.2` in `publish-npm.yml` is the version that carried the last successful publish. Trusted

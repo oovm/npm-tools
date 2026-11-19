@@ -1,5 +1,5 @@
-use oak_core::{ParseSession, Parser, SourceText};
-use oak_typescript::{TypeScriptLanguage, TypeScriptParser};
+use data_text_core::{ParseSession, Parser, SourceText};
+use data_text_typescript::{TypeScriptLanguage, TypeScriptParser};
 use std::time::{Duration, Instant};
 
 #[test]

@@ -83,7 +83,7 @@ try {
 } catch (error) {
     console.error("Cargo.lock does not match the workspace manifests.");
     console.error(String(error.stderr ?? "").trim() || error.message);
-    console.error("Refresh the lock where the local Oak overlay is off, then rebuild.");
+    console.error("Refresh the lock without the local Boost overlay, then rebuild.");
     process.exit(1);
 }
 

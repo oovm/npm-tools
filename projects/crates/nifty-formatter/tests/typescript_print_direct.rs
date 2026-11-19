@@ -1,6 +1,6 @@
-//! Moved from `oak-typescript/src/print/mod.rs` (private print path).
+//! Ported from `data-text-typescript/src/print/mod.rs` (private print path).
 
-use oak_typescript::formatter::{FormatOptions, format_source};
+use data_text_typescript::formatter::{FormatOptions, format_source};
 
 #[test]
 fn formats_const_spacing() {

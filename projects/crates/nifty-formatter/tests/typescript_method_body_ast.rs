@@ -1,12 +1,12 @@
 //! Class method bodies must lower `this` / update / private idents for VMZ FieldRw.
 
-use oak_core::{Builder, ParseSession, SourceText};
-use oak_typescript::{
+use data_text_core::{Builder, ParseSession, SourceText};
+use data_text_typescript::{
     TypeScriptBuilder, TypeScriptLanguage,
     ast::{ClassMember, ExpressionKind, Statement},
 };
 
-fn build_root(src: &str) -> oak_typescript::TypeScriptRoot {
+fn build_root(src: &str) -> data_text_typescript::TypeScriptRoot {
     let source = SourceText::new(src);
     let language = TypeScriptLanguage::default();
     let builder = TypeScriptBuilder::new(&language);
@@ -14,7 +14,7 @@ fn build_root(src: &str) -> oak_typescript::TypeScriptRoot {
     Builder::build(&builder, &source, &[], &mut cache).result.expect("build ok")
 }
 
-fn class_methods(root: &oak_typescript::TypeScriptRoot) -> Vec<&ClassMember> {
+fn class_methods(root: &data_text_typescript::TypeScriptRoot) -> Vec<&ClassMember> {
     let mut out = Vec::new();
     for stmt in &root.statements {
         let class = match stmt {

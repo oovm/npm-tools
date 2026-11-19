@@ -1,6 +1,6 @@
-//! Moved from `oak-typescript/src/print/jsx.rs` — formatter contract for JSX snippets.
+//! Ported from `data-text-typescript/src/print/jsx.rs` — formatter contract for JSX snippets.
 
-use oak_typescript::formatter::{FormatOptions, format_source};
+use data_text_typescript::formatter::{FormatOptions, format_source};
 
 #[test]
 fn jsx_element_with_string_attribute_formats() {

@@ -1,6 +1,6 @@
 mod cargo;
 mod engine;
-mod oak;
+mod text;
 mod style;
 mod walk;
 
@@ -42,7 +42,7 @@ pub struct RunFormatOptions {
 
 pub type Result<T> = std::result::Result<T, String>;
 
-/// Format JS/TS/JSX/TSX via Oak and Rust via cargo fmt.
+/// Format JS/TS/JSX/TSX via `data.text` and Rust via cargo fmt.
 pub fn run_format(options: RunFormatOptions) -> Result<FormatReport> {
     let cwd = options.cwd.clone().unwrap_or_else(|| std::env::current_dir().expect("current dir"));
     let layout = detect_project_layout(&cwd);
@@ -76,7 +76,7 @@ fn format_path(
     path: &Path,
     check: bool,
     report: &mut FormatReport,
-    options: &oak_typescript::formatter::FormatOptions,
+    options: &data_text_typescript::formatter::FormatOptions,
 ) -> Result<()> {
     let source = fs::read_to_string(path).map_err(|err| format!("{}: {err}", path.display()))?;
     let result = engine::format_source_with_options(path, &source, options.clone())

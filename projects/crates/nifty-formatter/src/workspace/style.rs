@@ -1,4 +1,4 @@
-use oak_typescript::formatter::{FormatOptions, QuoteStyle};
+use data_text_typescript::formatter::{FormatOptions, QuoteStyle};
 
 /// JavaScript/TypeScript formatter style from the workspace format configuration.
 #[derive(Debug, Clone, Default)]
@@ -9,22 +9,22 @@ pub struct FormatStyleOptions {
     pub quote_style: Option<String>,
 }
 
-/// Default Oak formatter options.
+/// Default formatter options.
 pub fn default_format_options() -> FormatOptions {
     FormatOptions { indent_width: 4, line_width: 144, type_erasure: false, quote_style: QuoteStyle::Single }
 }
 
-/// Resolve workspace style into the Oak formatter contract.
+/// Resolve workspace style into the formatter contract.
 pub fn resolve_format_options(style: Option<&FormatStyleOptions>) -> Result<FormatOptions, String> {
     let style = style.cloned().unwrap_or_default();
     if matches!(style.indent_style.as_deref(), Some("tab")) {
-        return Err("format.style.indentStyle=tab is not supported by Oak format".to_string());
+        return Err("format.style.indentStyle=tab is not supported by the text formatter".to_string());
     }
     let quote_style = match style.quote_style.as_deref() {
         None => QuoteStyle::Preserve,
         Some("single") => QuoteStyle::Single,
         Some("double") => QuoteStyle::Double,
-        Some(other) => return Err(format!("format.style.quoteStyle={other} is not supported by Oak format")),
+        Some(other) => return Err(format!("format.style.quoteStyle={other} is not supported by the text formatter")),
     };
     Ok(FormatOptions {
         indent_width: style.indent_width.unwrap_or(4),

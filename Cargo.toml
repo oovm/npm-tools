@@ -14,6 +14,10 @@ exclude = [
 boost-fs = { git = "https://github.com/oovm/rust-boost", rev = "7ba022a049cafef979dfe7a8adf81d9a0d3dd373" }
 boost-log = { git = "https://github.com/oovm/rust-boost", rev = "7ba022a049cafef979dfe7a8adf81d9a0d3dd373" }
 boost-http = { git = "https://github.com/oovm/rust-boost", rev = "7ba022a049cafef979dfe7a8adf81d9a0d3dd373" }
+data-text-core = { git = "https://github.com/oovm/rust-boost", rev = "37fee59efe65e8767f99dc0039a92fd797cedcb8" }
+data-text-typescript = { git = "https://github.com/oovm/rust-boost", rev = "37fee59efe65e8767f99dc0039a92fd797cedcb8" }
+data-text-javascript = { git = "https://github.com/oovm/rust-boost", rev = "37fee59efe65e8767f99dc0039a92fd797cedcb8" }
+language-testing = { git = "https://github.com/oovm/rust-boost", rev = "37fee59efe65e8767f99dc0039a92fd797cedcb8" }
 
 [profile.release]
 lto = true

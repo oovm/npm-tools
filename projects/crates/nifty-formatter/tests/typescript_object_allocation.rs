@@ -1,5 +1,5 @@
-use oak_core::{ParseSession, Parser, Source, SourceText};
-use oak_typescript::{TypeScriptLanguage, TypeScriptParser};
+use data_text_core::{ParseSession, Parser, Source, SourceText};
+use data_text_typescript::{TypeScriptLanguage, TypeScriptParser};
 use std::{
     alloc::{GlobalAlloc, Layout, System},
     sync::atomic::{AtomicBool, AtomicUsize, Ordering},
