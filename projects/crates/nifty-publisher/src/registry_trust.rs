@@ -54,6 +54,24 @@ impl RegistryTrustClient {
             _ => Err(registry_trust_error("create", package, status, &response_body)),
         }
     }
+
+    /// Delete one trusted publisher record by its registry-assigned id.
+    ///
+    /// A record can look correct in `list` (same repo/file/env claims) yet be bound to a stale
+    /// provider identity on the registry side, which surfaces as an OIDC exchange failure during
+    /// publish. Repairing that requires DELETE before a fresh POST; 404 means the record is
+    /// already gone and counts as revoked.
+    pub fn revoke(&self, package: &str, id: &str) -> Result<()> {
+        let registry = self.npmrc.registry_for_package(package);
+        let token = resolve_registry_token(&self.auth, &self.npmrc, package)?;
+        let path = revoke_path(package, id);
+        let (status, response_body) =
+            registry_request(&registry, "DELETE", &path, &token, self.auth.current_otp().as_deref(), None)?;
+        match status {
+            200..=299 | 404 => Ok(()),
+            _ => Err(registry_trust_error("revoke", package, status, &response_body)),
+        }
+    }
 }
 
 pub enum TrustCreateOutcome {
@@ -78,6 +96,21 @@ fn trust_path(package: &str) -> String {
     format!("/-/package/{}/trust", urlencoding::encode(package))
 }
 
+fn revoke_path(package: &str, id: &str) -> String {
+    format!("{}/{}", trust_path(package), urlencoding::encode(id))
+}
+
+/// Registry-assigned ids of trust records, in listing order. Records without an id cannot be
+/// revoked and are skipped by the caller.
+pub fn trust_config_ids(configs: &[Value]) -> Vec<String> {
+    configs
+        .iter()
+        .filter_map(|config| config.get("id").and_then(Value::as_str))
+        .map(|id| id.trim().to_string())
+        .filter(|id| !id.is_empty())
+        .collect()
+}
+
 fn trust_create_body(expect: &TrustExpect) -> Value {
     json!([{
         "type": "github",
@@ -86,7 +119,7 @@ fn trust_create_body(expect: &TrustExpect) -> Value {
             "workflow_ref": { "file": expect.file },
             "environment": expect.env,
         },
-        "permissions": ["createPackage"],
+        "permissions": ["createPackage", "createStagedPackage"],
     }])
 }
 
@@ -207,6 +240,32 @@ mod tests {
         let entry = body.as_array().and_then(|items| items.first()).expect("array");
         assert_eq!(entry.get("type").and_then(Value::as_str), Some("github"));
         assert_eq!(entry.pointer("/claims/repository").and_then(Value::as_str), Some("yy-database/yydb"));
+        assert_eq!(
+            entry
+                .get("permissions")
+                .and_then(Value::as_array)
+                .map(|items| items.iter().filter_map(Value::as_str).collect::<Vec<_>>()),
+            Some(vec!["createPackage", "createStagedPackage"])
+        );
+    }
+
+    #[test]
+    fn builds_revoke_path_from_package_and_id() {
+        assert_eq!(
+            revoke_path("@scope/pkg", "ab5f2d4e-8e1d-4e2b-b7f8-ee817dfa1091"),
+            "/-/package/%40scope%2Fpkg/trust/ab5f2d4e-8e1d-4e2b-b7f8-ee817dfa1091"
+        );
+    }
+
+    #[test]
+    fn extracts_revocable_ids_only() {
+        let configs = vec![
+            json!({ "id": " id-1 ", "type": "github" }),
+            json!({ "type": "github" }),
+            json!({ "id": "", "type": "github" }),
+            json!({ "id": "id-2", "type": "github" }),
+        ];
+        assert_eq!(trust_config_ids(&configs), vec!["id-1".to_string(), "id-2".to_string()]);
     }
 
     #[test]

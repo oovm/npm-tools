@@ -2,7 +2,7 @@ use crate::{
     Result,
     cache::PlaceholderCache,
     otp::{OtpAuth, OtpOverrides},
-    registry_trust::{RegistryTrustClient, TrustCreateOutcome},
+    registry_trust::{RegistryTrustClient, TrustCreateOutcome, trust_config_ids},
     trust_expect::{TrustExpectInput, resolve_trust_expect},
     workspace::{
         find_package_by_target, find_workspace_root, list_workspace_packages, registry_name, unpublishable_package_names,
@@ -18,6 +18,7 @@ pub struct TrustOptions {
     pub cwd: Option<std::path::PathBuf>,
     pub dry_run: bool,
     pub refresh: bool,
+    pub recreate: bool,
     pub only: Option<String>,
     pub packages: Option<Vec<String>>,
     pub npm: Option<std::path::PathBuf>,
@@ -45,7 +46,7 @@ pub fn trust_workspace(options: TrustOptions) -> Result<TrustReport> {
     let mut report = TrustReport { root: root.clone(), configured: Vec::new(), skipped: Vec::new(), failed: Vec::new() };
 
     for name in names {
-        match configure_trust(&client, &mut cache, &expect, &name, options.dry_run, options.refresh) {
+        match configure_trust(&client, &mut cache, &expect, &name, options.dry_run, options.refresh, options.recreate) {
             Ok(TrustOutcome::Configured) => report.configured.push(name),
             Ok(TrustOutcome::Skipped) => report.skipped.push(name),
             Err(message) => {
@@ -114,21 +115,51 @@ fn configure_trust(
     package: &str,
     dry_run: bool,
     refresh: bool,
+    recreate: bool,
 ) -> Result<TrustOutcome> {
-    if cache.trust_matches_cached(package, refresh) {
+    if cache.trust_matches_cached(package, refresh || recreate) {
         println!("trusted publisher already configured for {package} (cache)");
         return Ok(TrustOutcome::Skipped);
     }
 
     let configs = match client.list(package) {
         Ok(configs) => configs,
-        Err(err) if refresh => {
-            eprintln!("warn: registry trust list failed for {package}: {err}; continuing with --refresh");
+        Err(err) if refresh || recreate => {
+            eprintln!(
+                "warn: registry trust list failed for {package}: {err}; continuing with --{}",
+                if recreate { "recreate" } else { "refresh" }
+            );
             Vec::new()
         }
         Err(err) => return Err(err),
     };
     cache.record_trust_list(package, configs.clone());
+
+    if recreate {
+        let ids = trust_config_ids(&configs);
+        if dry_run {
+            println!("would revoke {} trust record(s) and re-create for {package}", ids.len());
+            return Ok(TrustOutcome::Configured);
+        }
+        for id in &ids {
+            client.revoke(package, id)?;
+        }
+        if !ids.is_empty() {
+            println!("revoked {} trust record(s) for {package}", ids.len());
+        }
+        match client.create(package, expect)? {
+            TrustCreateOutcome::Created => println!("re-created trusted publisher for {package}"),
+            TrustCreateOutcome::AlreadyExists => {
+                println!("trusted publisher re-created for {package} (registry reported it already exists)")
+            }
+        }
+        // Refresh the cache with the post-recreate state so later runs see the fresh record.
+        if let Ok(fresh) = client.list(package) {
+            cache.record_trust_list(package, fresh);
+        }
+        return Ok(TrustOutcome::Configured);
+    }
+
     if crate::registry_trust::trust_already_matches(&configs, expect) {
         return Ok(TrustOutcome::Skipped);
     }

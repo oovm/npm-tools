@@ -11,6 +11,7 @@ export function registerTrustCommand(cli: Cli): void {
     cli.command("trust", "cli.cmd.trust")
         .option("--dry-run", "cli.opt.dry-run")
         .option("--refresh", "cli.opt.refresh")
+        .option("--recreate", "cli.opt.recreate")
         .option("--only <package>", "cli.opt.only")
         .option("--otp <code>", "cli.opt.otp")
         .option("--totp-secret <secret>", "cli.opt.totp-secret")
@@ -27,6 +28,7 @@ export async function cmdTrust(options: ParsedOptions): Promise<number> {
         cwd: cwdFrom(options),
         dryRun: flag(options, "dry-run"),
         refresh: flag(options, "refresh"),
+        recreate: flag(options, "recreate"),
         only: str(options, "only"),
         ...(fromConfig.length > 0 ? { packages: fromConfig } : {}),
         ...trustPayloadFromConfig(config),

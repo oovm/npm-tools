@@ -89,6 +89,12 @@ nifty trust --only @doki-land/nifty-skills
 GitHub Actions OIDC can publish on the next tag. `nifty trust` uses `publish.packages` from `nifty.config.ts` when set
 (subset only — still respects `private`), otherwise all publishable workspace packages.
 
+**Stale trust records**: a record can list the right repo/file/env yet be bound to an outdated provider identity on the
+registry side (renamed/transferred repos, repos created under immutable OIDC subjects). The symptom is the OIDC publish
+failing with `ENEEDAUTH` while the workflow and config look correct. Repair without any npm CLI: **`nifty trust --recreate`**
+revokes every existing record for each package and creates a fresh one (fully non-interactive with `NPM_TOKEN` plus
+`NPM_TOTP_SECRET` or `--otp`).
+
 Local auth: `NPM_TOKEN`, `--npm-token`, `--otp`, or `--totp-secret` (see `nifty publish --help`). Trust uses the
 registry API with bearer token from `NPM_TOKEN` or `~/.npmrc`. Add OTP/TOTP on 2FA accounts when the registry asks.
 Per the repository policy above, these paths are not used for real releases in `npm-tools` or VMZ-family repos.

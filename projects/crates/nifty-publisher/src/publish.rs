@@ -74,7 +74,16 @@ impl PublishFailure {
     pub fn summary(&self) -> String {
         let code = self.npm_code.as_deref().map(|code| format!(" (npm code {code})")).unwrap_or_default();
         let message = self.message.split_whitespace().collect::<Vec<_>>().join(" ");
-        format!("{}{}: {message}", self.kind.label(), code)
+        let hint = match self.kind {
+            // The npm CLI swallows the registry's OIDC exchange error into ENEEDAUTH, so an auth
+            // failure during a Trusted Publisher run is usually a stale trust record, not a
+            // missing credential. Point at the repair command instead of "check your token".
+            PublishFailureKind::Auth => {
+                " hint: for an OIDC Trusted Publisher run this means the trust record is stale or mismatched; re-create it with `nifty trust --recreate`"
+            }
+            _ => "",
+        };
+        format!("{}{}: {message}{hint}", self.kind.label(), code)
     }
 }
 
