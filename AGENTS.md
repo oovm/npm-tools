@@ -68,8 +68,11 @@ nifty trust             # only for a newly added @doki-land/* package name
 ```
 
 `nifty publish --dry-run` is allowed for inspection. `nifty publish --placeholder` is only for never-published `0.0.0`
-stubs that configure Trusted Publisher, never for a real release. If the tag or CI fails, stop and report. Do not
-switch to a local publish to finish the task.
+stubs that configure Trusted Publisher, never for a real release. If the tag or CI fails, fix the root cause, commit and
+push `dev`, move the tag to the fixed commit (delete the old local and remote tag, re-create and push), and retry until
+the publish succeeds. Never switch to a local publish to finish the task, and never hand the publish run or the registry
+check over to the user: the agent that pushed the tag watches the run to its terminal state and verifies every
+published package on the registry before reporting.
 
 `nifty bump` does not rewrite `Cargo.lock`. Member versions are recorded there, so the bumped tree fails `--locked`
 until the lock is refreshed. Refresh it in a clean clone (`cargo metadata --offline`, then check that the diff is only
