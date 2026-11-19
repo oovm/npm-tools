@@ -18,7 +18,7 @@ regex = { version = "1.11", default-features = false, features = ["std", "unicod
 semver = "1.0"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-boost-log = { workspace = true }
-boost-http = { workspace = true }
+boost-harness = { workspace = true }
+boost-net = { workspace = true }
 nifty-types = { path = "../nifty-types" }
 urlencoding = "2.1"

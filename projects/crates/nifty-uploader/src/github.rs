@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use boost_http::{HttpTransport, HttpTransportConfig, Method, Request, Response, Transport, Url};
+use boost_net::http::{HttpTransport, HttpTransportConfig, Method, Request, Response, Transport, Url};
 use serde_json::Value;
 
 use crate::Result;

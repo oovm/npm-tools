@@ -2,7 +2,7 @@
 
 use std::{collections::HashMap, path::Path};
 
-use boost_http::{HttpTransport, Method, Request, Transport, Url};
+use boost_net::http::{HttpTransport, Method, Request, Transport, Url};
 use regex::Regex;
 use serde_json::Value;
 

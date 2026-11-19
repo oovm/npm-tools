@@ -2,7 +2,7 @@
 
 use std::collections::BTreeSet;
 
-use boost_log::{enter, span};
+use boost_harness::log::{enter, span};
 use chrono::{DateTime, Duration, NaiveDate, NaiveDateTime, NaiveTime};
 use gix::{ObjectId, Repository};
 use rand::Rng;

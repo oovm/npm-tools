@@ -66,6 +66,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f2032f911046de80f0a198e0901378627c33f59ea0ac00e363d481118bd70a53"
 
 [[package]]
+name = "base64"
+version = "0.23.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ac07cdecf99051d9a5238b80f35af32cdeba5b336e55d957b318b50137e18da5"
+
+[[package]]
+name = "base64ct"
+version = "1.8.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2af50177e190e07a26ab74f8b1efbfe2ef87da2116221318cb1c2e82baf7de06"
+
+[[package]]
 name = "bitflags"
 version = "1.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -87,58 +99,103 @@ dependencies = [
 ]
 
 [[package]]
-name = "boost-fs"
+name = "boost-collection"
 version = "0.1.0"
-source = "git+https://github.com/oovm/rust-boost?rev=37fee59efe65e8767f99dc0039a92fd797cedcb8#37fee59efe65e8767f99dc0039a92fd797cedcb8"
+source = "git+https://github.com/oovm/rust-boost?rev=71db8fa50f49e3693640cbd19e64ad9c797e5932#71db8fa50f49e3693640cbd19e64ad9c797e5932"
 dependencies = [
- "boost-random 0.1.0 (git+https://github.com/oovm/rust-boost?rev=37fee59efe65e8767f99dc0039a92fd797cedcb8)",
+ "boost-collection-macro",
+]
+
+[[package]]
+name = "boost-collection-macro"
+version = "0.1.0"
+source = "git+https://github.com/oovm/rust-boost?rev=71db8fa50f49e3693640cbd19e64ad9c797e5932#71db8fa50f49e3693640cbd19e64ad9c797e5932"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 3.0.10",
+]
+
+[[package]]
+name = "boost-console"
+version = "0.1.0"
+source = "git+https://github.com/oovm/rust-boost?rev=71db8fa50f49e3693640cbd19e64ad9c797e5932#71db8fa50f49e3693640cbd19e64ad9c797e5932"
+
+[[package]]
+name = "boost-crypto"
+version = "0.1.0"
+source = "git+https://github.com/oovm/rust-boost?rev=71db8fa50f49e3693640cbd19e64ad9c797e5932#71db8fa50f49e3693640cbd19e64ad9c797e5932"
+dependencies = [
+ "base64",
+ "boost-random",
+ "rsa",
+ "sha1",
+ "sha2",
+ "zeroize",
 ]
 
 [[package]]
 name = "boost-fs"
 version = "0.1.0"
-source = "git+https://github.com/oovm/rust-boost?rev=7ba022a049cafef979dfe7a8adf81d9a0d3dd373#7ba022a049cafef979dfe7a8adf81d9a0d3dd373"
+source = "git+https://github.com/oovm/rust-boost?rev=71db8fa50f49e3693640cbd19e64ad9c797e5932#71db8fa50f49e3693640cbd19e64ad9c797e5932"
 dependencies = [
- "boost-random 0.1.0 (git+https://github.com/oovm/rust-boost?rev=7ba022a049cafef979dfe7a8adf81d9a0d3dd373)",
+ "boost-random",
 ]
 
 [[package]]
-name = "boost-http"
+name = "boost-harness"
 version = "0.1.0"
-source = "git+https://github.com/oovm/rust-boost?rev=7ba022a049cafef979dfe7a8adf81d9a0d3dd373#7ba022a049cafef979dfe7a8adf81d9a0d3dd373"
+source = "git+https://github.com/oovm/rust-boost?rev=71db8fa50f49e3693640cbd19e64ad9c797e5932#71db8fa50f49e3693640cbd19e64ad9c797e5932"
 dependencies = [
+ "boost-console",
+ "boost-harness-macro",
+ "boost-math",
+ "boost-source",
+]
+
+[[package]]
+name = "boost-harness-macro"
+version = "0.1.0"
+source = "git+https://github.com/oovm/rust-boost?rev=71db8fa50f49e3693640cbd19e64ad9c797e5932#71db8fa50f49e3693640cbd19e64ad9c797e5932"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 3.0.10",
+]
+
+[[package]]
+name = "boost-math"
+version = "0.1.0"
+source = "git+https://github.com/oovm/rust-boost?rev=71db8fa50f49e3693640cbd19e64ad9c797e5932#71db8fa50f49e3693640cbd19e64ad9c797e5932"
+dependencies = [
+ "boost-collection",
+]
+
+[[package]]
+name = "boost-net"
+version = "0.1.0"
+source = "git+https://github.com/oovm/rust-boost?rev=71db8fa50f49e3693640cbd19e64ad9c797e5932#71db8fa50f49e3693640cbd19e64ad9c797e5932"
+dependencies = [
+ "base64",
+ "boost-crypto",
+ "boost-random",
  "rustls",
  "url",
  "webpki-roots",
 ]
 
 [[package]]
-name = "boost-log"
-version = "0.1.0"
-source = "git+https://github.com/oovm/rust-boost?rev=7ba022a049cafef979dfe7a8adf81d9a0d3dd373#7ba022a049cafef979dfe7a8adf81d9a0d3dd373"
-
-[[package]]
-name = "boost-math"
-version = "0.1.0"
-source = "git+https://github.com/oovm/rust-boost?rev=37fee59efe65e8767f99dc0039a92fd797cedcb8#37fee59efe65e8767f99dc0039a92fd797cedcb8"
-
-[[package]]
 name = "boost-random"
 version = "0.1.0"
-source = "git+https://github.com/oovm/rust-boost?rev=37fee59efe65e8767f99dc0039a92fd797cedcb8#37fee59efe65e8767f99dc0039a92fd797cedcb8"
+source = "git+https://github.com/oovm/rust-boost?rev=71db8fa50f49e3693640cbd19e64ad9c797e5932#71db8fa50f49e3693640cbd19e64ad9c797e5932"
 dependencies = [
  "boost-math",
 ]
 
 [[package]]
-name = "boost-random"
-version = "0.1.0"
-source = "git+https://github.com/oovm/rust-boost?rev=7ba022a049cafef979dfe7a8adf81d9a0d3dd373#7ba022a049cafef979dfe7a8adf81d9a0d3dd373"
-
-[[package]]
 name = "boost-source"
 version = "0.1.0"
-source = "git+https://github.com/oovm/rust-boost?rev=37fee59efe65e8767f99dc0039a92fd797cedcb8#37fee59efe65e8767f99dc0039a92fd797cedcb8"
+source = "git+https://github.com/oovm/rust-boost?rev=71db8fa50f49e3693640cbd19e64ad9c797e5932#71db8fa50f49e3693640cbd19e64ad9c797e5932"
 dependencies = [
  "serde",
 ]
@@ -212,6 +269,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "const-oid"
+version = "0.9.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c2459377285ad874054d797f3ccebf984978aa39129f6eafde5cdc8315b612f8"
+
+[[package]]
 name = "convert_case"
 version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -282,7 +345,7 @@ dependencies = [
 [[package]]
 name = "data-text-core"
 version = "0.1.0"
-source = "git+https://github.com/oovm/rust-boost?rev=37fee59efe65e8767f99dc0039a92fd797cedcb8#37fee59efe65e8767f99dc0039a92fd797cedcb8"
+source = "git+https://github.com/oovm/rust-boost?rev=71db8fa50f49e3693640cbd19e64ad9c797e5932#71db8fa50f49e3693640cbd19e64ad9c797e5932"
 dependencies = [
  "boost-source",
  "serde",
@@ -291,7 +354,7 @@ dependencies = [
 [[package]]
 name = "data-text-formatter"
 version = "0.1.0"
-source = "git+https://github.com/oovm/rust-boost?rev=37fee59efe65e8767f99dc0039a92fd797cedcb8#37fee59efe65e8767f99dc0039a92fd797cedcb8"
+source = "git+https://github.com/oovm/rust-boost?rev=71db8fa50f49e3693640cbd19e64ad9c797e5932#71db8fa50f49e3693640cbd19e64ad9c797e5932"
 dependencies = [
  "data-text-core",
 ]
@@ -299,7 +362,7 @@ dependencies = [
 [[package]]
 name = "data-text-javascript"
 version = "0.1.0"
-source = "git+https://github.com/oovm/rust-boost?rev=37fee59efe65e8767f99dc0039a92fd797cedcb8#37fee59efe65e8767f99dc0039a92fd797cedcb8"
+source = "git+https://github.com/oovm/rust-boost?rev=71db8fa50f49e3693640cbd19e64ad9c797e5932#71db8fa50f49e3693640cbd19e64ad9c797e5932"
 dependencies = [
  "data-text-core",
  "data-text-pretty",
@@ -310,7 +373,7 @@ dependencies = [
 [[package]]
 name = "data-text-pretty"
 version = "0.1.0"
-source = "git+https://github.com/oovm/rust-boost?rev=37fee59efe65e8767f99dc0039a92fd797cedcb8#37fee59efe65e8767f99dc0039a92fd797cedcb8"
+source = "git+https://github.com/oovm/rust-boost?rev=71db8fa50f49e3693640cbd19e64ad9c797e5932#71db8fa50f49e3693640cbd19e64ad9c797e5932"
 dependencies = [
  "data-text-core",
  "language-macro",
@@ -321,7 +384,7 @@ dependencies = [
 [[package]]
 name = "data-text-typescript"
 version = "0.1.0"
-source = "git+https://github.com/oovm/rust-boost?rev=37fee59efe65e8767f99dc0039a92fd797cedcb8#37fee59efe65e8767f99dc0039a92fd797cedcb8"
+source = "git+https://github.com/oovm/rust-boost?rev=71db8fa50f49e3693640cbd19e64ad9c797e5932#71db8fa50f49e3693640cbd19e64ad9c797e5932"
 dependencies = [
  "data-text-core",
  "data-text-formatter",
@@ -360,6 +423,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "der"
+version = "0.7.10"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e7c1832837b905bbfb5101e07cc24c8deddf52f93225eee6ead5f4d63d53ddcb"
+dependencies = [
+ "const-oid",
+ "pem-rfc7468",
+ "zeroize",
+]
+
+[[package]]
 name = "dialoguer"
 version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -377,6 +451,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9ed9a281f7bc9b7576e61468ba615a66a5c8cfdff42420a70aa82701a3b1e292"
 dependencies = [
  "block-buffer",
+ "const-oid",
  "crypto-common",
  "subtle",
 ]
@@ -1308,7 +1383,7 @@ dependencies = [
 [[package]]
 name = "language-macro"
 version = "0.1.0"
-source = "git+https://github.com/oovm/rust-boost?rev=37fee59efe65e8767f99dc0039a92fd797cedcb8#37fee59efe65e8767f99dc0039a92fd797cedcb8"
+source = "git+https://github.com/oovm/rust-boost?rev=71db8fa50f49e3693640cbd19e64ad9c797e5932#71db8fa50f49e3693640cbd19e64ad9c797e5932"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1318,13 +1393,22 @@ dependencies = [
 [[package]]
 name = "language-testing"
 version = "0.1.0"
-source = "git+https://github.com/oovm/rust-boost?rev=37fee59efe65e8767f99dc0039a92fd797cedcb8#37fee59efe65e8767f99dc0039a92fd797cedcb8"
+source = "git+https://github.com/oovm/rust-boost?rev=71db8fa50f49e3693640cbd19e64ad9c797e5932#71db8fa50f49e3693640cbd19e64ad9c797e5932"
 dependencies = [
- "boost-fs 0.1.0 (git+https://github.com/oovm/rust-boost?rev=37fee59efe65e8767f99dc0039a92fd797cedcb8)",
+ "boost-fs",
  "data-text-core",
  "serde",
  "serde_json",
  "triomphe",
+]
+
+[[package]]
+name = "lazy_static"
+version = "1.5.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "20870f649af7073d53e38067b2a84312175d56ea15217e1b15bc83506ec50afb"
+dependencies = [
+ "spin",
 ]
 
 [[package]]
@@ -1342,6 +1426,12 @@ dependencies = [
  "cfg-if",
  "windows-link",
 ]
+
+[[package]]
+name = "libm"
+version = "0.2.16"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b6d2cec3eae94f9f509c767b45932f1ada8350c4bdb85af2fcab4a3c14807981"
 
 [[package]]
 name = "linux-raw-sys"
@@ -1464,14 +1554,14 @@ dependencies = [
 name = "nifty-config"
 version = "0.1.15"
 dependencies = [
- "boost-fs 0.1.0 (git+https://github.com/oovm/rust-boost?rev=7ba022a049cafef979dfe7a8adf81d9a0d3dd373)",
+ "boost-fs",
 ]
 
 [[package]]
 name = "nifty-formatter"
 version = "0.1.15"
 dependencies = [
- "boost-fs 0.1.0 (git+https://github.com/oovm/rust-boost?rev=7ba022a049cafef979dfe7a8adf81d9a0d3dd373)",
+ "boost-fs",
  "data-text-core",
  "data-text-javascript",
  "data-text-typescript",
@@ -1485,7 +1575,7 @@ dependencies = [
 name = "nifty-git"
 version = "0.1.15"
 dependencies = [
- "boost-fs 0.1.0 (git+https://github.com/oovm/rust-boost?rev=7ba022a049cafef979dfe7a8adf81d9a0d3dd373)",
+ "boost-fs",
  "gix",
  "nifty-history",
  "nifty-types",
@@ -1496,7 +1586,7 @@ dependencies = [
 name = "nifty-github"
 version = "0.1.15"
 dependencies = [
- "boost-http",
+ "boost-net",
  "nifty-types",
  "serde_json",
  "urlencoding",
@@ -1506,8 +1596,8 @@ dependencies = [
 name = "nifty-history"
 version = "0.1.15"
 dependencies = [
- "boost-http",
- "boost-log",
+ "boost-harness",
+ "boost-net",
  "chrono",
  "gix",
  "gix-error",
@@ -1524,7 +1614,7 @@ dependencies = [
 name = "nifty-linter"
 version = "0.1.15"
 dependencies = [
- "boost-fs 0.1.0 (git+https://github.com/oovm/rust-boost?rev=7ba022a049cafef979dfe7a8adf81d9a0d3dd373)",
+ "boost-fs",
  "nifty-config",
  "nifty-formatter",
  "nifty-git",
@@ -1557,8 +1647,8 @@ dependencies = [
 name = "nifty-publisher"
 version = "0.1.15"
 dependencies = [
- "boost-fs 0.1.0 (git+https://github.com/oovm/rust-boost?rev=7ba022a049cafef979dfe7a8adf81d9a0d3dd373)",
- "boost-http",
+ "boost-fs",
+ "boost-net",
  "hmac",
  "nifty-config",
  "nifty-git",
@@ -1581,7 +1671,7 @@ dependencies = [
 name = "nifty-updater"
 version = "0.1.15"
 dependencies = [
- "boost-http",
+ "boost-net",
  "dialoguer",
  "nifty-config",
  "semver",
@@ -1595,8 +1685,8 @@ dependencies = [
 name = "nifty-uploader"
 version = "0.1.15"
 dependencies = [
- "boost-fs 0.1.0 (git+https://github.com/oovm/rust-boost?rev=7ba022a049cafef979dfe7a8adf81d9a0d3dd373)",
- "boost-http",
+ "boost-fs",
+ "boost-net",
  "nifty-config",
  "nifty-formatter",
  "nifty-git",
@@ -1606,12 +1696,48 @@ dependencies = [
 ]
 
 [[package]]
+name = "num-bigint-dig"
+version = "0.8.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e661dda6640fad38e827a6d4a310ff4763082116fe217f279885c97f511bb0b7"
+dependencies = [
+ "lazy_static",
+ "libm",
+ "num-integer",
+ "num-iter",
+ "num-traits",
+ "rand",
+ "smallvec",
+ "zeroize",
+]
+
+[[package]]
+name = "num-integer"
+version = "0.1.47"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7ce2d95d4b3734dc35aa2f45e1aa22cd416814592a4f9d9205e11affd5b8e10b"
+dependencies = [
+ "num-traits",
+]
+
+[[package]]
+name = "num-iter"
+version = "0.1.46"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c92800bd69a1eac91786bcfe9da64a897eb72911b8dc3095decbd07429e8048b"
+dependencies = [
+ "num-integer",
+ "num-traits",
+]
+
+[[package]]
 name = "num-traits"
 version = "0.2.19"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "071dfc062690e90b734c0b2273ce72ad0ffa95f0c74596bc250dcfd960262841"
 dependencies = [
  "autocfg",
+ "libm",
 ]
 
 [[package]]
@@ -1644,6 +1770,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "pem-rfc7468"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "88b39c9bfcfc231068454382784bb460aae594343fb030d46e9f50a645418412"
+dependencies = [
+ "base64ct",
+]
+
+[[package]]
 name = "percent-encoding"
 version = "2.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1664,6 +1799,27 @@ name = "pin-project-lite"
 version = "0.2.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a89322df9ebe1c1578d689c92318e070967d1042b512afbe49518723f4e6d5cd"
+
+[[package]]
+name = "pkcs1"
+version = "0.7.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c8ffb9f10fa047879315e6625af03c164b16962a5368d724ed16323b68ace47f"
+dependencies = [
+ "der",
+ "pkcs8",
+ "spki",
+]
+
+[[package]]
+name = "pkcs8"
+version = "0.10.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f950b2377845cebe5cf8b5165cb3cc1a5e0fa5cfa3e1f7f55707d8fd82e0a7b7"
+dependencies = [
+ "der",
+ "spki",
+]
 
 [[package]]
 name = "portable-atomic"
@@ -1812,6 +1968,27 @@ dependencies = [
  "libc",
  "untrusted",
  "windows-sys 0.52.0",
+]
+
+[[package]]
+name = "rsa"
+version = "0.9.10"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b8573f03f5883dcaebdfcf4725caa1ecb9c15b2ef50c43a07b816e06799bb12d"
+dependencies = [
+ "const-oid",
+ "digest",
+ "num-bigint-dig",
+ "num-integer",
+ "num-traits",
+ "pkcs1",
+ "pkcs8",
+ "rand_core",
+ "sha2",
+ "signature",
+ "spki",
+ "subtle",
+ "zeroize",
 ]
 
 [[package]]
@@ -1971,6 +2148,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bbfa15b3dddfee50a0fff136974b3e1bde555604ba463834a7eb7deb6417705d"
 
 [[package]]
+name = "sha2"
+version = "0.10.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a7507d819769d01a365ab707794a4084392c824f54a7a6a7862f8c3d0892b283"
+dependencies = [
+ "cfg-if",
+ "cpufeatures",
+ "digest",
+]
+
+[[package]]
 name = "shell-words"
 version = "1.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1981,6 +2169,16 @@ name = "shlex"
 version = "2.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f8fadd59c855ef2080decdef8ff161eb6661b86933c9d82e5ba29dc602a55aba"
+
+[[package]]
+name = "signature"
+version = "2.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "77549399552de45a898a580c1b41d445bf730df867cc44e6c0233bbc4b8329de"
+dependencies = [
+ "digest",
+ "rand_core",
+]
 
 [[package]]
 name = "simd-adler32"
@@ -1999,6 +2197,22 @@ name = "smallvec"
 version = "1.16.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "149309498a5f7334b12ddae0cad8aba81ce785fe91755068867e017cf98fee46"
+
+[[package]]
+name = "spin"
+version = "0.9.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3763264f6b73151db08c50ff20d7d8a0b8796e021cdea7ceedad07b80155fa0e"
+
+[[package]]
+name = "spki"
+version = "0.7.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d91ed6c858b01f942cd56b37a94b3e0a1798290327d1236e4d9cf4eaca44d29d"
+dependencies = [
+ "base64ct",
+ "der",
+]
 
 [[package]]
 name = "stable_deref_trait"
@@ -2578,6 +2792,20 @@ name = "zeroize"
 version = "1.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e13084392c5e4bc371903e2935a5eaeed24905a7511356b883835e18a78f6879"
+dependencies = [
+ "zeroize_derive",
+]
+
+[[package]]
+name = "zeroize_derive"
+version = "1.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3c50655cbb0fe3fc43170059e702f1ce5e19b84cec58dc87b037a09935c2f328"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.119",
+]
 
 [[package]]
 name = "zerotrie"

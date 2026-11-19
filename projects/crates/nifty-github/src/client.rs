@@ -1,6 +1,6 @@
 //! GitHub REST API client (`api.github.com`).
 
-use boost_http::{HttpTransport, Method, Request, Transport, Url};
+use boost_net::http::{HttpTransport, Method, Request, Transport, Url};
 use nifty_types::GithubAuthor;
 use serde_json::Value;
 
