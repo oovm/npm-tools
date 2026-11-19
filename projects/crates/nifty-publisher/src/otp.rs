@@ -1,13 +1,17 @@
 use std::{fs, path::Path};
 
 use hmac::{Hmac, Mac};
+use serde::Deserialize;
 use sha1::Sha1;
 
 use crate::Result;
 
 type HmacSha1 = Hmac<Sha1>;
 
-const ENV_FILE_NAME: &str = ".env.placeholder.local";
+/// Workspace-root secrets file. Nifty never reads npm secrets from process env
+/// (too many tools pick them up unintentionally); the file is the only source
+/// besides explicit CLI overrides.
+const SECRETS_FILE: &str = ".secrets/nifty.json";
 
 /// npm 2FA：RFC 6238 TOTP 或静态 6 位码，外加可选 registry token。
 #[derive(Debug, Clone, Default)]
@@ -24,45 +28,40 @@ pub struct OtpOverrides {
     pub token: Option<String>,
 }
 
+/// Shape of `.secrets/nifty.json`. Unknown keys are rejected so a typo cannot
+/// silently leave a secret unread.
+#[derive(Debug, Default, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct SecretsFile {
+    npm_token: Option<String>,
+    npm_totp_secret: Option<String>,
+    npm_otp: Option<String>,
+}
+
 fn oidc_ci_publish() -> bool {
     std::env::var("GITHUB_ACTIONS").ok().as_deref() == Some("true") && std::env::var("CI").ok().as_deref() == Some("true")
 }
 
 impl OtpAuth {
-    /// 从 CLI 覆盖项、进程环境、仓库根 `.env.placeholder.local` 加载。
-    pub fn load(workspace_root: &Path, overrides: OtpOverrides) -> Self {
+    /// 从 CLI 覆盖项与工作区根 `.secrets/nifty.json` 加载（不读进程 env 秘密）。
+    pub fn load(workspace_root: &Path, overrides: OtpOverrides) -> Result<Self> {
         if oidc_ci_publish() {
-            return OtpAuth::default();
+            return Ok(OtpAuth::default());
         }
-        let file_env = load_local_env(&workspace_root.join(ENV_FILE_NAME));
-        OtpAuth {
+        let file = load_secrets_file(&workspace_root.join(SECRETS_FILE))?;
+        Ok(OtpAuth {
             totp_secret: first_non_empty(&[
-                overrides.totp_secret,
-                env_var("NPM_TOTP_SECRET"),
-                env_var("TOTP_SECRET"),
-                file_env.get("NPM_TOTP_SECRET").cloned(),
-                file_env.get("TOTP_SECRET").cloned(),
-                otp_as_secret(overrides.static_otp.clone()),
-                otp_as_secret(env_var("NPM_OTP")),
-                otp_as_secret(file_env.get("NPM_OTP").cloned()),
-                otp_as_secret(env_var("OTP")),
-                otp_as_secret(file_env.get("OTP").cloned()),
+                non_empty(overrides.totp_secret),
+                non_empty(file.npm_totp_secret),
+                otp_as_secret(non_empty(overrides.static_otp.clone())),
+                otp_as_secret(non_empty(file.npm_otp.clone())),
             ]),
             static_otp: first_non_empty(&[
-                static_otp_only(overrides.static_otp),
-                static_otp_only(env_var("NPM_OTP")),
-                static_otp_only(file_env.get("NPM_OTP").cloned()),
-                static_otp_only(env_var("OTP")),
-                static_otp_only(file_env.get("OTP").cloned()),
+                static_otp_only(non_empty(overrides.static_otp)),
+                static_otp_only(non_empty(file.npm_otp)),
             ]),
-            token: first_non_empty(&[
-                overrides.token,
-                env_var("NPM_TOKEN"),
-                file_env.get("NPM_TOKEN").cloned(),
-                env_var("TOKEN"),
-                file_env.get("TOKEN").cloned(),
-            ]),
-        }
+            token: first_non_empty(&[non_empty(overrides.token), non_empty(file.npm_token)]),
+        })
     }
 
     pub fn has_otp(&self) -> bool {
@@ -123,30 +122,17 @@ fn decode_base32(secret: &str) -> Result<Vec<u8>> {
     Ok(bytes)
 }
 
-fn load_local_env(path: &Path) -> std::collections::BTreeMap<String, String> {
-    let mut out = std::collections::BTreeMap::new();
-    let text = fs::read_to_string(path).unwrap_or_default();
-    for raw in text.lines() {
-        let line = raw.trim();
-        if line.is_empty() || line.starts_with('#') {
-            continue;
-        }
-        let Some((key, value)) = line.split_once('=')
-        else {
-            continue;
-        };
-        let key = key.trim().trim_start_matches("export ").trim();
-        let mut value = value.trim().to_string();
-        if (value.starts_with('"') && value.ends_with('"')) || (value.starts_with('\'') && value.ends_with('\'')) {
-            value = value[1..value.len() - 1].to_string();
-        }
-        out.insert(key.to_string(), value);
+/// Missing file is fine (CLI overrides only); a malformed file is an error.
+fn load_secrets_file(path: &Path) -> Result<SecretsFile> {
+    match fs::read_to_string(path) {
+        Err(err) if err.kind() == std::io::ErrorKind::NotFound => Ok(SecretsFile::default()),
+        Err(err) => Err(format!("failed to read {}: {err}", path.display())),
+        Ok(text) => serde_json::from_str(&text).map_err(|err| format!("invalid {}: {err}", path.display())),
     }
-    out
 }
 
-fn env_var(key: &str) -> Option<String> {
-    std::env::var(key).ok().filter(|value| !value.is_empty())
+fn non_empty(value: Option<String>) -> Option<String> {
+    value.map(|text| text.trim().to_string()).filter(|text| !text.is_empty())
 }
 
 fn otp_as_secret(value: Option<String>) -> Option<String> {
@@ -167,7 +153,7 @@ fn first_non_empty(values: &[Option<String>]) -> Option<String> {
 
 #[cfg(test)]
 mod tests {
-    use super::{decode_base32, totp_code};
+    use super::{decode_base32, load_secrets_file, totp_code};
 
     #[test]
     fn decodes_base32_secret() {
@@ -180,5 +166,38 @@ mod tests {
         let code = totp_code("JBSWY3DPEHPK3PXP", 59_000);
         assert_eq!(code.len(), 6);
         assert!(code.chars().all(|ch| ch.is_ascii_digit()));
+    }
+
+    #[test]
+    fn missing_secrets_file_is_empty() {
+        let path = std::path::Path::new(".secrets").join("definitely-missing-nifty.json");
+        let file = load_secrets_file(&path).expect("missing file loads as default");
+        assert!(file.npm_token.is_none());
+        assert!(file.npm_totp_secret.is_none());
+        assert!(file.npm_otp.is_none());
+    }
+
+    #[test]
+    fn parses_camel_case_secrets() {
+        let dir = std::env::temp_dir().join(format!("nifty-secrets-test-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).expect("temp dir");
+        let path = dir.join("nifty.json");
+        std::fs::write(&path, r#"{"npmToken":"npm_x","npmTotpSecret":"JBSW","npmOtp":"123456"}"#).expect("write");
+        let file = load_secrets_file(&path).expect("parse");
+        assert_eq!(file.npm_token.as_deref(), Some("npm_x"));
+        assert_eq!(file.npm_totp_secret.as_deref(), Some("JBSW"));
+        assert_eq!(file.npm_otp.as_deref(), Some("123456"));
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn rejects_unknown_secret_keys() {
+        let dir = std::env::temp_dir().join(format!("nifty-secrets-typo-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).expect("temp dir");
+        let path = dir.join("nifty.json");
+        std::fs::write(&path, r#"{"npmTotp":"oops"}"#).expect("write");
+        let err = load_secrets_file(&path).expect_err("typo key must fail");
+        assert!(err.contains("npmTotp"), "error should name the bad key: {err}");
+        let _ = std::fs::remove_dir_all(&dir);
     }
 }

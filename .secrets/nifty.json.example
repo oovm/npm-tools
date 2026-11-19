@@ -1,0 +1,5 @@
+{
+    "npmToken": "npm_xxxxxxxxxxxxxxxxxxxx",
+    "npmTotpSecret": "BASE32AUTHENTICATORSECRET",
+    "npmOtp": "optional-static-six-digit-code"
+}

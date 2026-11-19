@@ -39,7 +39,7 @@ pub fn trust_workspace(options: TrustOptions) -> Result<TrustReport> {
     let root = find_workspace_root(&cwd)?;
     let expect = resolve_trust_expect(&root, options.trust.as_ref())?;
     let names = resolve_trust_package_names(&root, &options)?;
-    let auth = OtpAuth::load(&root, options.otp);
+    let auth = OtpAuth::load(&root, options.otp)?;
     let client = RegistryTrustClient::from_workspace(&auth, &root)?;
     let mut cache = PlaceholderCache::load(&root, &expect);
 

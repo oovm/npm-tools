@@ -87,7 +87,7 @@ pub fn resolve_registry_token(auth: &OtpAuth, npmrc: &NpmRc, package: &str) -> R
         return Ok(token);
     }
     Err(
-        "registry trust requires NPM_TOKEN in env or .env.placeholder.local, or an npm login token in ~/.npmrc / project .npmrc"
+        "registry trust requires `npmToken` in the workspace-root `.secrets/nifty.json`, or an npm login token in ~/.npmrc / project .npmrc"
             .into(),
     )
 }
@@ -132,7 +132,7 @@ fn registry_trust_error(action: &str, package: &str, status: u16, body: &str) ->
         || lower.contains("two-factor")
         || lower.contains("2fa")
     {
-        " Set `NPM_TOTP_SECRET` or pass `--otp` with a current six-digit code."
+        " Set `npmTotpSecret` in `.secrets/nifty.json` or pass `--otp` with a current six-digit code."
     }
     else {
         ""
@@ -296,7 +296,7 @@ mod tests {
     #[test]
     fn reports_actionable_otp_errors_without_dumping_body() {
         let message = registry_trust_error("list", "@scope/pkg", 403, "otp required: secret-token");
-        assert!(message.contains("NPM_TOTP_SECRET"));
+        assert!(message.contains("npmTotpSecret"));
         assert!(message.contains("--otp"));
         assert!(!message.contains("secret-token"));
     }
