@@ -3,11 +3,11 @@ mod commit;
 mod workspace;
 
 use nifty_formatter::format_subject;
-use nifty_types::{known_gitmojis, leading_gitmoji, parse_subject, strip_gitmoji, validate_subject};
+use nifty_types::{parse_subject, strip_gitmoji, validate_subject};
 
 use crate::{
     context::{CommitInput, LintContext, diagnostic},
-    rule::{LintDiagnostic, RULE_GITMOJI_BODY, RULE_GITMOJI_FORMAT, RULE_GITMOJI_KNOWN, RULE_GITMOJI_SUBJECT},
+    rule::{LintDiagnostic, RULE_GITMOJI_BODY, RULE_GITMOJI_FORMAT, RULE_GITMOJI_SUBJECT},
 };
 
 pub use cargo::lint_cargo_workspace;
@@ -15,7 +15,7 @@ pub use commit::lint_commit_hygiene;
 pub use workspace::lint_typescript_workspace;
 pub fn lint_commit(ctx: &LintContext, commit: &CommitInput) -> Vec<LintDiagnostic> {
     let mut out = Vec::new();
-    for rule in [check_gitmoji_subject, check_gitmoji_known, check_gitmoji_body, check_gitmoji_format] {
+    for rule in [check_gitmoji_subject, check_gitmoji_body, check_gitmoji_format] {
         if let Some(item) = rule(ctx, commit) {
             out.push(item);
         }
@@ -28,18 +28,7 @@ fn check_gitmoji_subject(ctx: &LintContext, commit: &CommitInput) -> Option<Lint
     if validate_subject(&commit.subject) {
         return None;
     }
-    diagnostic(ctx, RULE_GITMOJI_SUBJECT, "commit subject must start with a known gitmoji followed by a space", commit)
-}
-
-fn check_gitmoji_known(ctx: &LintContext, commit: &CommitInput) -> Option<LintDiagnostic> {
-    let Some(emoji) = leading_gitmoji(&commit.subject)
-    else {
-        return None;
-    };
-    if known_gitmojis().contains(&emoji) {
-        return None;
-    }
-    diagnostic(ctx, RULE_GITMOJI_KNOWN, format!("gitmoji `{emoji}` is not in the Nifty known gitmoji list"), commit)
+    diagnostic(ctx, RULE_GITMOJI_SUBJECT, "commit subject must start with a gitmoji followed by a space", commit)
 }
 
 fn check_gitmoji_body(ctx: &LintContext, commit: &CommitInput) -> Option<LintDiagnostic> {
@@ -91,5 +80,13 @@ mod tests {
         let commit = CommitInput::subject_only("✨ Add feature");
         let diagnostics = lint_commit(&ctx, &commit);
         assert!(diagnostics.is_empty());
+    }
+
+    #[test]
+    fn accepts_emoji_outside_known_list() {
+        let ctx = LintContext::new(vec![], default_rules());
+        let commit = CommitInput::subject_only("🔖 Tag the milestone packages");
+        let diagnostics = lint_commit(&ctx, &commit);
+        assert!(diagnostics.iter().all(|item| item.rule != "gitmoji/subject"), "unknown emoji must not error: {diagnostics:?}");
     }
 }

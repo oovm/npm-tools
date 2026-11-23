@@ -6,7 +6,7 @@ Gitmoji commit lint and hybrid workspace hygiene for [Nifty](https://www.npmjs.c
 
 | Group | Examples |
 | --- | --- |
-| Gitmoji | `gitmoji/subject`, `gitmoji/known`, `gitmoji/body`, `gitmoji/format` |
+| Gitmoji | `gitmoji/subject`, `gitmoji/body`, `gitmoji/format` |
 | Commit hygiene | `commit/semver`, `commit/semicolon`, `commit/bare-package` |
 | Cargo workspace | `cargo/readme-case`, `cargo/workspace-inherit`, `cargo/misplaced-test` |
 | TypeScript | `typescript/large-file` |

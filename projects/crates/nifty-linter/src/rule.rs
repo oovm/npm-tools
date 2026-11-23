@@ -36,7 +36,6 @@ pub struct RuleConfig {
 }
 
 pub const RULE_GITMOJI_SUBJECT: &str = "gitmoji/subject";
-pub const RULE_GITMOJI_KNOWN: &str = "gitmoji/known";
 pub const RULE_GITMOJI_BODY: &str = "gitmoji/body";
 pub const RULE_GITMOJI_FORMAT: &str = "gitmoji/format";
 
@@ -68,7 +67,6 @@ fn default_severity() -> RuleSeverity {
 pub fn default_rules() -> Vec<RuleConfig> {
     vec![
         RuleConfig { id: RULE_GITMOJI_SUBJECT.to_string(), enabled: true, severity: RuleSeverity::Error },
-        RuleConfig { id: RULE_GITMOJI_KNOWN.to_string(), enabled: true, severity: RuleSeverity::Error },
         RuleConfig { id: RULE_GITMOJI_BODY.to_string(), enabled: true, severity: RuleSeverity::Warning },
         RuleConfig { id: RULE_GITMOJI_FORMAT.to_string(), enabled: true, severity: RuleSeverity::Warning },
         RuleConfig { id: RULE_CARGO_README_CASE.to_string(), enabled: true, severity: RuleSeverity::Error },
@@ -88,7 +86,6 @@ pub fn default_rules() -> Vec<RuleConfig> {
 pub fn default_commit_rules() -> Vec<RuleConfig> {
     vec![
         RuleConfig { id: RULE_GITMOJI_SUBJECT.to_string(), enabled: true, severity: RuleSeverity::Error },
-        RuleConfig { id: RULE_GITMOJI_KNOWN.to_string(), enabled: true, severity: RuleSeverity::Error },
         RuleConfig { id: RULE_GITMOJI_BODY.to_string(), enabled: true, severity: RuleSeverity::Warning },
         RuleConfig { id: RULE_GITMOJI_FORMAT.to_string(), enabled: true, severity: RuleSeverity::Warning },
         RuleConfig { id: RULE_COMMIT_SEMVER.to_string(), enabled: true, severity: RuleSeverity::Error },

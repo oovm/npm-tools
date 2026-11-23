@@ -47,8 +47,7 @@ nifty lint --subject "✨ Add feature"
 
 | Rule                  | Default | Meaning                                   |
 |-----------------------|---------|-------------------------------------------|
-| `gitmoji/subject`     | error   | Subject must start with gitmoji + space   |
-| `gitmoji/known`       | error   | Gitmoji must be in the known list         |
+| `gitmoji/subject`     | error   | Subject must start with any emoji + space |
 | `gitmoji/body`        | warning | Text after gitmoji must not be empty      |
 | `gitmoji/format`      | warning | Subject should match canonical formatting |
 | `commit/semver`       | error   | Semver must not appear in subject/body    |
