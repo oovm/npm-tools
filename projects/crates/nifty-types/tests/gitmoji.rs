@@ -27,3 +27,13 @@ fn accepts_pin_gitmoji_subject() {
     assert_eq!(parsed.gitmoji.as_deref(), Some("📌"));
     assert_eq!(parsed.section, Section::Other);
 }
+
+#[test]
+fn accepts_emoji_outside_known_list() {
+    let subject = "🔖 Tag the milestone packages";
+    assert!(validate_subject(subject));
+    let parsed = parse_subject(subject);
+    assert_eq!(parsed.gitmoji.as_deref(), Some("🔖"));
+    assert_eq!(parsed.body, "Tag the milestone packages");
+    assert_eq!(parsed.section, Section::Other);
+}

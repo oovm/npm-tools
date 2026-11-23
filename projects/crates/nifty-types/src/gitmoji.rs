@@ -81,12 +81,65 @@ pub fn leading_gitmoji(subject: &str) -> Option<&'static str> {
     None
 }
 
+/// 判断码位是否属于 emoji 区段（不含修饰符）。
+fn is_emoji_cp(cp: u32) -> bool {
+    matches!(cp,
+        0x1F000..=0x1FAFF
+            | 0x2600..=0x27BF
+            | 0x2300..=0x23FF
+            | 0x2B00..=0x2BFF
+            | 0x2190..=0x21FF
+            | 0x203C
+            | 0x2049
+            | 0x2122
+            | 0x2139
+            | 0x21A9
+            | 0x21AA
+            | 0x25AA
+            | 0x25AB
+            | 0x25B6
+            | 0x25C0
+            | 0x25FB..=0x25FE
+            | 0x2934
+            | 0x2935
+            | 0x3030
+            | 0x303D
+            | 0x3297
+            | 0x3299
+            | 0x00A9
+            | 0x00AE)
+}
+
+/// 返回 subject 行首的任意 emoji 簇（后跟空格时）。
+///
+/// 与 [`leading_gitmoji`] 不同，本函数不受已知 gitmoji 列表限制：
+/// `🔖`、`🎂` 等 emoji 同样是合法前缀，任何 emoji 前缀都不应被拒绝。
+pub fn leading_emoji(subject: &str) -> Option<&str> {
+    let mut chars = subject.char_indices().peekable();
+    let (_, first) = chars.next()?;
+    if !is_emoji_cp(first as u32) {
+        return None;
+    }
+    let mut end = first.len_utf8();
+    while let Some((idx, ch)) = chars.next() {
+        let cp = ch as u32;
+        if cp == 0xFE0F || cp == 0x20E3 {
+            end = idx + ch.len_utf8();
+        } else if cp == 0x200D && chars.peek().is_some_and(|(_, next)| is_emoji_cp(*next as u32)) {
+            end = idx + ch.len_utf8();
+        } else if is_emoji_cp(cp) {
+            end = idx + ch.len_utf8();
+        } else {
+            break;
+        }
+    }
+    subject[end..].starts_with(' ').then(|| &subject[..end])
+}
+
 /// 去掉 subject 行首 gitmoji 与后续空白。
 pub fn strip_gitmoji(subject: &str) -> String {
-    if let Some(emoji) = leading_gitmoji(subject) {
-        let rest = subject.strip_prefix(emoji).unwrap_or(subject);
-        let rest = rest.strip_prefix('\u{fe0f}').unwrap_or(rest);
-        return rest.trim_start().to_string();
+    if let Some(emoji) = leading_emoji(subject) {
+        return subject[emoji.len()..].trim_start().to_string();
     }
     subject.trim().to_string()
 }
@@ -98,14 +151,14 @@ pub fn section_for_gitmoji(gitmoji: Option<&str>) -> Section {
 
 /// 解析 subject：gitmoji + body + section。
 pub fn parse_subject(subject: &str) -> ParsedSubject {
-    let gitmoji = leading_gitmoji(subject).map(str::to_string);
+    let gitmoji = leading_emoji(subject).map(str::to_string);
     let section = section_for_gitmoji(gitmoji.as_deref());
     let body = strip_gitmoji(subject);
     ParsedSubject { gitmoji, body, section }
 }
 
 pub fn validate_subject(subject: &str) -> bool {
-    leading_gitmoji(subject).is_some()
+    leading_emoji(subject).is_some()
 }
 
 /// 分组标题与空节占位文案。
