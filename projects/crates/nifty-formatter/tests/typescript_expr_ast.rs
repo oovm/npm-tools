@@ -22,8 +22,8 @@ fn parse_expr_snippet(trimmed: &str) -> Option<data_text_typescript::ast::Expres
 
 #[test]
 fn prints_binary_with_spacing_via_formatter() {
-    let out =
-        data_text_typescript::formatter::format_source("a+b", &data_text_typescript::formatter::FormatOptions::default()).expect("format");
+    let out = data_text_typescript::formatter::format_source("a+b", &data_text_typescript::formatter::FormatOptions::default())
+        .expect("format");
     assert_eq!(out, "a + b");
 }
 

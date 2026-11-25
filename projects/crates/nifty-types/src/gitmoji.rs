@@ -125,11 +125,14 @@ pub fn leading_emoji(subject: &str) -> Option<&str> {
         let cp = ch as u32;
         if cp == 0xFE0F || cp == 0x20E3 {
             end = idx + ch.len_utf8();
-        } else if cp == 0x200D && chars.peek().is_some_and(|(_, next)| is_emoji_cp(*next as u32)) {
+        }
+        else if cp == 0x200D && chars.peek().is_some_and(|(_, next)| is_emoji_cp(*next as u32)) {
             end = idx + ch.len_utf8();
-        } else if is_emoji_cp(cp) {
+        }
+        else if is_emoji_cp(cp) {
             end = idx + ch.len_utf8();
-        } else {
+        }
+        else {
             break;
         }
     }

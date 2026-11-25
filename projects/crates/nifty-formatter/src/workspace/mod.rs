@@ -1,7 +1,7 @@
 mod cargo;
 mod engine;
-mod text;
 mod style;
+mod text;
 mod walk;
 
 use std::{
