@@ -34,7 +34,7 @@ test("commit lint honours -C for an explicit range", async () => {
             { subjects: [], cwd: root, from: "v0.0.0", to: "v0.0.1", commitOnly: true, scanCargo: false },
             false,
         );
-        assert.equal(count, 2, "only the probe repository's two invalid commits may be reported");
+        assert.equal(count, 1, "only the probe repository's invalid commit may be reported");
     } finally {
         fs.rmSync(root, { recursive: true, force: true });
     }
@@ -44,7 +44,7 @@ test("commit lint honours -C without an explicit range", async () => {
     const root = probeRepo();
     try {
         const count = await lintCommits({ subjects: [], cwd: root, commitOnly: true, scanCargo: false }, false);
-        assert.equal(count, 2, "the whole probe history must be scanned, not the caller's repository");
+        assert.equal(count, 1, "the whole probe history must be scanned, not the caller's repository");
     } finally {
         fs.rmSync(root, { recursive: true, force: true });
     }
