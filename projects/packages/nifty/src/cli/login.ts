@@ -1,6 +1,7 @@
 import { spawn } from "node:child_process";
 import { createHmac } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { homedir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 
 import { detectProjectLayout } from "../config/detectProject.js";
@@ -158,12 +159,38 @@ export function readSecrets(root: string): Record<string, unknown> {
     return parsed as Record<string, unknown>;
 }
 
-/** Merge a token into `.secrets/nifty.json` without touching other keys. */
-export function writeNpmToken(root: string, token: string): string {
-    const path = secretsPath(root);
-    const secrets = { ...readSecrets(root), npmToken: token };
+/** npm's user config file: `npm login` persists the token here too. */
+export function npmRcPath(): string {
+    return process.env.npm_config_userconfig ?? join(homedir(), ".npmrc");
+}
+
+/** `_authToken` key npm uses for a registry (`//host/path/:_authToken`). */
+export function authTokenKey(registry: string): string {
+    const url = new URL(registry);
+    const path = url.pathname.endsWith("/") ? url.pathname : `${url.pathname}/`;
+    return `//${url.host}${path}:_authToken`;
+}
+
+/** Store the token in the npm user config, replacing a stale one in place. */
+export function writeNpmToken(registry: string, token: string): string {
+    const path = npmRcPath();
+    const key = authTokenKey(registry);
+    const existing = existsSync(path) ? readFileSync(path, "utf8") : "";
+    const lines: string[] = [];
+    for (const line of existing.split(/\r?\n/)) {
+        const separator = line.indexOf("=");
+        const lineKey = separator === -1 ? "" : line.slice(0, separator).trim();
+        if (lineKey === key) {
+            continue;
+        }
+        lines.push(line);
+    }
+    while (lines.length > 0 && lines[lines.length - 1]!.trim() === "") {
+        lines.pop();
+    }
+    lines.push(`${key}=${token}`);
     mkdirSync(dirname(path), { recursive: true });
-    writeFileSync(path, `${JSON.stringify(secrets, null, 2)}\n`, "utf8");
+    writeFileSync(path, `${lines.join("\n")}\n`, "utf8");
     return path;
 }
 

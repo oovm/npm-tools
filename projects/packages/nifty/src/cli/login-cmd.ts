@@ -48,8 +48,8 @@ export async function cmdLogin(options: ParsedOptions): Promise<number> {
     const timeoutMs = timeoutSeconds(options) * 1000;
     const token = await waitForLoginToken(session.doneUrl, { timeoutMs });
     const username = await whoami(registry, token);
-    const path = writeNpmToken(root, token);
-    console.log(`  token: ${path}`);
+    const path = writeNpmToken(registry, token);
+    console.log(`  npmrc: ${path}`);
     console.log(`logged in as ${username}`);
     return 0;
 }
