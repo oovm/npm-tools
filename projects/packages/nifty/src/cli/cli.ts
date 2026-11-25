@@ -11,6 +11,7 @@ import { registerFormatCommand } from "./format-cmd.js";
 import { registerChangeLogsCommand } from "./change-logs-cmd.js";
 import { registerInstallNativeCommand } from "./install-native-cmd.js";
 import { registerLintCommands } from "./lint-cmd.js";
+import { registerLoginCommand } from "./login-cmd.js";
 import { registerPublishCommand } from "./publish-cmd.js";
 import { registerRetimeCommand } from "./retime-cmd.js";
 import { registerCommitCommand } from "./commit-cmd.js";
@@ -31,6 +32,7 @@ function buildNiftyCli() {
     registerUploadCommand(cli);
     registerInstallNativeCommand(cli);
     registerBumpCommand(cli);
+    registerLoginCommand(cli);
     registerPublishCommand(cli);
     registerTrustCommand(cli);
     registerCommitCommand(cli);
