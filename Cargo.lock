@@ -1552,14 +1552,14 @@ dependencies = [
 
 [[package]]
 name = "nifty-config"
-version = "0.1.16"
+version = "0.1.17"
 dependencies = [
  "boost-fs",
 ]
 
 [[package]]
 name = "nifty-formatter"
-version = "0.1.16"
+version = "0.1.17"
 dependencies = [
  "boost-fs",
  "data-text-core",
@@ -1573,7 +1573,7 @@ dependencies = [
 
 [[package]]
 name = "nifty-git"
-version = "0.1.16"
+version = "0.1.17"
 dependencies = [
  "boost-fs",
  "gix",
@@ -1584,7 +1584,7 @@ dependencies = [
 
 [[package]]
 name = "nifty-github"
-version = "0.1.16"
+version = "0.1.17"
 dependencies = [
  "boost-net",
  "nifty-types",
@@ -1594,7 +1594,7 @@ dependencies = [
 
 [[package]]
 name = "nifty-history"
-version = "0.1.16"
+version = "0.1.17"
 dependencies = [
  "boost-harness",
  "boost-net",
@@ -1612,7 +1612,7 @@ dependencies = [
 
 [[package]]
 name = "nifty-linter"
-version = "0.1.16"
+version = "0.1.17"
 dependencies = [
  "boost-fs",
  "nifty-config",
@@ -1626,7 +1626,7 @@ dependencies = [
 
 [[package]]
 name = "nifty-napi"
-version = "0.1.16"
+version = "0.1.17"
 dependencies = [
  "gix",
  "napi",
@@ -1645,7 +1645,7 @@ dependencies = [
 
 [[package]]
 name = "nifty-publisher"
-version = "0.1.16"
+version = "0.1.17"
 dependencies = [
  "boost-fs",
  "boost-net",
@@ -1661,7 +1661,7 @@ dependencies = [
 
 [[package]]
 name = "nifty-types"
-version = "0.1.16"
+version = "0.1.17"
 dependencies = [
  "serde",
  "serde_json",
@@ -1669,7 +1669,7 @@ dependencies = [
 
 [[package]]
 name = "nifty-updater"
-version = "0.1.16"
+version = "0.1.17"
 dependencies = [
  "boost-net",
  "dialoguer",
@@ -1683,7 +1683,7 @@ dependencies = [
 
 [[package]]
 name = "nifty-uploader"
-version = "0.1.16"
+version = "0.1.17"
 dependencies = [
  "boost-fs",
  "boost-net",
